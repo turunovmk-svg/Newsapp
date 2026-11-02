@@ -50,4 +50,21 @@ dependencies {
 
     // Для интернета и парсинга (добавим позже, пока база)
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
+// Для работы с интернетом
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    
+    // Для парсинга XML (RSS-ленты)
+    implementation("org.simpleframework:simple-xml:2.7.1") {
+        exclude(group = "xpp3", module = "xpp3")
+        exclude(group = "stax", module = "stax-api")
+        exclude(group = "stax", module = "stax")
+    }
+    
+    // Для загрузки картинок
+    implementation("io.coil-kt:coil-compose:2.5.0")
+    
+    // Для работы с сетью в фоне (Kotlin Coroutines)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 }
