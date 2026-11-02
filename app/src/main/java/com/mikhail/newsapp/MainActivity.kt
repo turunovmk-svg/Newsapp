@@ -37,7 +37,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     object Shorts : Screen("shorts", "Шортс", Icons.Filled.PlayCircle)
     object YouTube : Screen("youtube", "YouTube", Icons.Filled.PlayArrow)
     object Telegram : Screen("telegram", "Telegram", Icons.Filled.Send)
-    object Settings : Screen("settings", "Настройки", Icons.Filled.Settings)
+    object Settings : Screen("settings", "Ещё", Icons.Filled.Settings)
     
     companion object {
         val allScreens = listOf(Feed, Shorts, YouTube, Telegram, Settings)
@@ -62,7 +62,7 @@ fun AppNavigation() {
             composable(Screen.Shorts.route) { PlaceholderScreen("🎬 Шортс", "Здесь будет вертикальная лента как в TikTok") }
             composable(Screen.YouTube.route) { PlaceholderScreen("📺 YouTube", "Здесь будут видео из твоих любимых каналов") }
             composable(Screen.Telegram.route) { PlaceholderScreen("✈️ Telegram", "Здесь будут посты из выбранных каналов") }
-            composable(Screen.Settings.route) { PlaceholderScreen("⚙️ Настройки", "Здесь можно будет добавить свои источники") }
+            composable(Screen.Settings.route) { PlaceholderScreen("⚙️ Ещё", "Здесь можно будет добавить свои источники") }
         }
     }
 }
