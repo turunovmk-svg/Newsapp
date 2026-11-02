@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -122,7 +123,10 @@ fun NewsCard(news: NewsItem) {
             AsyncImage(
                 model = news.imageUrl,
                 contentDescription = null,
-                modifier = Modifier.fillMaxWidth().height(200.dp).clip(MaterialTheme.shapes.top),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)), // <-- ИСПРАВЛЕНО ЗДЕСЬ
                 contentScale = ContentScale.Crop
             )
             Column(modifier = Modifier.padding(16.dp)) {
