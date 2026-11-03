@@ -1,9 +1,13 @@
 package com.mikhail.newsapp
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -19,6 +23,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -67,9 +72,9 @@ fun AppNavigation() {
         ) {
             composable(Screen.Feed.route) { FeedScreen() }
             composable(Screen.Shorts.route) { ShortsScreen() }
-            composable(Screen.YouTube.route) { PlaceholderScreen("📺 YouTube", "Здесь будут видео из твоих любимых каналов") }
-            composable(Screen.Telegram.route) { PlaceholderScreen("✈️ Telegram", "Здесь будут посты из выбранных каналов") }
-            composable(Screen.Settings.route) { PlaceholderScreen("⚙️ Ещё", "Здесь можно будет добавить свои источники") }
+            composable(Screen.YouTube.route) { YouTubeScreen() }
+            composable(Screen.Telegram.route) { TelegramScreen() }
+            composable(Screen.Settings.route) { SettingsScreen() }
         }
     }
 }
@@ -96,13 +101,13 @@ fun BottomNavigationBar(navController: androidx.navigation.NavController) {
     }
 }
 
-// --- ЭКРАН ЛЕНТЫ С РЕАЛЬНЫМИ ДАННЫМИ ---
+// --- ЛЕНТА С PULL-TO-REFRESH ---
 @Composable
 fun FeedScreen() {
     val viewModel: MainViewModel = viewModel()
     val posts by viewModel.posts.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
     
-    // Кнопка обновления (Pull-to-refresh можно добавить позже, пока кнопка)
     Column(modifier = Modifier.fillMaxSize()) {
         Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text("🔥 Главные события", fontSize = 24.sp, fontWeight = FontWeight.Bold)
@@ -115,18 +120,23 @@ fun FeedScreen() {
             modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            items(posts) { post ->
+            items(posts, key = { it.id }) { post ->
                 UnifiedPostCard(post)
             }
         }
     }
 }
 
-// --- УНИВЕРСАЛЬНАЯ КАРТОЧКА ---
 @Composable
 fun UnifiedPostCard(post: UnifiedPost) {
+    val context = LocalContext.current
+    
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable {
+            if (post.videoUrl != null) {
+                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(post.videoUrl)))
+            }
+        },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         shape = MaterialTheme.shapes.medium
     ) {
@@ -152,7 +162,63 @@ fun UnifiedPostCard(post: UnifiedPost) {
     }
 }
 
-// --- ЭКРАН ШОРТС (Оставляем красивым) ---
+// --- YOUTUBE ЭКРАН ---
+@Composable
+fun YouTubeScreen() {
+    val viewModel: MainViewModel = viewModel()
+    val posts by viewModel.posts.collectAsState()
+    val youtubePosts = posts.filter { it.source == SourceType.YOUTUBE }
+    
+    LazyColumn(
+        modifier = Modifier.fillMaxSize().padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        item {
+            Text("📺 YouTube видео", fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 8.dp))
+        }
+        items(youtubePosts) { post ->
+            UnifiedPostCard(post)
+        }
+    }
+}
+
+// --- TELEGRAM ЭКРАН ---
+@Composable
+fun TelegramScreen() {
+    val viewModel: MainViewModel = viewModel()
+    val posts by viewModel.posts.collectAsState()
+    val telegramPosts = posts.filter { it.source == SourceType.TELEGRAM }
+    
+    LazyColumn(
+        modifier = Modifier.fillMaxSize().padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        item {
+            Text("✈️ Telegram каналы", fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 8.dp))
+        }
+        items(telegramPosts) { post ->
+            UnifiedPostCard(post)
+        }
+    }
+}
+
+// --- НАСТРОЙКИ ---
+@Composable
+fun SettingsScreen() {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("⚙️ Настройки", fontSize = 28.sp, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(32.dp))
+        Text("Версия 1.0", fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("Создано с ❤️ Михаилом", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+// --- ШОРТСЫ ---
 @Composable
 fun ShortsScreen() {
     val shortsList = remember { ShortsRepository.getShorts() }
@@ -196,13 +262,4 @@ object ShortsRepository {
         ShortItem(2, "Новый iPhone 16", "Первый взгляд на революционный дизайн", "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800", "Apple"),
         ShortItem(3, "Марсианские пейзажи", "Фото с поверхности Красной планеты", "https://images.unsplash.com/photo-1614728853913-1e22ba0e982b?w=800", "NASA")
     )
-}
-
-@Composable
-fun PlaceholderScreen(title: String, subtitle: String) {
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Text(text = title, fontSize = 28.sp, style = MaterialTheme.typography.headlineMedium)
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(text = subtitle, fontSize = 16.sp, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
 }
