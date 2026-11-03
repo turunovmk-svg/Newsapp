@@ -22,6 +22,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -56,7 +57,6 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    
     Scaffold(
         bottomBar = { BottomNavigationBar(navController = navController) }
     ) { paddingValues ->
@@ -79,7 +79,6 @@ fun BottomNavigationBar(navController: androidx.navigation.NavController) {
     NavigationBar {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
-        
         Screen.allScreens.forEach { screen ->
             NavigationBarItem(
                 icon = { Icon(screen.icon, contentDescription = screen.title) },
@@ -97,26 +96,35 @@ fun BottomNavigationBar(navController: androidx.navigation.NavController) {
     }
 }
 
-// --- ЭКРАН ЛЕНТЫ НОВОСТЕЙ ---
+// --- ЭКРАН ЛЕНТЫ С РЕАЛЬНЫМИ ДАННЫМИ ---
 @Composable
 fun FeedScreen() {
-    val viewModel = remember { FeedViewModel() }
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        item {
-            Text("📰 Главные новости", fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 8.dp))
+    val viewModel: MainViewModel = viewModel()
+    val posts by viewModel.posts.collectAsState()
+    
+    // Кнопка обновления (Pull-to-refresh можно добавить позже, пока кнопка)
+    Column(modifier = Modifier.fillMaxSize()) {
+        Row(modifier = Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text("🔥 Главные события", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            IconButton(onClick = { viewModel.loadPosts() }) {
+                Icon(Icons.Filled.Refresh, "Обновить")
+            }
         }
-        items(viewModel.newsList) { news ->
-            NewsCard(news)
+        
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(posts) { post ->
+                UnifiedPostCard(post)
+            }
         }
     }
 }
 
-// --- КАРТОЧКА НОВОСТИ ---
+// --- УНИВЕРСАЛЬНАЯ КАРТОЧКА ---
 @Composable
-fun NewsCard(news: NewsItem) {
+fun UnifiedPostCard(post: UnifiedPost) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -124,110 +132,48 @@ fun NewsCard(news: NewsItem) {
     ) {
         Column {
             AsyncImage(
-                model = news.imageUrl,
+                model = post.imageUrl,
                 contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-                    .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
+                modifier = Modifier.fillMaxWidth().height(200.dp).clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
                 contentScale = ContentScale.Crop
             )
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(news.source, color = MaterialTheme.colorScheme.primary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(news.title, fontSize = 18.sp, fontWeight = FontWeight.Bold, maxLines = 2)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(news.description, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(post.source.emoji, fontSize = 14.sp)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(post.source.displayName, color = MaterialTheme.colorScheme.primary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(post.title, fontSize = 18.sp, fontWeight = FontWeight.Bold, maxLines = 2)
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(post.description, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3)
             }
         }
     }
 }
 
-// --- ЭКРАН ШОРТС (TIKTOK-STYLE) ---
+// --- ЭКРАН ШОРТС (Оставляем красивым) ---
 @Composable
 fun ShortsScreen() {
     val shortsList = remember { ShortsRepository.getShorts() }
-    
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black),
-        verticalArrangement = Arrangement.spacedBy(0.dp)
-    ) {
-        items(shortsList) { short ->
-            ShortItem(short)
-        }
+    LazyColumn(modifier = Modifier.fillMaxSize().background(Color.Black), verticalArrangement = Arrangement.spacedBy(0.dp)) {
+        items(shortsList) { short -> ShortItem(short) }
     }
 }
 
-// --- ОДИН ШОРТ (ПОЛНОЭКРАННЫЙ) ---
 @Composable
 fun ShortItem(short: ShortItem) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(700.dp) // Высота одного "экрана" шортса
-            .background(Color.Black)
-    ) {
-        // Фоновое изображение
-        AsyncImage(
-            model = short.imageUrl,
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
-        
-        // Градиент снизу для читаемости текста
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(300.dp)
-                .align(Alignment.BottomCenter)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, Color.Black.copy(0.8f))
-                    )
-                )
-        )
-        
-        // Контент (заголовок и описание)
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(16.dp)
-                .padding(bottom = 60.dp)
-        ) {
-            Text(
-                text = short.source,
-                color = Color(0xFF00D4FF),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold
-            )
+    Box(modifier = Modifier.fillMaxWidth().height(700.dp).background(Color.Black)) {
+        AsyncImage(model = short.imageUrl, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        Box(modifier = Modifier.fillMaxWidth().height(300.dp).align(Alignment.BottomCenter).background(Brush.verticalGradient(colors = listOf(Color.Transparent, Color.Black.copy(0.8f)))))
+        Column(modifier = Modifier.align(Alignment.BottomStart).padding(16.dp).padding(bottom = 60.dp)) {
+            Text(text = short.source, color = Color(0xFF00D4FF), fontSize = 14.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = short.title,
-                color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 3
-            )
+            Text(text = short.title, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold, maxLines = 3)
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = short.description,
-                color = Color.White.copy(0.9f),
-                fontSize = 14.sp,
-                maxLines = 3
-            )
+            Text(text = short.description, color = Color.White.copy(0.9f), fontSize = 14.sp, maxLines = 3)
         }
-        
-        // Кнопки действий справа (лайк, комментарий, поделиться)
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = 16.dp, bottom = 80.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        Column(modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 80.dp), verticalArrangement = Arrangement.spacedBy(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             ActionButton(Icons.Filled.Favorite, "12K")
             ActionButton(Icons.Filled.ChatBubble, "342")
             ActionButton(Icons.Filled.Share, "89")
@@ -238,66 +184,23 @@ fun ShortItem(short: ShortItem) {
 @Composable
 fun ActionButton(icon: ImageVector, count: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = Color.White,
-            modifier = Modifier.size(32.dp)
-        )
+        Icon(imageVector = icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(32.dp))
         Text(text = count, color = Color.White, fontSize = 12.sp)
     }
 }
 
-// --- МОДЕЛИ И РЕПОЗИТОРИИ ---
-data class NewsItem(
-    val id: Int,
-    val title: String,
-    val description: String,
-    val imageUrl: String,
-    val source: String
-)
-
-object NewsRepository {
-    fun getNews(): List<NewsItem> {
-        return listOf(
-            NewsItem(1, "Илон Маск запустил новую ракету Starship", "SpaceX успешно провела очередное испытание...", "https://images.unsplash.com/photo-1517976487492-5750f3195933?w=800", "SpaceX"),
-            NewsItem(2, "Apple представила революционный чип", "Новый процессор M4 обещает изменить...", "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800", "Tech"),
-            NewsItem(3, "Ученые нашли воду на Марсе", "Марсоход Perseverance передал сенсационные...", "https://images.unsplash.com/photo-1614728853913-1e22ba0e982b?w=800", "Science"),
-            NewsItem(4, "Биткоин пробил новый исторический максимум", "Криптовалютный рынок снова в эпицентре...", "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=800", "Finance")
-        )
-    }
-}
-
-class FeedViewModel : androidx.lifecycle.ViewModel() {
-    val newsList = NewsRepository.getNews()
-}
-
-data class ShortItem(
-    val id: Int,
-    val title: String,
-    val description: String,
-    val imageUrl: String,
-    val source: String
-)
-
+data class ShortItem(val id: Int, val title: String, val description: String, val imageUrl: String, val source: String)
 object ShortsRepository {
-    fun getShorts(): List<ShortItem> {
-        return listOf(
-            ShortItem(1, "Запуск ракеты SpaceX", "Невероятные кадры старта Starship", "https://images.unsplash.com/photo-1517976487492-5750f3195933?w=800", "SpaceX"),
-            ShortItem(2, "Новый iPhone 16", "Первый взгляд на революционный дизайн", "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800", "Apple"),
-            ShortItem(3, "Марсианские пейзажи", "Фото с поверхности Красной планеты", "https://images.unsplash.com/photo-1614728853913-1e22ba0e982b?w=800", "NASA"),
-            ShortItem(4, "Крипто-бум 2024", "Биткоин пробил все рекорды", "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=800", "Crypto")
-        )
-    }
+    fun getShorts(): List<ShortItem> = listOf(
+        ShortItem(1, "Запуск ракеты SpaceX", "Невероятные кадры старта Starship", "https://images.unsplash.com/photo-1517976487492-5750f3195933?w=800", "SpaceX"),
+        ShortItem(2, "Новый iPhone 16", "Первый взгляд на революционный дизайн", "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800", "Apple"),
+        ShortItem(3, "Марсианские пейзажи", "Фото с поверхности Красной планеты", "https://images.unsplash.com/photo-1614728853913-1e22ba0e982b?w=800", "NASA")
+    )
 }
 
 @Composable
 fun PlaceholderScreen(title: String, subtitle: String) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         Text(text = title, fontSize = 28.sp, style = MaterialTheme.typography.headlineMedium)
         Spacer(modifier = Modifier.height(16.dp))
         Text(text = subtitle, fontSize = 16.sp, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
