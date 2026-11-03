@@ -1,10 +1,9 @@
 package com.mikhail.newsapp
 
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Brush
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -16,6 +15,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -128,7 +129,7 @@ fun NewsCard(news: NewsItem) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(200.dp)
-                    .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)), // <-- ИСПРАВЛЕНО ЗДЕСЬ
+                    .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
                 contentScale = ContentScale.Crop
             )
             Column(modifier = Modifier.padding(16.dp)) {
@@ -142,18 +143,6 @@ fun NewsCard(news: NewsItem) {
     }
 }
 
-@Composable
-fun PlaceholderScreen(title: String, subtitle: String) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(text = title, fontSize = 28.sp, style = MaterialTheme.typography.headlineMedium)
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(text = subtitle, fontSize = 16.sp, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-}
 // --- ЭКРАН ШОРТС (TIKTOK-STYLE) ---
 @Composable
 fun ShortsScreen() {
@@ -177,7 +166,7 @@ fun ShortItem(short: ShortItem) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(700.dp) // Примерная высота экрана
+            .height(700.dp) // Высота одного "экрана" шортса
             .background(Color.Black)
     ) {
         // Фоновое изображение
@@ -206,7 +195,7 @@ fun ShortItem(short: ShortItem) {
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .padding(16.dp)
-                .padding(bottom = 40.dp)
+                .padding(bottom = 60.dp)
         ) {
             Text(
                 text = short.source,
@@ -227,7 +216,7 @@ fun ShortItem(short: ShortItem) {
                 text = short.description,
                 color = Color.White.copy(0.9f),
                 fontSize = 14.sp,
-                maxLines = 2
+                maxLines = 3
             )
         }
         
@@ -235,8 +224,8 @@ fun ShortItem(short: ShortItem) {
         Column(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = 12.dp, bottom = 80.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
+                .padding(end = 16.dp, bottom = 80.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             ActionButton(Icons.Filled.Favorite, "12K")
@@ -259,7 +248,30 @@ fun ActionButton(icon: ImageVector, count: String) {
     }
 }
 
-// --- МОДЕЛЬ И РЕПОЗИТОРИЙ ДЛЯ ШОРТС ---
+// --- МОДЕЛИ И РЕПОЗИТОРИИ ---
+data class NewsItem(
+    val id: Int,
+    val title: String,
+    val description: String,
+    val imageUrl: String,
+    val source: String
+)
+
+object NewsRepository {
+    fun getNews(): List<NewsItem> {
+        return listOf(
+            NewsItem(1, "Илон Маск запустил новую ракету Starship", "SpaceX успешно провела очередное испытание...", "https://images.unsplash.com/photo-1517976487492-5750f3195933?w=800", "SpaceX"),
+            NewsItem(2, "Apple представила революционный чип", "Новый процессор M4 обещает изменить...", "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800", "Tech"),
+            NewsItem(3, "Ученые нашли воду на Марсе", "Марсоход Perseverance передал сенсационные...", "https://images.unsplash.com/photo-1614728853913-1e22ba0e982b?w=800", "Science"),
+            NewsItem(4, "Биткоин пробил новый исторический максимум", "Криптовалютный рынок снова в эпицентре...", "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=800", "Finance")
+        )
+    }
+}
+
+class FeedViewModel : androidx.lifecycle.ViewModel() {
+    val newsList = NewsRepository.getNews()
+}
+
 data class ShortItem(
     val id: Int,
     val title: String,
@@ -276,5 +288,18 @@ object ShortsRepository {
             ShortItem(3, "Марсианские пейзажи", "Фото с поверхности Красной планеты", "https://images.unsplash.com/photo-1614728853913-1e22ba0e982b?w=800", "NASA"),
             ShortItem(4, "Крипто-бум 2024", "Биткоин пробил все рекорды", "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=800", "Crypto")
         )
+    }
+}
+
+@Composable
+fun PlaceholderScreen(title: String, subtitle: String) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(text = title, fontSize = 28.sp, style = MaterialTheme.typography.headlineMedium)
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(text = subtitle, fontSize = 16.sp, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
