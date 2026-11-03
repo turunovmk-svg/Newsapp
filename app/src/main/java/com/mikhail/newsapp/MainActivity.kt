@@ -1,5 +1,7 @@
 package com.mikhail.newsapp
 
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -63,7 +65,7 @@ fun AppNavigation() {
             modifier = Modifier.padding(paddingValues)
         ) {
             composable(Screen.Feed.route) { FeedScreen() }
-            composable(Screen.Shorts.route) { PlaceholderScreen("🎬 Шортс", "Здесь будет вертикальная лента как в TikTok") }
+            composable(Screen.Shorts.route) { ShortsScreen() }
             composable(Screen.YouTube.route) { PlaceholderScreen("📺 YouTube", "Здесь будут видео из твоих любимых каналов") }
             composable(Screen.Telegram.route) { PlaceholderScreen("✈️ Telegram", "Здесь будут посты из выбранных каналов") }
             composable(Screen.Settings.route) { PlaceholderScreen("⚙️ Ещё", "Здесь можно будет добавить свои источники") }
@@ -150,5 +152,129 @@ fun PlaceholderScreen(title: String, subtitle: String) {
         Text(text = title, fontSize = 28.sp, style = MaterialTheme.typography.headlineMedium)
         Spacer(modifier = Modifier.height(16.dp))
         Text(text = subtitle, fontSize = 16.sp, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+// --- ЭКРАН ШОРТС (TIKTOK-STYLE) ---
+@Composable
+fun ShortsScreen() {
+    val shortsList = remember { ShortsRepository.getShorts() }
+    
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black),
+        verticalArrangement = Arrangement.spacedBy(0.dp)
+    ) {
+        items(shortsList) { short ->
+            ShortItem(short)
+        }
+    }
+}
+
+// --- ОДИН ШОРТ (ПОЛНОЭКРАННЫЙ) ---
+@Composable
+fun ShortItem(short: ShortItem) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(700.dp) // Примерная высота экрана
+            .background(Color.Black)
+    ) {
+        // Фоновое изображение
+        AsyncImage(
+            model = short.imageUrl,
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+        
+        // Градиент снизу для читаемости текста
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(300.dp)
+                .align(Alignment.BottomCenter)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(Color.Transparent, Color.Black.copy(0.8f))
+                    )
+                )
+        )
+        
+        // Контент (заголовок и описание)
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(16.dp)
+                .padding(bottom = 40.dp)
+        ) {
+            Text(
+                text = short.source,
+                color = Color(0xFF00D4FF),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = short.title,
+                color = Color.White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 3
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = short.description,
+                color = Color.White.copy(0.9f),
+                fontSize = 14.sp,
+                maxLines = 2
+            )
+        }
+        
+        // Кнопки действий справа (лайк, комментарий, поделиться)
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 12.dp, bottom = 80.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            ActionButton(Icons.Filled.Favorite, "12K")
+            ActionButton(Icons.Filled.ChatBubble, "342")
+            ActionButton(Icons.Filled.Share, "89")
+        }
+    }
+}
+
+@Composable
+fun ActionButton(icon: ImageVector, count: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = Color.White,
+            modifier = Modifier.size(32.dp)
+        )
+        Text(text = count, color = Color.White, fontSize = 12.sp)
+    }
+}
+
+// --- МОДЕЛЬ И РЕПОЗИТОРИЙ ДЛЯ ШОРТС ---
+data class ShortItem(
+    val id: Int,
+    val title: String,
+    val description: String,
+    val imageUrl: String,
+    val source: String
+)
+
+object ShortsRepository {
+    fun getShorts(): List<ShortItem> {
+        return listOf(
+            ShortItem(1, "Запуск ракеты SpaceX", "Невероятные кадры старта Starship", "https://images.unsplash.com/photo-1517976487492-5750f3195933?w=800", "SpaceX"),
+            ShortItem(2, "Новый iPhone 16", "Первый взгляд на революционный дизайн", "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800", "Apple"),
+            ShortItem(3, "Марсианские пейзажи", "Фото с поверхности Красной планеты", "https://images.unsplash.com/photo-1614728853913-1e22ba0e982b?w=800", "NASA"),
+            ShortItem(4, "Крипто-бум 2024", "Биткоин пробил все рекорды", "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=800", "Crypto")
+        )
     }
 }
