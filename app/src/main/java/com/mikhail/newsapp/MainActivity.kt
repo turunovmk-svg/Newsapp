@@ -83,37 +83,48 @@ fun AppNavigation() {
     val context = LocalContext.current
     val viewModel: MainViewModel = remember { MainViewModel(context) }
     
-    val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/xml")) { uri ->
-        if (uri != null) {
-            try {
-                val opmlContent = viewModel.exportSourcesToOpml()
-                if (opmlContent.isNotBlank()) {
-                    context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                        outputStream.write(opmlContent.toByteArray(Charsets.UTF_8))
+    var exportFileUri by remember { mutableStateOf<Uri?>(null) }
+    var importFileUri by remember { mutableStateOf<Uri?>(null) }
+    
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.data?.let { uri ->
+                try {
+                    val opmlContent = viewModel.exportSourcesToOpml()
+                    if (opmlContent.isNotBlank()) {
+                        context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                            outputStream.write(opmlContent.toByteArray(Charsets.UTF_8))
+                        }
+                        Toast.makeText(context, "Источники экспортированы", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(context, "Нет источников для экспорта", Toast.LENGTH_SHORT).show()
                     }
-                    Toast.makeText(context, "Источники экспортированы", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(context, "Нет источников для экспорта", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Ошибка экспорта: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
-            } catch (e: Exception) {
-                Toast.makeText(context, "Ошибка экспорта: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
     
-    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) {
-            try {
-                val inputStream = context.contentResolver.openInputStream(uri) ?: return@rememberLauncherForActivityResult
-                val opmlContent = inputStream.bufferedReader().use { it.readText() }
-                val imported = viewModel.importSourcesFromOpml(opmlContent)
-                if (imported >= 0) {
-                    Toast.makeText(context, "Импортировано источников: $imported", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(context, "Ошибка импорта OPML", Toast.LENGTH_SHORT).show()
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.data?.let { uri ->
+                try {
+                    val inputStream = context.contentResolver.openInputStream(uri) ?: return@rememberLauncherForActivityResult
+                    val opmlContent = inputStream.bufferedReader().use { it.readText() }
+                    val imported = viewModel.importSourcesFromOpml(opmlContent)
+                    if (imported >= 0) {
+                        Toast.makeText(context, "Импортировано источников: $imported", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(context, "Ошибка импорта OPML", Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Ошибка чтения файла: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
-            } catch (e: Exception) {
-                Toast.makeText(context, "Ошибка чтения файла: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -132,8 +143,20 @@ fun AppNavigation() {
             }
             composable(Screen.Settings.route) { 
                 SettingsScreen(
-                    onExportSources = { exportLauncher.launch("") },
-                    onImportSources = { importLauncher.launch() },
+                    onExportSources = { 
+                    val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                        type = "application/xml"
+                        putExtra(Intent.EXTRA_TITLE, "news_app_sources.opml")
+                    }
+                    exportLauncher.launch(intent)
+                },
+                    onImportSources = { 
+                    val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                        type = "*/*"
+                        addCategory(Intent.CATEGORY_OPENABLE)
+                    }
+                    importLauncher.launch(intent)
+                },
                     onClearAllSources = { 
                         viewModel.clearAllSources()
                         Toast.makeText(context, "Источники удалены", Toast.LENGTH_SHORT).show()
