@@ -30,11 +30,11 @@ enum class SourceType(val displayName: String, val emoji: String) {
 
 object NetworkClient {
     private val gson = Gson()
+    private val imgRegex = Regex("""<img[^>]+src=["']([^"']+)["']""")
 
     private fun extractImageUrlFromHtml(html: String?): String? {
         if (html.isNullOrEmpty()) return null
-        return Regex("""<img[^>]+src=["']([^"']+)["']""")
-            .find(html)?.groupValues?.get(1)
+        return imgRegex.find(html)?.groupValues?.get(1)
             ?.trim()
             ?.takeIf { it.startsWith("http") }
     }
@@ -59,19 +59,19 @@ object NetworkClient {
                     val description = item["description"]?.toString() ?: ""
                     val content = item["content"]?.toString() ?: ""
 
-                    val enclosureLink = enclosure?.get("link")?.toString()
-                    val enclosureType = enclosure?.get("type")?.toString()
+                    val enclosureLink = enclosure?.get("link")?.toString() ?: ""
+                    val enclosureType = enclosure?.get("type")?.toString() ?: ""
 
                     val rawImageUrl = when {
-                        thumbnail?.isNotEmpty() == true && thumbnail.startsWith("http") -> thumbnail
-                        enclosureLink?.isNotEmpty() == true &&
+                        thumbnail.isNotEmpty() && thumbnail.startsWith("http") -> thumbnail
+                        enclosureLink.isNotEmpty() &&
                             enclosureLink.startsWith("http") &&
-                            (enclosureType?.isEmpty() == true || enclosureType.contains("image")) -> enclosureLink
+                            (enclosureType.isEmpty() || enclosureType.contains("image")) -> enclosureLink
                         else -> extractImageUrlFromHtml(description)
                             ?: extractImageUrlFromHtml(content)
                     }
 
-                    val imageUrl = if (rawImageUrl?.startsWith("http") == true) {
+                    val imageUrl = if (rawImageUrl != null && rawImageUrl.startsWith("http")) {
                         rawImageUrl.trim().replace(" ", "%20")
                     } else {
                         getFallbackImage(type)
