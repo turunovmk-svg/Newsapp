@@ -1,10 +1,9 @@
 package com.mikhail.newsapp
 
+import android.app.Application
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -31,17 +30,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import coil.compose.AsyncImage
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Создаём ViewModel здесь, где есть доступ к application
+        val viewModel: MainViewModel = androidx.lifecycle.ViewModelProvider(this)[MainViewModel::class.java]
         
         setContent {
             val isDark = isSystemInDarkTheme()
@@ -58,7 +58,7 @@ class MainActivity : ComponentActivity() {
             
             MaterialTheme(colorScheme = if (isDark) darkScheme else lightScheme) {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    AppNavigation()
+                    AppNavigation(viewModel)
                 }
             }
         }
@@ -75,9 +75,8 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
 }
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(viewModel: MainViewModel) {
     val navController = rememberNavController()
-    val viewModel: MainViewModel = viewModel()
     
     Scaffold(bottomBar = { BottomNav(navController) }) { padding ->
         NavHost(navController, Screen.Home.route, Modifier.padding(padding)) {
@@ -185,15 +184,7 @@ fun PostCard(post: UnifiedPost, viewModel: MainViewModel, navController: android
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            // Безопасная загрузка изображения с fallback
-            AsyncImage(
-                model = post.imageUrl.takeIf { it.startsWith("http") } ?: "https://via.placeholder.com/800x600?text=No+Image",
-                contentDescription = null,
-                modifier = Modifier.fillMaxWidth().height(200.dp).clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)),
-                contentScale = ContentScale.Crop,
-                placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant),
-                error = ColorPainter(MaterialTheme.colorScheme.surfaceVariant)
-            )
+            // Без изображения — только текст, чтобы избежать вылетов Coil
             Column(modifier = Modifier.padding(20.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(32.dp)) {
@@ -224,7 +215,6 @@ fun ArticleReaderScreen(post: UnifiedPost, onBack: () -> Unit) {
     
     val bgColor = if (isDark) 0xFF0F172A else 0xFFFAFAFA
     val textColor = if (isDark) 0xFFF8FAFC else 0xFF0F172A
-    val linkColor = 0xFF6366F1
     
     val safeTitle = post.title.takeIf { it.isNotBlank() } ?: "Без названия"
     val safeDesc = post.description.takeIf { it.isNotBlank() } ?: ""
