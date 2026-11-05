@@ -21,7 +21,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -138,12 +137,12 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
-    object HomeScreen : Screen("home", "Главная", Icons.Filled.Home)
-    object FavoritesScreen : Screen("favorites", "Избранное", Icons.Filled.Favorite)
-    object ShortsScreen : Screen("shorts", "Шортс", Icons.Filled.PlayCircle)
-    object AddSourceScreen : Screen("add_source", "Добавить", Icons.Filled.Add)
-    object SettingsScreen : Screen("settings", "Настройки", Icons.Filled.Settings)
+sealed class Screen(val route: String, val title: String, val emoji: String) {
+    object HomeScreen : Screen("home", "Главная", "🏠")
+    object FavoritesScreen : Screen("favorites", "Избранное", "❤️")
+    object ShortsScreen : Screen("shorts", "Шортс", "▶️")
+    object AddSourceScreen : Screen("add_source", "Добавить", "➕")
+    object SettingsScreen : Screen("settings", "Настройки", "⚙️")
 
     companion object {
         val allScreens = listOf(HomeScreen, FavoritesScreen, ShortsScreen, AddSourceScreen, SettingsScreen)
@@ -203,11 +202,7 @@ fun BottomNavigationBar(navController: androidx.navigation.NavController) {
         Screen.allScreens.forEach { screen ->
             NavigationBarItem(
                 icon = {
-                    Icon(
-                        screen.icon,
-                        contentDescription = screen.title,
-                        modifier = Modifier.size(26.dp)
-                    )
+                    Text(screen.emoji, fontSize = 26.dp)
                 },
                 label = {
                     Text(
@@ -284,11 +279,10 @@ fun HomeScreen(viewModel: MainViewModel) {
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primary)
                 ) {
-                    Icon(
-                        Icons.Filled.Refresh,
-                        contentDescription = "Обновить",
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
+                    Text(
+                        "🔄",
+                        fontSize = 24.dp,
+                        color = Color.White
                     )
                 }
             }
@@ -345,12 +339,7 @@ fun FavoritesScreen(viewModel: MainViewModel) {
                     modifier = Modifier.size(120.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            Icons.Filled.FavoriteBorder,
-                            contentDescription = null,
-                            modifier = Modifier.size(60.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                        Text("❤️", fontSize = 60.dp)
                     }
                 }
                 Spacer(modifier = Modifier.height(32.dp))
@@ -506,7 +495,7 @@ fun AddSourceScreen(viewModel: MainViewModel) {
                         IconButton(onClick = {
                             addedSources = addedSources.filter { it != source }
                         }) {
-                            Icon(Icons.Filled.Delete, contentDescription = "Удалить")
+                            Text("🗑️", fontSize = 20.dp)
                         }
                     }
                 }
@@ -617,17 +606,9 @@ fun UnifiedPostCard(post: UnifiedPost) {
                                     MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                             )
                     ) {
-                        Icon(
-                            imageVector = if (FavoritesRepository.isFavorite(post.id))
-                                Icons.Filled.Favorite
-                            else
-                                Icons.Filled.FavoriteBorder,
-                            contentDescription = "В избранное",
-                            tint = if (FavoritesRepository.isFavorite(post.id))
-                                Color(0xFFFF4757)
-                            else
-                                MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(22.dp)
+                        Text(
+                            text = if (FavoritesRepository.isFavorite(post.id)) "❤️" else "𤤶",
+                            fontSize = 22.dp
                         )
                     }
                 }
@@ -650,12 +631,7 @@ fun ShortsScreen() {
                     modifier = Modifier.size(100.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            Icons.Filled.PlayCircle,
-                            contentDescription = null,
-                            modifier = Modifier.size(56.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                        Text("▶️", fontSize = 56.dp)
                     }
                 }
                 Spacer(modifier = Modifier.height(24.dp))
@@ -733,22 +709,17 @@ fun ShortItem(short: ShortItem) {
             verticalArrangement = Arrangement.spacedBy(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            ActionButton(Icons.Filled.Favorite, "12K")
-            ActionButton(Icons.Filled.ChatBubble, "342")
-            ActionButton(Icons.Filled.Share, "89")
+            ActionButton("❤️", "12K")
+            ActionButton("💬", "342")
+            ActionButton("📤", "89")
         }
     }
 }
 
 @Composable
-fun ActionButton(icon: ImageVector, count: String) {
+fun ActionButton(emoji: String, count: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = Color.White,
-            modifier = Modifier.size(32.dp)
-        )
+        Text(emoji, fontSize = 32.dp)
         Text(text = count, color = Color.White, fontSize = 12.sp)
     }
 }
@@ -779,7 +750,7 @@ fun SettingsScreen() {
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(onClick = { showAddDialog = true }) {
-            Icon(Icons.Filled.Add, contentDescription = null)
+            Text("➕", fontSize = 24.dp)
             Spacer(modifier = Modifier.width(8.dp))
             Text("Добавить RSS")
         }
