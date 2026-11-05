@@ -140,14 +140,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val isRefreshing: StateFlow<Boolean> = _isRefreshing
     
     init { 
-        loadPosts() 
+        try {
+            loadPosts() 
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "Init error: ${e.message}", e)
+            _posts.value = emptyList()
+        }
     }
     
     fun getSources(): List<SourceItem> {
         return try {
             val json = prefs.getString("sources", "[]") ?: "[]"
             val type = object : TypeToken<List<SourceItem>>() {}.type
-            gson.fromJson(json, type) ?: emptyList()
+            val result = gson.fromJson(json, type)
+            if (result == null) emptyList() else result
         } catch (e: Exception) {
             Log.e("MainViewModel", "Read sources error: ${e.message}")
             emptyList()
@@ -175,9 +181,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             try {
                 _isRefreshing.value = true
-                val sources = getSources()
+                val sources = try { getSources() } catch (e: Exception) {
+                    Log.e("MainViewModel", "Get sources error: ${e.message}")
+                    emptyList()
+                }
                 _posts.value = if (sources.isEmpty()) emptyList() else {
-                    sources.map { NetworkClient.fetchRssAsJson(it.url, it.type) }.flatten().shuffled()
+                    sources.map { source ->
+                        try {
+                            NetworkClient.fetchRssAsJson(source.url, source.type)
+                        } catch (e: Exception) {
+                            Log.e("MainViewModel", "Fetch error for ${source.url}: ${e.message}")
+                            emptyList()
+                        }
+                    }.flatten().shuffled()
                 }
             } catch (e: Exception) {
                 Log.e("MainViewModel", "Load posts error: ${e.message}")
