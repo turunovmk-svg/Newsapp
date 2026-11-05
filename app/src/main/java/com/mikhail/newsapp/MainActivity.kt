@@ -61,6 +61,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     object Telegram : Screen("telegram", "Telegram", Icons.Filled.Send)
     object Search : Screen("search", "Поиск", Icons.Filled.Search)
     object Favorites : Screen("favorites", "Избранное", Icons.Filled.Bookmark)
+    object VideoPlayer : Screen("video", "Видео", Icons.Filled.PlayArrow)
     object Settings : Screen("settings", "Ещё", Icons.Filled.Settings)
     
     companion object {
@@ -90,6 +91,10 @@ fun AppNavigation() {
             composable(Screen.Favorites.route) {
                 val viewModel: MainViewModel = viewModel()
                 FavoritesScreen(viewModel)
+            }
+            composable("video/{url}") { backStackEntry ->
+                val url = backStackEntry.arguments?.getString("url") ?: ""
+                VideoPlayerScreen(videoUrl = url, onBack = { navController.popBackStack() })
             }
             composable(Screen.Settings.route) { SettingsScreen() }
         }
@@ -245,13 +250,42 @@ fun FavoritesScreen(viewModel: MainViewModel) {
 }
 
 @Composable
-fun UnifiedPostCard(post: UnifiedPost) {
+fun VideoPlayerScreen(videoUrl: String, onBack: () -> Unit) {
+    val context = LocalContext.current
+
+    Column(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+        Box(modifier = Modifier.fillMaxWidth().aspectRatio(16f / 9f)) {
+            AndroidView(
+                factory = { ctx ->
+                    VideoView(ctx).apply {
+                        setVideoURI(Uri.parse(videoUrl))
+                        setMediaController(MediaController(ctx))
+                        start()
+                    }
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        IconButton(onClick = onBack, modifier = Modifier.padding(16.dp)) {
+            Icon(Icons.Filled.ArrowBack, contentDescription = "Назад", tint = Color.White)
+        }
+    }
+}
+
+@Composable
+fun UnifiedPostCard(post: UnifiedPost, navController: androidx.navigation.NavController? = null) {
     val context = LocalContext.current
     
     Card(
         modifier = Modifier.fillMaxWidth().clickable {
             if (post.videoUrl != null) {
-                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(post.videoUrl)))
+                navController?.navigate(
+                    "video/${java.net.URLEncoder.encode(post.videoUrl, "UTF-8")}"
+                )
+            } else {
+                context.startActivity(
+                    Intent(Intent.ACTION_VIEW, Uri.parse(post.link))
+                )
             }
         },
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
