@@ -19,19 +19,12 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.filled.Home as IcHome
-import androidx.compose.material.icons.filled.Favorite as IcFavorite
-import androidx.compose.material.icons.filled.FavoriteBorder as IcFavoriteBorder
-import androidx.compose.material.icons.filled.Add as IcAdd
-import androidx.compose.material.icons.filled.Delete as IcDelete
-import androidx.compose.material.icons.filled.Refresh as IcRefresh
-import androidx.compose.material.icons.filled.Search as IcSearch
-import androidx.compose.material.icons.filled.Settings as IcSettings
-import androidx.compose.material.icons.filled.PlayCircle as IcPlayCircle
-import androidx.compose.material.icons.filled.ChatBubble as IcChatBubble
-import androidx.compose.material.icons.filled.Share as IcShare
+import androidx.compose.foundation.text.input.ImeAction
+import androidx.compose.material.icons.Icons
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -149,11 +142,11 @@ class MainActivity : ComponentActivity() {
 }
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
-    object HomeScreen : Screen("home", "Главная", IcHome)
-    object FavoritesScreen : Screen("favorites", "Избранное", IcFavorite)
-    object ShortsScreen : Screen("shorts", "Шортс", IcPlayCircle)
-    object AddSourceScreen : Screen("add_source", "Добавить", IcAdd)
-    object SettingsScreen : Screen("settings", "Настройки", IcSettings)
+    object HomeScreen : Screen("home", "Главная", Icons.Filled.Home)
+    object FavoritesScreen : Screen("favorites", "Избранное", Icons.Filled.Favorite)
+    object ShortsScreen : Screen("shorts", "Шортс", Icons.Filled.PlayCircle)
+    object AddSourceScreen : Screen("add_source", "Добавить", Icons.Filled.Add)
+    object SettingsScreen : Screen("settings", "Настройки", Icons.Filled.Settings)
 
     companion object {
         val allScreens = listOf(HomeScreen, FavoritesScreen, ShortsScreen, AddSourceScreen, SettingsScreen)
@@ -295,7 +288,7 @@ fun HomeScreen(viewModel: MainViewModel) {
                         .background(MaterialTheme.colorScheme.primary)
                 ) {
                     Icon(
-                        IcRefresh,
+                        Icons.Filled.Refresh,
                         contentDescription = "Обновить",
                         tint = Color.White,
                         modifier = Modifier.size(24.dp)
@@ -356,7 +349,7 @@ fun FavoritesScreen(viewModel: MainViewModel) {
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            IcFavoriteBorder,
+                            Icons.Filled.FavoriteBorder,
                             contentDescription = null,
                             modifier = Modifier.size(60.dp),
                             tint = MaterialTheme.colorScheme.primary
@@ -516,7 +509,7 @@ fun AddSourceScreen(viewModel: MainViewModel) {
                         IconButton(onClick = {
                             addedSources = addedSources.filter { it != source }
                         }) {
-                            Icon(IcDelete, contentDescription = "Удалить")
+                            Icon(Icons.Filled.Delete, contentDescription = "Удалить")
                         }
                     }
                 }
@@ -629,9 +622,9 @@ fun UnifiedPostCard(post: UnifiedPost) {
                     ) {
                         Icon(
                             imageVector = if (FavoritesRepository.isFavorite(post.id))
-                                IcFavorite
+                                Icons.Filled.Favorite
                             else
-                                IcFavoriteBorder,
+                                Icons.Filled.FavoriteBorder,
                             contentDescription = "В избранное",
                             tint = if (FavoritesRepository.isFavorite(post.id))
                                 Color(0xFFFF4757)
@@ -661,7 +654,7 @@ fun ShortsScreen() {
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            IcPlayCircle,
+                            Icons.Filled.PlayCircle,
                             contentDescription = null,
                             modifier = Modifier.size(56.dp),
                             tint = MaterialTheme.colorScheme.primary
@@ -743,9 +736,9 @@ fun ShortItem(short: ShortItem) {
             verticalArrangement = Arrangement.spacedBy(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            ActionButton(IcFavorite, "12K")
-            ActionButton(IcChatBubble, "342")
-            ActionButton(IcShare, "89")
+            ActionButton(Icons.Filled.Favorite, "12K")
+            ActionButton(Icons.Filled.ChatBubble, "342")
+            ActionButton(Icons.Filled.Share, "89")
         }
     }
 }
@@ -789,7 +782,7 @@ fun SettingsScreen() {
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(onClick = { showAddDialog = true }) {
-            Icon(IcAdd, contentDescription = null)
+            Icon(Icons.Filled.Add, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
             Text("Добавить RSS")
         }
