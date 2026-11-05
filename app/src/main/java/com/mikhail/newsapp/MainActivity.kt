@@ -24,17 +24,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.PlayCircle
-import androidx.compose.material.icons.filled.ChatBubble
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -438,12 +427,7 @@ fun ArticleReaderScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     val textColor = if (isDark) "#F8FAFC" else "#0F172A"
     val linkColor = "#6366F1"
 
-    if (article == null) {
-        onBack()
-        return
-    }
-
-    val post = article
+    val post = article ?: return
 
     val htmlContent = """
         <html>
@@ -725,6 +709,6 @@ fun SettingsScreen() {
 data class ShortItem(val id: Int, val title: String, val description: String, val imageUrl: String, val source: String)
 object ShortsRepository {
     fun getShorts(): List<ShortItem> {
-        return emptyList()
+        return emptyList() // Убираем тестовые данные
     }
 }
