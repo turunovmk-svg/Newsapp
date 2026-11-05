@@ -31,7 +31,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.foundation.text.input.ImeAction
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
@@ -53,7 +53,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
-import androidx.compose.material3.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,7 +65,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -194,7 +192,7 @@ fun BottomNavigationBar(navController: androidx.navigation.NavController) {
     }
 }
 
-// --- ЛЕНТА С PULL-TO-REFRESH ---
+// --- ЛЕНТА ---
 @Composable
 fun FeedScreen() {
     val viewModel: MainViewModel = viewModel()
@@ -213,18 +211,12 @@ fun FeedScreen() {
             }
         }
 
-        PullToRefreshBox(
-            isRefreshing = isRefreshing,
-            onRefresh = { viewModel.loadPosts() },
-            modifier = Modifier.fillMaxSize()
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(posts, key = { it.id }) { post ->
-                    UnifiedPostCard(post, navController = null)
-                }
+            items(posts, key = { it.id }) { post ->
+                UnifiedPostCard(post, navController = null)
             }
         }
     }
@@ -248,7 +240,7 @@ fun SearchScreen(viewModel: MainViewModel) {
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        OutlinedTextField(
+        androidx.compose.material3.OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
             modifier = Modifier
