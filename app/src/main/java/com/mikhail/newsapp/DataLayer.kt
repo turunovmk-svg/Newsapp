@@ -89,7 +89,7 @@ object UnifiedRepository {
         val ytPosts = NetworkClient.fetchRssAsJson("https://www.youtube.com/feeds/videos.xml?channel_id=UC_x5XG1OV2P6uZZ5FSM9Ttw", SourceType.YOUTUBE)
         val tgPosts = NetworkClient.fetchRssAsJson("https://rsshub.app/telegram/channel/telegram", SourceType.TELEGRAM)
         
-        if (rssPosts.isEmpty() && ytPosts.isEmpty() && tgPosts.isEmpty()) return emptyList() // Нет тестовых данных!
+        if (rssPosts.isEmpty() && ytPosts.isEmpty() && tgPosts.isEmpty()) return emptyList()
         return (rssPosts + ytPosts + tgPosts).shuffled()
     }
 }
@@ -108,6 +108,18 @@ class MainViewModel : ViewModel() {
     val posts: StateFlow<List<UnifiedPost>> = _posts
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing
+    
+    private val _selectedArticle = MutableStateFlow<UnifiedPost?>(null)
+    val selectedArticle: StateFlow<UnifiedPost?> = _selectedArticle
+    
+    fun openArticle(post: UnifiedPost) {
+        _selectedArticle.value = post
+    }
+    
+    fun closeArticle() {
+        _selectedArticle.value = null
+    }
+    
     init { loadPosts() }
     fun loadPosts() {
         viewModelScope.launch {
