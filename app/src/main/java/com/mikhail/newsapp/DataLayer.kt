@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.URL
+import java.util.regex.Regex
 
 data class UnifiedPost(
     val id: String,
@@ -51,31 +52,31 @@ object NetworkClient {
     }
     
     private fun getYouTubeThumbnail(videoLink: String?): String {
-        if (videoLink.isNullOrEmpty()) return getFallbackImage(SourceType.YOUTUBE)
+        val link = videoLink ?: return getFallbackImage(SourceType.YOUTUBE)
         
         // Извлекаем video ID из различных форматов YouTube ссылок
         // https://www.youtube.com/watch?v=VIDEO_ID
         // https://youtu.be/VIDEO_ID
         // https://www.youtube.com/v/VIDEO_ID?version=3
-        var videoId = videoLink
-            .substringAfter("v=")
-            .takeIf { it != videoLink }
-            ?.substringBefore("&")
-            ?.substringBefore("/")
-            ?.take(11)
+        var videoId: String? = null
         
-        if (videoId.isNullOrEmpty()) {
-            // Пробуем формат youtu.be/VIDEO_ID
-            videoId = videoLink
-                .substringAfterLast("/")
-                .substringBefore("?")
-                .takeIf { it.length == 11 }
+        val vParam = link.substringAfter("v=")
+        if (vParam != link) {
+            videoId = vParam.substringBefore("&").substringBefore("/").take(11)
         }
         
-        return if (videoId.isNotEmpty()) {
-            "https://img.youtube.com/vi/$videoId/maxresdefault.jpg"
-        } else {
+        if (videoId.isNullOrEmpty() || videoId.isEmpty()) {
+            // Пробуем формат youtu.be/VIDEO_ID
+            val lastSegment = link.substringAfterLast("/").substringBefore("?")
+            if (lastSegment.length == 11) {
+                videoId = lastSegment
+            }
+        }
+        
+        return if (videoId.isNullOrEmpty() || videoId.isEmpty()) {
             getFallbackImage(SourceType.YOUTUBE)
+        } else {
+            "https://img.youtube.com/vi/$videoId/maxresdefault.jpg"
         }
     }
     
@@ -98,10 +99,10 @@ object NetworkClient {
                         val description = item["description"]?.toString() ?: ""
                         
                         val enclosure = item["enclosure"] as? Map<*, *>
-                        val thumbnail = item["thumbnail"]?.toString()
+                        val thumbnail = item["thumbnail"]?.toString() ?: ""
                         
-                        val enclosureLink = enclosure?.get("link")?.toString()
-                        val enclosureType = enclosure?.get("type")?.toString()
+                        val enclosureLink = enclosure?.get("link")?.toString() ?: ""
+                        val enclosureType = enclosure?.get("type")?.toString() ?: ""
                         
                         Log.d("RSS_DEBUG", "=== Item: $title ===")
                         Log.d("RSS_DEBUG", "Thumbnail: $thumbnail")
@@ -125,7 +126,7 @@ object NetworkClient {
                         }
                         
                         val imageUrl = when {
-                            type == SourceType.YOUTUBE && rawImageUrl == null -> getYouTubeThumbnail(link)
+                            type == SourceType.YOUTUBE && rawImageUrl.isNullOrEmpty() -> getYouTubeThumbnail(link)
                             rawImageUrl != null && rawImageUrl.startsWith("http") -> rawImageUrl.trim().replace(" ", "%20")
                             else -> getFallbackImage(type)
                         }
