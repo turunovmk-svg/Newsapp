@@ -381,19 +381,19 @@ fun SettingsScreen() {
         modifier = Modifier.fillMaxSize().padding(16.dp)
     ) {
         Text("⚙️ Настройки", fontSize = 28.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = androidx.compose.foundation.layout.height(32.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         Text("Версия 1.0", fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(modifier = androidx.compose.foundation.layout.height(8.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
             "Создано с ❤️ Михаилом",
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        Spacer(modifier = androidx.compose.foundation.layout.height(32.dp))
+        Spacer(modifier = Modifier.height(32.dp))
         Text("Мои источники", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = androidx.compose.foundation.layout.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         Button(onClick = { showAddDialog = true }) {
             Icon(Icons.Filled.Add, contentDescription = null)
@@ -401,7 +401,7 @@ fun SettingsScreen() {
             Text("Добавить RSS")
         }
 
-        Spacer(modifier = androidx.compose.foundation.layout.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         if (customSources.isEmpty()) {
             Text(
