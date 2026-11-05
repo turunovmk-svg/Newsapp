@@ -152,7 +152,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         return try {
             val json = prefs.getString("sources", "[]") ?: "[]"
             val type = object : TypeToken<List<SourceItem>>() {}.type
-            val result = gson.fromJson(json, type)
+            val result = gson.fromJson(json, type) as? List<SourceItem>
             if (result == null) emptyList() else result
         } catch (e: Exception) {
             Log.e("MainViewModel", "Read sources error: ${e.message}")
