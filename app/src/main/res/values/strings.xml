@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NewsApp</string>
+    <string name="nav_home">Главная</string>
+    <string name="nav_favorites">Избранное</string>
+    <string name="nav_shorts">Шортс</string>
+    <string name="nav_add">Добавить</string>
+    <string name="nav_settings">Настройки</string>
+    <string name="main_events">Главные события</string>
+    <string name="fresh_news">Свежие новости из ваших источников</string>
+    <string name="loading_news">Загрузка новостей...</string>
+    <string name="no_favorites">Нет избранных постов</string>
+    <string name="tap_heart">Нажмите на сердечко чтобы добавить</string>
+    <string name="shorts_placeholder">Шорты скоро появятся</string>
+    <string name="add_source_placeholder">Источники скоро появятся</string>
+    <string name="settings_placeholder">Настройки скоро появятся</string>
+    <string name="favorite">Избранное</string>
+</resources>

@@ -32,14 +32,11 @@ object NetworkClient {
     
     private fun extractImageUrlFromHtml(html: String?): String? {
         if (html.isNullOrEmpty()) return null
-        
         return try {
-            val regex = Regex("""<img[^>]+src=["']([^"']+)["']""")
-            regex.find(html)?.groupValues?.get(1)?.trim()
-        } catch (e: Exception) {
-            Log.e("RSS_DEBUG", "Error extracting image: ${e.message}")
-            null
-        }
+            Regex("""<img[^>]+src=["']([^"']+)["']""")
+                .find(html)?.groupValues?.get(1)?.trim()
+                ?.takeIf { it.startsWith("http") }
+        } catch (e: Exception) { null }
     }
     
     private fun getFallbackImage(type: SourceType): String {
@@ -50,87 +47,25 @@ object NetworkClient {
         }
     }
     
-    private fun getYouTubeThumbnail(videoLink: String?): String {
-        val link = videoLink ?: return getFallbackImage(SourceType.YOUTUBE)
-        
-        // Извлекаем video ID из различных форматов YouTube ссылок
-        // https://www.youtube.com/watch?v=VIDEO_ID
-        // https://youtu.be/VIDEO_ID
-        // https://www.youtube.com/v/VIDEO_ID?version=3
-        var videoId: String? = null
-        
-        val vParam = link.substringAfter("v=")
-        if (vParam != link) {
-            videoId = vParam.substringBefore("&").substringBefore("/").take(11)
-        }
-        
-        if (videoId.isNullOrEmpty() || videoId.isEmpty()) {
-            // Пробуем формат youtu.be/VIDEO_ID
-            val lastSegment = link.substringAfterLast("/").substringBefore("?")
-            if (lastSegment.length == 11) {
-                videoId = lastSegment
-            }
-        }
-        
-        return if (videoId.isNullOrEmpty() || videoId.isEmpty()) {
-            getFallbackImage(SourceType.YOUTUBE)
-        } else {
-            "https://img.youtube.com/vi/$videoId/maxresdefault.jpg"
-        }
-    }
-    
     suspend fun fetchRssAsJson(rssUrl: String, type: SourceType): List<UnifiedPost> {
         return withContext(Dispatchers.IO) {
             try {
                 val apiUrl = "https://api.rss2json.com/v1/api.json?rss_url=${java.net.URLEncoder.encode(rssUrl, "UTF-8")}"
-                Log.d("RSS_DEBUG", "Fetching: $apiUrl")
-                
                 val json = URL(apiUrl).readText()
                 val root = gson.fromJson(json, Map::class.java)
                 val items = root["items"] as? List<Map<String, Any>> ?: emptyList()
-                
-                Log.d("RSS_DEBUG", "Found ${items.size} items for $type")
                 
                 items.take(8).mapNotNull { item ->
                     try {
                         val title = item["title"]?.toString() ?: return@mapNotNull null
                         val link = item["link"]?.toString() ?: return@mapNotNull null
                         val description = item["description"]?.toString() ?: ""
-                        
                         val enclosure = item["enclosure"] as? Map<*, *>
-                        val thumbnail = item["thumbnail"]?.toString() ?: ""
-                        
-                        val enclosureLink = enclosure?.get("link")?.toString() ?: ""
-                        val enclosureType = enclosure?.get("type")?.toString() ?: ""
-                        
-                        Log.d("RSS_DEBUG", "=== Item: $title ===")
-                        Log.d("RSS_DEBUG", "Thumbnail: $thumbnail")
-                        Log.d("RSS_DEBUG", "Enclosure link: $enclosureLink | type: $enclosureType")
-                        Log.d("RSS_DEBUG", "Link: $link")
-                        
-                        // Приоритет для YouTube: thumbnail → enclosure → HTML → getYouTubeThumbnail → fallback
-                        // Приоритет для остальных: enclosure → thumbnail → HTML → fallback
-                        val rawImageUrl = when (type) {
-                            SourceType.YOUTUBE -> {
-                                thumbnail.takeIf { it.isNotEmpty() && it.startsWith("http") }
-                                    ?: enclosureLink.takeIf { it.isNotEmpty() && it.startsWith("http") && (enclosureType.isEmpty() || enclosureType.contains("image")) }
-                                    ?: extractImageUrlFromHtml(description)
-                                    ?: link.takeIf { it.startsWith("http") }
-                            }
-                            else -> {
-                                enclosureLink.takeIf { it.isNotEmpty() && it.startsWith("http") && (enclosureType.isEmpty() || enclosureType.contains("image")) }
-                                    ?: thumbnail.takeIf { it.isNotEmpty() && it.startsWith("http") }
-                                    ?: extractImageUrlFromHtml(description)
-                            }
-                        }
-                        
-                        val imageUrl = when {
-                            type == SourceType.YOUTUBE && rawImageUrl.isNullOrEmpty() -> getYouTubeThumbnail(link)
-                            rawImageUrl != null && rawImageUrl.startsWith("http") -> rawImageUrl.trim().replace(" ", "%20")
-                            else -> getFallbackImage(type)
-                        }
-                        
-                        Log.d("RSS_DEBUG", "Final Image URL: $imageUrl")
+                        val thumbnail = item["thumbnail"]?.toString()
+                        val rawImageUrl = enclosure?.get("link")?.toString() ?: thumbnail ?: extractImageUrlFromHtml(description)
+                        val imageUrl = if (!rawImageUrl.isNullOrEmpty() && rawImageUrl.startsWith("http")) {
+                            rawImageUrl.trim().replace(" ", "%20")
+                        } else { getFallbackImage(type) }
                         
                         UnifiedPost(
                             id = item["guid"]?.toString() ?: link,
@@ -141,67 +76,39 @@ object NetworkClient {
                             link = link,
                             videoUrl = if (type == SourceType.YOUTUBE) link else null
                         )
-                    } catch (e: Exception) {
-                        Log.e("RSS_DEBUG", "Error parsing item: ${e.message}")
-                        null
-                    }
+                    } catch (e: Exception) { null }
                 }
-            } catch (e: Exception) {
-                Log.e("RSS_DEBUG", "Error fetching RSS: ${e.message}")
-                emptyList()
-            }
+            } catch (e: Exception) { emptyList() }
         }
     }
 }
 
 object UnifiedRepository {
     suspend fun getAllPosts(): List<UnifiedPost> {
-        val rssUrl = "https://lenta.ru/rss/news"
-        val youtubeUrl = "https://www.youtube.com/feeds/videos.xml?channel_id=UC_x5XG1OV2P6uZZ5FSM9Ttw"
+        val rssPosts = NetworkClient.fetchRssAsJson("https://lenta.ru/rss/news", SourceType.RSS)
+        val ytPosts = NetworkClient.fetchRssAsJson("https://www.youtube.com/feeds/videos.xml?channel_id=UC_x5XG1OV2P6uZZ5FSM9Ttw", SourceType.YOUTUBE)
+        val tgPosts = NetworkClient.fetchRssAsJson("https://rsshub.app/telegram/channel/telegram", SourceType.TELEGRAM)
         
-        val telegramChannels = listOf(
-            "https://rsshub.app/telegram/channel/durov",
-            "https://rsshub.app/telegram/channel/telegramru",
-            "https://rsshub.app/telegram/channel/mash"
-        )
-        
-        Log.d("RSS_DEBUG", "Starting to fetch all posts...")
-        
-        val rssPosts = NetworkClient.fetchRssAsJson(rssUrl, SourceType.RSS)
-        val ytPosts = NetworkClient.fetchRssAsJson(youtubeUrl, SourceType.YOUTUBE)
-        
-        var tgPosts = emptyList<UnifiedPost>()
-        for (channel in telegramChannels) {
-            tgPosts = NetworkClient.fetchRssAsJson(channel, SourceType.TELEGRAM)
-            if (tgPosts.isNotEmpty()) break
-        }
-        
-        Log.d("RSS_DEBUG", "RSS: ${rssPosts.size}, YouTube: ${ytPosts.size}, Telegram: ${tgPosts.size}")
-        
-        if (rssPosts.isEmpty() && ytPosts.isEmpty() && tgPosts.isEmpty()) {
-            Log.d("RSS_DEBUG", "All sources empty, using fallback")
-            return getFallbackData()
-        }
-        
+        if (rssPosts.isEmpty() && ytPosts.isEmpty() && tgPosts.isEmpty()) return emptyList() // Нет тестовых данных!
         return (rssPosts + ytPosts + tgPosts).shuffled()
     }
-    
-    private fun getFallbackData(): List<UnifiedPost> {
-        return emptyList()
+}
+
+object FavoritesRepository {
+    private val _favorites = MutableStateFlow<Set<String>>(emptySet())
+    val favorites: StateFlow<Set<String>> = _favorites
+    fun toggleFavorite(postId: String) {
+        _favorites.value = if (_favorites.value.contains(postId)) _favorites.value - postId else _favorites.value + postId
     }
+    fun isFavorite(postId: String): Boolean = _favorites.value.contains(postId)
 }
 
 class MainViewModel : ViewModel() {
     private val _posts = MutableStateFlow<List<UnifiedPost>>(emptyList())
     val posts: StateFlow<List<UnifiedPost>> = _posts
-    
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing
-    
-    init {
-        loadPosts()
-    }
-    
+    init { loadPosts() }
     fun loadPosts() {
         viewModelScope.launch {
             _isRefreshing.value = true
