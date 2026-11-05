@@ -10,6 +10,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,6 +28,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -54,6 +57,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     object Shorts : Screen("shorts", "Шортс", Icons.Filled.PlayCircle)
     object YouTube : Screen("youtube", "YouTube", Icons.Filled.PlayArrow)
     object Telegram : Screen("telegram", "Telegram", Icons.Filled.Send)
+    object Search : Screen("search", "Поиск", Icons.Filled.Search)
     object Settings : Screen("settings", "Ещё", Icons.Filled.Settings)
     
     companion object {
@@ -76,6 +80,10 @@ fun AppNavigation() {
             composable(Screen.Shorts.route) { ShortsScreen() }
             composable(Screen.YouTube.route) { YouTubeScreen() }
             composable(Screen.Telegram.route) { TelegramScreen() }
+            composable(Screen.Search.route) {
+                val viewModel: MainViewModel = viewModel()
+                SearchScreen(viewModel)
+            }
             composable(Screen.Settings.route) { SettingsScreen() }
         }
     }
@@ -123,6 +131,55 @@ fun FeedScreen() {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             items(posts, key = { it.id }) { post ->
+                UnifiedPostCard(post)
+            }
+        }
+    }
+}
+
+// --- ПОИСК ---
+@Composable
+fun SearchScreen(viewModel: MainViewModel) {
+    val posts by viewModel.posts.collectAsState()
+    var searchQuery by remember { mutableStateOf("") }
+
+    val filteredPosts = remember(posts, searchQuery) {
+        if (searchQuery.isBlank()) {
+            posts
+        } else {
+            posts.filter {
+                it.title.contains(searchQuery, ignoreCase = true) ||
+                    it.description.contains(searchQuery, ignoreCase = true)
+            }
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        androidx.compose.material3.OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            placeholder = { Text("Поиск новостей...") },
+            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { searchQuery = "" }) {
+                        Icon(Icons.Filled.Clear, contentDescription = "Очистить")
+                    }
+                }
+            },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(onSearch = { })
+        )
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(filteredPosts, key = { it.id }) { post ->
                 UnifiedPostCard(post)
             }
         }
