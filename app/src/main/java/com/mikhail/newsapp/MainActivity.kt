@@ -13,6 +13,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -22,9 +23,18 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.ChatBubble
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -33,12 +43,14 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.PullToRefreshBox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -49,11 +61,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -82,9 +97,48 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
+            // Кастомная премиум цветовая палитра
+            val customLightColorScheme = lightColorScheme(
+                primary = Color(0xFF6366F1),
+                onPrimary = Color.White,
+                primaryContainer = Color(0xFFE0E7FF),
+                onPrimaryContainer = Color(0xFF312E81),
+                secondary = Color(0xFFEC4899),
+                onSecondary = Color.White,
+                secondaryContainer = Color(0xFFFCE7F3),
+                onSecondaryContainer = Color(0xFF831843),
+                background = Color(0xFFFAFAFA),
+                onBackground = Color(0xFF0F172A),
+                surface = Color.White,
+                onSurface = Color(0xFF0F172A),
+                surfaceVariant = Color(0xFFF1F5F9),
+                onSurfaceVariant = Color(0xFF64748B),
+                outline = Color(0xFFE2E8F0),
+                outlineVariant = Color(0xFFF1F5F9)
+            )
+
+            val customDarkColorScheme = darkColorScheme(
+                primary = Color(0xFF818CF8),
+                onPrimary = Color(0xFF1E1B4B),
+                primaryContainer = Color(0xFF312E81),
+                onPrimaryContainer = Color(0xFFE0E7FF),
+                secondary = Color(0xFFF472B6),
+                onSecondary = Color(0xFF500724),
+                secondaryContainer = Color(0xFF831843),
+                onSecondaryContainer = Color(0xFFFCE7F3),
+                background = Color(0xFF0F172A),
+                onBackground = Color(0xFFF8FAFC),
+                surface = Color(0xFF1E293B),
+                onSurface = Color(0xFFF8FAFC),
+                surfaceVariant = Color(0xFF334155),
+                onSurfaceVariant = Color(0xFF94A3B8),
+                outline = Color(0xFF475569),
+                outlineVariant = Color(0xFF334155)
+            )
+
             val isSystemInDarkTheme = androidx.compose.foundation.isSystemInDarkTheme()
             MaterialTheme(
-                colorScheme = if (isSystemInDarkTheme) darkColorScheme() else lightColorScheme()
+                colorScheme = if (isSystemInDarkTheme) customDarkColorScheme else customLightColorScheme
             ) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -98,11 +152,11 @@ class MainActivity : ComponentActivity() {
 }
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
-    object Home : Screen("home", "Главная", Icons.Filled.Home)
-    object Favorites : Screen("favorites", "Избранное", Icons.Filled.Favorite)
-    object Shorts : Screen("shorts", "Шортс", Icons.Filled.PlayCircle)
-    object AddSource : Screen("add_source", "Добавить", Icons.Filled.Add)
-    object Settings : Screen("settings", "Настройки", Icons.Filled.Settings)
+    object Home : Screen("home", "Главная", Home)
+    object Favorites : Screen("favorites", "Избранное", Favorite)
+    object Shorts : Screen("shorts", "Шортс", PlayCircle)
+    object AddSource : Screen("add_source", "Добавить", Add)
+    object Settings : Screen("settings", "Настройки", Settings)
 
     companion object {
         val allScreens = listOf(Home, Favorites, Shorts, AddSource, Settings)
@@ -144,13 +198,37 @@ fun AppNavigation() {
 
 @Composable
 fun BottomNavigationBar(navController: androidx.navigation.NavController) {
-    NavigationBar {
+    NavigationBar(
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 12.dp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(
+                elevation = 8.dp,
+                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+                ambientColor = Color.Black.copy(alpha = 0.08f),
+                spotColor = Color.Black.copy(alpha = 0.08f)
+            )
+    ) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
+
         Screen.allScreens.forEach { screen ->
             NavigationBarItem(
-                icon = { Icon(screen.icon, contentDescription = screen.title) },
-                label = { Text(screen.title, fontSize = 10.sp, maxLines = 1) },
+                icon = {
+                    Icon(
+                        screen.icon,
+                        contentDescription = screen.title,
+                        modifier = Modifier.size(26.dp)
+                    )
+                },
+                label = {
+                    Text(
+                        screen.title,
+                        fontSize = 11.sp,
+                        fontWeight = if (currentRoute == screen.route) FontWeight.Bold else FontWeight.Medium
+                    )
+                },
                 selected = currentRoute == screen.route,
                 onClick = {
                     navController.navigate(screen.route) {
@@ -158,7 +236,14 @@ fun BottomNavigationBar(navController: androidx.navigation.NavController) {
                         launchSingleTop = true
                         restoreState = true
                     }
-                }
+                },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = MaterialTheme.colorScheme.primary,
+                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                )
             )
         }
     }
@@ -177,7 +262,8 @@ fun HomeScreen(viewModel: MainViewModel) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     "Загрузка новостей...",
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -186,37 +272,52 @@ fun HomeScreen(viewModel: MainViewModel) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                    .padding(horizontal = 24.dp, vertical = 20.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    "🔥 Главные события",
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
+                Column {
+                    Text(
+                        "🔥 Главные события",
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    Text(
+                        "Свежие новости из ваших источников",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
                 IconButton(
                     onClick = { viewModel.loadPosts() },
                     modifier = Modifier
-                        .size(44.dp)
+                        .size(48.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .background(MaterialTheme.colorScheme.primary)
                 ) {
                     Icon(
-                        Icons.Filled.Refresh,
+                        Refresh,
                         contentDescription = "Обновить",
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
 
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = { viewModel.loadPosts() },
+                modifier = Modifier.fillMaxSize()
             ) {
-                items(posts, key = { it.id }) { post ->
-                    UnifiedPostCard(post)
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(posts, key = { it.id }) { post ->
+                        UnifiedPostCard(post)
+                    }
                 }
             }
         }
@@ -249,21 +350,30 @@ fun FavoritesScreen(viewModel: MainViewModel) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(32.dp)
+                modifier = Modifier.padding(40.dp)
             ) {
-                Icon(
-                    Icons.Filled.FavoriteBorder,
-                    contentDescription = null,
-                    modifier = Modifier.size(80.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.height(20.dp))
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.size(120.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            FavoriteBorder,
+                            contentDescription = null,
+                            modifier = Modifier.size(60.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(32.dp))
                 Text(
                     "Нет избранных постов",
                     style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     "Нажмите на сердечко чтобы добавить",
                     style = MaterialTheme.typography.bodyMedium,
@@ -318,10 +428,26 @@ fun AddSourceScreen(viewModel: MainViewModel) {
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("RSS", "YouTube", "Telegram").forEach { type ->
-                androidx.compose.material3.FilterChip(
+                FilterChip(
                     selected = sourceType == type,
                     onClick = { sourceType = type },
-                    label = { Text(type) }
+                    label = {
+                        Text(
+                            type,
+                            fontWeight = if (sourceType == type) FontWeight.SemiBold else FontWeight.Normal
+                        )
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                        selectedLabelColor = Color.White,
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    border = FilterChipDefaults.filterChipBorder(
+                        enabled = true,
+                        selected = sourceType == type,
+                        borderColor = if (sourceType == type) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                    )
                 )
             }
         }
@@ -357,16 +483,21 @@ fun AddSourceScreen(viewModel: MainViewModel) {
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp),
+                .height(56.dp),
             shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary
+            ),
+            elevation = ButtonDefaults.buttonElevation(
+                defaultElevation = 4.dp,
+                pressedElevation = 8.dp
             )
         ) {
             Text(
                 "Добавить источник",
                 fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White
             )
         }
 
@@ -390,7 +521,7 @@ fun AddSourceScreen(viewModel: MainViewModel) {
                         IconButton(onClick = {
                             addedSources = addedSources.filter { it != source }
                         }) {
-                            Icon(Icons.Filled.Delete, contentDescription = "Удалить")
+                            Icon(Delete, contentDescription = "Удалить")
                         }
                     }
                 }
@@ -418,61 +549,102 @@ fun UnifiedPostCard(post: UnifiedPost) {
                     )
                 }
             },
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(24.dp),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 0.dp,
+            pressedElevation = 8.dp
+        ),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
-        Column {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.surface,
+                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                        )
+                    )
+                )
+        ) {
             AsyncImage(
                 model = post.imageUrl,
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(220.dp)
-                    .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)),
+                    .height(240.dp)
+                    .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)),
                 contentScale = ContentScale.Crop
             )
-            Column(modifier = Modifier.padding(16.dp)) {
+            Column(modifier = Modifier.padding(24.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(post.source.emoji, fontSize = 14.sp)
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(post.source.emoji, fontSize = 16.sp)
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         post.source.displayName,
                         color = MaterialTheme.colorScheme.primary,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(post.title, fontSize = 18.sp, fontWeight = FontWeight.Bold, maxLines = 2)
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    post.title,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 2,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    lineHeight = 26.sp
+                )
+                Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     post.description,
-                    fontSize = 14.sp,
+                    fontSize = 15.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 3
+                    maxLines = 3,
+                    lineHeight = 22.sp
                 )
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                horizontalArrangement = Arrangement.End
-            ) {
-                IconButton(
-                    onClick = { FavoritesRepository.toggleFavorite(post.id) },
-                    modifier = Modifier.size(40.dp)
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
                 ) {
-                    Icon(
-                        imageVector = if (FavoritesRepository.isFavorite(post.id))
-                            Icons.Filled.Favorite
-                        else
-                            Icons.Filled.FavoriteBorder,
-                        contentDescription = "В избранное",
-                        tint = if (FavoritesRepository.isFavorite(post.id))
-                            Color(0xFFFF4757)
-                        else
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    IconButton(
+                        onClick = { FavoritesRepository.toggleFavorite(post.id) },
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (FavoritesRepository.isFavorite(post.id))
+                                    Color(0xFFFF4757).copy(alpha = 0.1f)
+                                else
+                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                            )
+                    ) {
+                        Icon(
+                            imageVector = if (FavoritesRepository.isFavorite(post.id))
+                                Favorite
+                            else
+                                FavoriteBorder,
+                            contentDescription = "В избранное",
+                            tint = if (FavoritesRepository.isFavorite(post.id))
+                                Color(0xFFFF4757)
+                            else
+                                MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
                 }
             }
         }
@@ -483,11 +655,45 @@ fun UnifiedPostCard(post: UnifiedPost) {
 @Composable
 fun ShortsScreen() {
     val shortsList = remember { ShortsRepository.getShorts() }
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().background(Color.Black),
-        verticalArrangement = Arrangement.spacedBy(0.dp)
-    ) {
-        items(shortsList) { short -> ShortItem(short) }
+
+    if (shortsList.isEmpty()) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.size(100.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            PlayCircle,
+                            contentDescription = null,
+                            modifier = Modifier.size(56.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    "Шорты скоро появятся",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    "Добавьте YouTube источники в настройках",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    } else {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().background(Color.Black),
+            verticalArrangement = Arrangement.spacedBy(0.dp)
+        ) {
+            items(shortsList) { short -> ShortItem(short) }
+        }
     }
 }
 
@@ -542,9 +748,9 @@ fun ShortItem(short: ShortItem) {
             verticalArrangement = Arrangement.spacedBy(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            ActionButton(Icons.Filled.Favorite, "12K")
-            ActionButton(Icons.Filled.ChatBubble, "342")
-            ActionButton(Icons.Filled.Share, "89")
+            ActionButton(Favorite, "12K")
+            ActionButton(ChatBubble, "342")
+            ActionButton(Share, "89")
         }
     }
 }
@@ -588,7 +794,7 @@ fun SettingsScreen() {
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(onClick = { showAddDialog = true }) {
-            Icon(Icons.Filled.Add, contentDescription = null)
+            Icon(Add, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
             Text("Добавить RSS")
         }
@@ -646,9 +852,7 @@ fun SettingsScreen() {
 
 data class ShortItem(val id: Int, val title: String, val description: String, val imageUrl: String, val source: String)
 object ShortsRepository {
-    fun getShorts(): List<ShortItem> = listOf(
-        ShortItem(1, "Запуск ракеты SpaceX", "Невероятные кадры старта Starship", "https://images.unsplash.com/photo-1517976487492-5750f3195933?w=800", "SpaceX"),
-        ShortItem(2, "Новый iPhone 16", "Первый взгляд на революционный дизайн", "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800", "Apple"),
-        ShortItem(3, "Марсианские пейзажи", "Фото с поверхности Красной планеты", "https://images.unsplash.com/photo-1614728853913-1e22ba0e982b?w=800", "NASA")
-    )
+    fun getShorts(): List<ShortItem> {
+        return emptyList() // Убираем тестовые данные
+    }
 }
