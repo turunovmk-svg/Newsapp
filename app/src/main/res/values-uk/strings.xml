@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App name -->
+    <string name="app_name">NewsApp</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Головна</string>
+    <string name="nav_favorites">Обране</string>
+    <string name="nav_shorts">Шорти</string>
+    <string name="nav_add">Додати</string>
+    <string name="nav_settings">Налаштування</string>
+
+    <!-- Home screen -->
+    <string name="main_events">Головні події</string>
+    <string name="fresh_news">Свіжі новини з ваших джерел</string>
+    <string name="loading_news">Завантаження новин...</string>
+    <string name="no_sources">Додайте джерела</string>
+    <string name="no_sources_subtitle">Перейдіть на вкладку \"Додати\" та вкажіть RSS, YouTube або Telegram</string>
+    <string name="refresh">Оновити</string>
+
+    <!-- Favorites screen -->
+    <string name="no_favorites">Немає обраних постів</string>
+    <string name="tap_heart">Натисніть на серце щоб додати</string>
+
+    <!-- Shorts screen -->
+    <string name="shorts_placeholder">Шорти скоро з\'являться</string>
+
+    <!-- Add source screen -->
+    <string name="add_source_title">Додати джерело</string>
+    <string name="source_type">Тип джерела</string>
+    <string name="source_url">URL джерела</string>
+    <string name="add_source_button">Додати джерело</string>
+    <string name="my_sources">Мої джерела</string>
+    <string name="no_sources_added">Немає доданих джерел</string>
+
+    <!-- Settings screen -->
+    <string name="settings_title">Налаштування</string>
+    <string name="settings_sources">Джерела</string>
+    <string name="sources_count">Кількість джерел: %1$d</string>
+    <string name="export_sources">Експорт джерел (OPML)</string>
+    <string name="import_sources">Імпорт джерел (OPML)</string>
+    <string name="clear_all_sources">Видалити всі джерела</string>
+    <string name="theme_title">Тема оформлення</string>
+    <string name="theme_system">Системна</string>
+    <string name="theme_light">Світла</string>
+    <string name="theme_dark">Темна</string>
+    <string name="theme_amoled">AMOLED</string>
+    <string name="language_title">Мова</string>
+    <string name="language_system">Системна</string>
+    <string name="language_ru">Російська</string>
+    <string name="language_en">Англійська</string>
+    <string name="language_uk">Українська</string>
+    <string name="data_title">Дані</string>
+    <string name="clear_cache">Очистити кеш</string>
+    <string name="clear_read_history">Очистити історію читання</string>
+    <string name="about_title">Про додаток</string>
+    <string name="app_version">NewsApp v1.0</string>
+    <string name="app_github">GitHub: turunovmk-svg/Newsapp</string>
+    <string name="app_privacy">Політика конфіденційності</string>
+
+    <!-- Article reader -->
+    <string name="article_reader_title">Читання</string>
+    <string name="open_original">Відкрити оригінальне джерело</string>
+
+    <!-- Add source -->
+    <string name="add_source">Додати</string>
+    <string name="source_added">Джерело додано!</string>
+    <string name="sources_deleted">Джерела видалено</string>
+    <string name="favorite_added">Джерело додано до обраного</string>
+    <string name="favorite_removed">Джерело видалено з обраного</string>
+
+    <!-- Dialog -->
+    <string name="dialog_ok">ОК</string>
+    <string name="dialog_cancel">Скасувати</string>
+</resources>

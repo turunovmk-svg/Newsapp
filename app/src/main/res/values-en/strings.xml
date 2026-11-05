@@ -1,18 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- App name -->
     <string name="app_name">NewsApp</string>
+
+    <!-- Navigation -->
     <string name="nav_home">Home</string>
     <string name="nav_favorites">Favorites</string>
     <string name="nav_shorts">Shorts</string>
     <string name="nav_add">Add Source</string>
     <string name="nav_settings">Settings</string>
+
+    <!-- Home screen -->
     <string name="main_events">Main Events</string>
     <string name="fresh_news">Fresh news from your sources</string>
     <string name="loading_news">Loading news...</string>
+    <string name="no_sources">Add sources</string>
+    <string name="no_sources_subtitle">Go to the \"Add Source\" tab and specify RSS, YouTube or Telegram</string>
+    <string name="refresh">Refresh</string>
+
+    <!-- Favorites screen -->
     <string name="no_favorites">No favorites yet</string>
     <string name="tap_heart">Tap heart to add</string>
+
+    <!-- Shorts screen -->
     <string name="shorts_placeholder">Shorts coming soon</string>
-    <string name="add_source_placeholder">Sources coming soon</string>
-    <string name="settings_placeholder">Settings coming soon</string>
-    <string name="favorite">Favorite</string>
+
+    <!-- Add source screen -->
+    <string name="add_source_title">Add Source</string>
+    <string name="source_type">Source type</string>
+    <string name="source_url">Source URL</string>
+    <string name="add_source_button">Add Source</string>
+    <string name="my_sources">My sources</string>
+    <string name="no_sources_added">No sources added</string>
+
+    <!-- Settings screen -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_sources">Sources</string>
+    <string name="sources_count">Number of sources: %1$d</string>
+    <string name="export_sources">Export sources (OPML)</string>
+    <string name="import_sources">Import sources (OPML)</string>
+    <string name="clear_all_sources">Delete all sources</string>
+    <string name="theme_title">Theme</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_amoled">AMOLED</string>
+    <string name="language_title">Language</string>
+    <string name="language_system">System</string>
+    <string name="language_ru">Russian</string>
+    <string name="language_en">English</string>
+    <string name="language_uk">Ukrainian</string>
+    <string name="data_title">Data</string>
+    <string name="clear_cache">Clear cache</string>
+    <string name="clear_read_history">Clear reading history</string>
+    <string name="about_title">About app</string>
+    <string name="app_version">NewsApp v1.0</string>
+    <string name="app_github">GitHub: turunovmk-svg/Newsapp</string>
+    <string name="app_privacy">Privacy Policy</string>
+
+    <!-- Article reader -->
+    <string name="article_reader_title">Reading</string>
+    <string name="open_original">Open original source</string>
+
+    <!-- Add source -->
+    <string name="add_source">Add</string>
+    <string name="source_added">Source added!</string>
+    <string name="sources_deleted">Sources deleted</string>
+    <string name="favorite_added">Source added to favorites</string>
+    <string name="favorite_removed">Source removed from favorites</string>
+
+    <!-- Dialog -->
+    <string name="dialog_ok">OK</string>
+    <string name="dialog_cancel">Cancel</string>
 </resources>
