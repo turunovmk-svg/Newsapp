@@ -21,7 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.Icons
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -38,6 +38,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -138,11 +139,11 @@ class MainActivity : ComponentActivity() {
 }
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
-    object HomeScreen : Screen("home", "Главная", Home)
-    object FavoritesScreen : Screen("favorites", "Избранное", Favorite)
-    object ShortsScreen : Screen("shorts", "Шортс", PlayCircle)
-    object AddSourceScreen : Screen("add_source", "Добавить", Add)
-    object SettingsScreen : Screen("settings", "Настройки", Settings)
+    object HomeScreen : Screen("home", "Главная", Icons.Filled.Home)
+    object FavoritesScreen : Screen("favorites", "Избранное", Icons.Filled.Favorite)
+    object ShortsScreen : Screen("shorts", "Шортс", Icons.Filled.PlayCircle)
+    object AddSourceScreen : Screen("add_source", "Добавить", Icons.Filled.Add)
+    object SettingsScreen : Screen("settings", "Настройки", Icons.Filled.Settings)
 
     companion object {
         val allScreens = listOf(HomeScreen, FavoritesScreen, ShortsScreen, AddSourceScreen, SettingsScreen)
@@ -284,7 +285,7 @@ fun HomeScreen(viewModel: MainViewModel) {
                         .background(MaterialTheme.colorScheme.primary)
                 ) {
                     Icon(
-                        Home,
+                        Icons.Filled.Refresh,
                         contentDescription = "Обновить",
                         tint = Color.White,
                         modifier = Modifier.size(24.dp)
@@ -292,12 +293,18 @@ fun HomeScreen(viewModel: MainViewModel) {
                 }
             }
 
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = { viewModel.loadPosts() },
+                modifier = Modifier.fillMaxSize()
             ) {
-                items(posts, key = { it.id }) { post ->
-                    UnifiedPostCard(post)
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(posts, key = { it.id }) { post ->
+                        UnifiedPostCard(post)
+                    }
                 }
             }
         }
@@ -339,7 +346,7 @@ fun FavoritesScreen(viewModel: MainViewModel) {
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            FavoriteBorder,
+                            Icons.Filled.FavoriteBorder,
                             contentDescription = null,
                             modifier = Modifier.size(60.dp),
                             tint = MaterialTheme.colorScheme.primary
@@ -499,7 +506,7 @@ fun AddSourceScreen(viewModel: MainViewModel) {
                         IconButton(onClick = {
                             addedSources = addedSources.filter { it != source }
                         }) {
-                            Icon(Delete, contentDescription = "Удалить")
+                            Icon(Icons.Filled.Delete, contentDescription = "Удалить")
                         }
                     }
                 }
@@ -612,9 +619,9 @@ fun UnifiedPostCard(post: UnifiedPost) {
                     ) {
                         Icon(
                             imageVector = if (FavoritesRepository.isFavorite(post.id))
-                                Favorite
+                                Icons.Filled.Favorite
                             else
-                                FavoriteBorder,
+                                Icons.Filled.FavoriteBorder,
                             contentDescription = "В избранное",
                             tint = if (FavoritesRepository.isFavorite(post.id))
                                 Color(0xFFFF4757)
@@ -644,7 +651,7 @@ fun ShortsScreen() {
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            PlayCircle,
+                            Icons.Filled.PlayCircle,
                             contentDescription = null,
                             modifier = Modifier.size(56.dp),
                             tint = MaterialTheme.colorScheme.primary
@@ -726,9 +733,9 @@ fun ShortItem(short: ShortItem) {
             verticalArrangement = Arrangement.spacedBy(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            ActionButton(Favorite, "12K")
-            ActionButton(ChatBubble, "342")
-            ActionButton(Share, "89")
+            ActionButton(Icons.Filled.Favorite, "12K")
+            ActionButton(Icons.Filled.ChatBubble, "342")
+            ActionButton(Icons.Filled.Share, "89")
         }
     }
 }
@@ -772,7 +779,7 @@ fun SettingsScreen() {
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(onClick = { showAddDialog = true }) {
-            Icon(Add, contentDescription = null)
+            Icon(Icons.Filled.Add, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
             Text("Добавить RSS")
         }
