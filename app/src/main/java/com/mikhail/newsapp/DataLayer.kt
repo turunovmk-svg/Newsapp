@@ -237,6 +237,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     
     fun isFavorite(postId: String): Boolean = getFavorites().contains(postId)
     
+    private fun convertTelegramUrl(url: String): String {
+        // Если пользователь ввел обычную ссылку из Telegram (t.me/...), конвертируем в формат RSS Hub
+        return try {
+            if (url.contains("t.me/")) {
+                val channelName = url.substringAfter("t.me/")
+                    .takeIf { it.isNotBlank() }
+                    ?.takeWhile { it != '/' && it != '?' }
+                    ?.trim()
+                    ?: url
+                "https://rsshub.app/telegram/channel/$channelName"
+            } else {
+                url
+            }
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "Telegram URL conversion error: ${e.message}")
+            url
+        }
+    }
+    
     fun addSource(type: SourceType, url: String) {
         viewModelScope.launch {
             try {
@@ -244,7 +263,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     Toast.makeText(context, "Добавляем источник...", Toast.LENGTH_SHORT).show()
                 }
                 val current = getSources()
-                val newSource = SourceItem("${type.name}_${System.currentTimeMillis()}", type, url)
+                val finalUrl = if (type == SourceType.TELEGRAM) convertTelegramUrl(url) else url
+                val newSource = SourceItem("${type.name}_${System.currentTimeMillis()}", type, finalUrl)
                 saveSources(current + newSource)
                 withContext(Dispatchers.Main) {
                     Toast.makeText(context, "Источник добавлен! Загружаем новости...", Toast.LENGTH_SHORT).show()
