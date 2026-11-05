@@ -223,6 +223,7 @@ fun ArticleReaderScreen(post: UnifiedPost, onBack: () -> Unit) {
     
     val bgColor = if (isDark) 0xFF0F172A else 0xFFFAFAFA
     val textColor = if (isDark) 0xFFF8FAFC else 0xFF0F172A
+    val linkColor = 0xFF6366F1
     
     val safeTitle = post.title.takeIf { it.isNotBlank() } ?: "Без названия"
     val safeDesc = post.description.takeIf { it.isNotBlank() } ?: ""
