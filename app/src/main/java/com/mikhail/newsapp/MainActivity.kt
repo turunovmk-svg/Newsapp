@@ -74,10 +74,6 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     companion object { val allScreens = listOf(Home, Favorites, Shorts, AddSource, Settings) }
 }
 
-object ArticleNavigator {
-    var currentPost: UnifiedPost? = null
-}
-
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
@@ -98,7 +94,7 @@ fun AppNavigation() {
             }
             composable(Screen.Settings.route) { SettingsScreen() }
             composable("article_reader/{postId}") { backStackEntry ->
-                val postId = backStackEntry.arguments?.getString("postId")
+                val postId = backStackEntry.arguments?.getString("postId") ?: return@composable
                 val viewModel: MainViewModel = viewModel()
                 val posts by viewModel.posts.collectAsState()
                 val post = posts.find { it.id == postId }
@@ -138,7 +134,7 @@ fun BottomNav(navController: androidx.navigation.NavController) {
 @Composable
 fun HomeScreen(viewModel: MainViewModel, navController: androidx.navigation.NavController) {
     val posts by viewModel.posts.collectAsState()
-    val sources = viewModel.getSources()
+    val sources by viewModel.sources.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     
     if (sources.isEmpty()) {
@@ -309,7 +305,7 @@ fun FavoritesScreen(viewModel: MainViewModel, navController: androidx.navigation
 fun AddSourceScreen(viewModel: MainViewModel) {
     var sourceUrl by remember { mutableStateOf("") }
     var sourceType by remember { mutableStateOf(SourceType.RSS) }
-    val userSources = viewModel.getSources()
+    val sources = viewModel.getSources()
     
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text("➕ Добавить источник", fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 24.dp))
@@ -331,11 +327,11 @@ fun AddSourceScreen(viewModel: MainViewModel) {
         Spacer(modifier = Modifier.height(32.dp))
         Text("Мои источники:", fontSize = 18.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(12.dp))
-        if (userSources.isEmpty()) {
+        if (sources.isEmpty()) {
             Text("Нет добавленных источников", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
         } else {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(userSources, key = { it.id }) { source ->
+                items(sources, key = { it.id }) { source ->
                     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                         Row(modifier = Modifier.padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                             Column(modifier = Modifier.weight(1f)) {

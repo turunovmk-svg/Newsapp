@@ -80,7 +80,7 @@ object NetworkClient {
                 connection.requestMethod = "GET"
                 
                 if (connection.responseCode != 200) {
-                    Log.e("NetworkClient", "HTTP error: ${connection.responseCode}")
+                    Log.e("NetworkClient", "HTTP error: ${connection.responseCode} for $rssUrl")
                     connection.disconnect()
                     return@withContext emptyList()
                 }
@@ -115,8 +115,10 @@ object NetworkClient {
                             getFallbackImage(type)
                         }
                         
+                        val postId = (item["guid"] as? String) ?: link
+                        
                         UnifiedPost(
-                            id = (item["guid"] as? String) ?: link,
+                            id = postId,
                             title = title,
                             description = description.replace(Regex("<[^>]*>"), "").take(150),
                             imageUrl = imageUrl,
@@ -143,10 +145,14 @@ object NetworkClient {
 }
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
-    // БЕЗОПАСНАЯ ИНИЦИАЛИЗАЦИЯ: берем контекст напрямую из Application
+    // БЕЗОПАСНАЯ ИНИЦИАЛИЗАЦИЯ: контекст из Application
     private val context = getApplication<Application>().applicationContext
     private val prefs: SharedPreferences = context.getSharedPreferences("news_app_prefs", Context.MODE_PRIVATE)
     private val gson = Gson()
+    
+    // Реактивные источники данных — единственный источник истины
+    private val _sources = MutableStateFlow<List<SourceItem>>(emptyList())
+    val sources: StateFlow<List<SourceItem>> = _sources
     
     private val _posts = MutableStateFlow<List<UnifiedPost>>(emptyList())
     val posts: StateFlow<List<UnifiedPost>> = _posts
@@ -154,12 +160,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val isRefreshing: StateFlow<Boolean> = _isRefreshing
     
     init { 
-        // Не загружаем посты в init — делаем это только когда пользователь явно запрашивает
+        // Загружаем источники при создании, но НЕ запускаем сетевые запросы здесь
+        _sources.value = loadSourcesFromPrefs()
         _posts.value = emptyList()
         _isRefreshing.value = false
     }
     
-    fun getSources(): List<SourceItem> {
+    private fun loadSourcesFromPrefs(): List<SourceItem> {
         return try {
             val json = prefs.getString("sources", "[]") ?: "[]"
             if (json.isNullOrBlank()) return emptyList()
@@ -172,10 +179,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     
+    fun getSources(): List<SourceItem> = _sources.value
+    
     private fun saveSources(sources: List<SourceItem>) {
         try {
             val json = gson.toJson(sources)
             prefs.edit().putString("sources", json).apply()
+            _sources.value = sources
         } catch (e: Exception) {
             Log.e("MainViewModel", "Save sources error: ${e.message}")
         }
@@ -195,20 +205,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             try {
                 _isRefreshing.value = true
-                val sources = try { getSources() } catch (e: Exception) {
-                    Log.e("MainViewModel", "Get sources error: ${e.message}")
-                    emptyList()
+                val currentSources = _sources.value
+                if (currentSources.isEmpty()) {
+                    _posts.value = emptyList()
+                    return@launch
                 }
-                _posts.value = if (sources.isEmpty()) emptyList() else {
-                    sources.map { source ->
-                        try {
-                            NetworkClient.fetchRssAsJson(source.url, source.type)
-                        } catch (e: Exception) {
-                            Log.e("MainViewModel", "Fetch error for ${source.url}: ${e.message}")
-                            emptyList()
-                        }
-                    }.flatten().shuffled()
+                
+                // Каждый источник загружается独立 с индивидуальной защитой от ошибок
+                val allPosts = mutableListOf<UnifiedPost>()
+                for (source in currentSources) {
+                    try {
+                        val fetched = NetworkClient.fetchRssAsJson(source.url, source.type)
+                        allPosts.addAll(fetched)
+                    } catch (e: Exception) {
+                        Log.e("MainViewModel", "Fetch failed for source ${source.id}: ${e.message}")
+                    }
                 }
+                
+                _posts.value = allPosts.shuffled()
             } catch (e: Exception) {
                 Log.e("MainViewModel", "Load posts error: ${e.message}")
                 _posts.value = emptyList()
@@ -223,7 +237,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val current = getFavorites()
                 val newFav = if (current.contains(postId)) current - postId else current + postId
-                // putStringSet не принимает null и пустой set на некоторых устройствах
                 if (newFav.isNotEmpty()) {
                     prefs.edit().putStringSet("favorites", newFav).apply()
                 } else {
@@ -238,7 +251,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun isFavorite(postId: String): Boolean = getFavorites().contains(postId)
     
     private fun convertTelegramUrl(url: String): String {
-        // Если пользователь ввел обычную ссылку из Telegram (t.me/...), конвертируем в формат RSS Hub
         return try {
             if (url.contains("t.me/")) {
                 val channelName = url.substringAfter("t.me/")
@@ -262,7 +274,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(context, "Добавляем источник...", Toast.LENGTH_SHORT).show()
                 }
-                val current = getSources()
+                val current = _sources.value
                 val finalUrl = if (type == SourceType.TELEGRAM) convertTelegramUrl(url) else url
                 val newSource = SourceItem("${type.name}_${System.currentTimeMillis()}", type, finalUrl)
                 saveSources(current + newSource)
@@ -271,7 +283,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 loadPosts()
             } catch (e: Exception) {
-                // ЕСЛИ ВЫЛЕТ ЗДЕСЬ, МЫ УВИДИМ ТЕКСТ ОШИБКИ НА ЭКРАНЕ!
                 withContext(Dispatchers.Main) {
                     Toast.makeText(context, "ОШИБКА: ${e.message}", Toast.LENGTH_LONG).show()
                 }
@@ -283,7 +294,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun removeSource(sourceId: String) {
         viewModelScope.launch {
             try {
-                val current = getSources()
+                val current = _sources.value
                 saveSources(current.filter { it.id != sourceId })
                 loadPosts()
             } catch (e: Exception) {
