@@ -42,7 +42,7 @@ import coil.compose.AsyncImage
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        DataStoreManager.init(applicationContext)
+        AppPrefs.init(applicationContext)
         
         setContent {
             val isDark = isSystemInDarkTheme()

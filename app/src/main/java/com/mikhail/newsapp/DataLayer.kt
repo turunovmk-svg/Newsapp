@@ -1,21 +1,18 @@
 package com.mikhail.newsapp
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.util.Log
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.*
-import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.URL
-
-val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "news_app")
 
 data class UnifiedPost(
     val id: String,
@@ -94,39 +91,59 @@ object NetworkClient {
                         )
                     } catch (e: Exception) { null }
                 }
-            } catch (e: Exception) { emptyList() }
+            } catch (e: Exception) { 
+                Log.e("NetworkClient", "Fetch error: ${e.message}")
+                emptyList() 
+            }
         }
     }
 }
 
-object DataStoreManager {
-    lateinit var dataStore: DataStore<Preferences>
+object AppPrefs {
+    private const val PREFS_NAME = "news_app_prefs"
+    private const val KEY_SOURCES = "sources"
+    private const val KEY_FAVORITES = "favorites"
+    
+    private lateinit var prefs: SharedPreferences
     
     fun init(context: Context) {
-        dataStore = context.dataStore
+        prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     }
     
-    suspend fun saveSources(sources: List<SourceItem>) {
-        val json = Gson().toJson(sources)
-        dataStore.edit { it[stringPreferencesKey("sources")] = json }
-    }
-    
-    fun getSources(): Flow<List<SourceItem>> {
-        return dataStore.data.map { prefs ->
-            val json = prefs[stringPreferencesKey("sources")] ?: "[]"
-            Gson().fromJson(json, object : TypeToken<List<SourceItem>>() {}.type) ?: emptyList()
+    fun saveSources(sources: List<SourceItem>) {
+        try {
+            val json = Gson().toJson(sources)
+            prefs.edit().putString(KEY_SOURCES, json).apply()
+        } catch (e: Exception) {
+            Log.e("AppPrefs", "Save sources error: ${e.message}")
         }
     }
     
-    suspend fun saveFavorites(favorites: Set<String>) {
-        val json = Gson().toJson(favorites)
-        dataStore.edit { it[stringPreferencesKey("favorites")] = json }
+    fun getSources(): List<SourceItem> {
+        return try {
+            val json = prefs.getString(KEY_SOURCES, "[]") ?: "[]"
+            val type = object : TypeToken<List<SourceItem>>() {}.type
+            Gson().fromJson(json, type) ?: emptyList()
+        } catch (e: Exception) {
+            Log.e("AppPrefs", "Read sources error: ${e.message}")
+            emptyList()
+        }
     }
     
-    fun getFavorites(): Flow<Set<String>> {
-        return dataStore.data.map { prefs ->
-            val json = prefs[stringPreferencesKey("favorites")] ?: "[]"
-            Gson().fromJson(json, object : TypeToken<Set<String>>() {}.type) ?: emptySet()
+    fun saveFavorites(favorites: Set<String>) {
+        try {
+            prefs.edit().putStringSet(KEY_FAVORITES, favorites).apply()
+        } catch (e: Exception) {
+            Log.e("AppPrefs", "Save favorites error: ${e.message}")
+        }
+    }
+    
+    fun getFavorites(): Set<String> {
+        return try {
+            prefs.getStringSet(KEY_FAVORITES, emptySet()) ?: emptySet()
+        } catch (e: Exception) {
+            Log.e("AppPrefs", "Read favorites error: ${e.message}")
+            emptySet()
         }
     }
 }
@@ -137,21 +154,21 @@ class MainViewModel(application: android.app.Application) : AndroidViewModel(app
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing
     
-    val userSources = DataStoreManager.getSources().stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
-    val favorites = DataStoreManager.getFavorites().stateIn(viewModelScope, SharingStarted.Lazily, emptySet())
-    
-    init { loadPosts() }
+    init { 
+        AppPrefs.init(application)
+        loadPosts() 
+    }
     
     fun loadPosts() {
         viewModelScope.launch {
             try {
                 _isRefreshing.value = true
-                val sources = userSources.value
+                val sources = AppPrefs.getSources()
                 _posts.value = if (sources.isEmpty()) emptyList() else {
                     sources.map { NetworkClient.fetchRssAsJson(it.url, it.type) }.flatten().shuffled()
                 }
             } catch (e: Exception) {
-                android.util.Log.e("NewsApp", "Error loading posts", e)
+                Log.e("MainViewModel", "Load posts error: ${e.message}")
                 _posts.value = emptyList()
             } finally {
                 _isRefreshing.value = false
@@ -160,28 +177,26 @@ class MainViewModel(application: android.app.Application) : AndroidViewModel(app
     }
     
     fun toggleFavorite(postId: String) {
-        viewModelScope.launch {
-            try {
-                val current = favorites.value
-                val newFav = if (current.contains(postId)) current - postId else current + postId
-                DataStoreManager.saveFavorites(newFav)
-            } catch (e: Exception) {
-                android.util.Log.e("NewsApp", "Error toggling favorite", e)
-            }
+        try {
+            val current = AppPrefs.getFavorites()
+            val newFav = if (current.contains(postId)) current - postId else current + postId
+            AppPrefs.saveFavorites(newFav)
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "Toggle favorite error: ${e.message}")
         }
     }
     
-    fun isFavorite(postId: String): Boolean = favorites.value.contains(postId)
+    fun isFavorite(postId: String): Boolean = AppPrefs.getFavorites().contains(postId)
     
     fun addSource(type: SourceType, url: String) {
         viewModelScope.launch {
             try {
-                val current = userSources.value
+                val current = AppPrefs.getSources()
                 val newSource = SourceItem("${type.name}_${System.currentTimeMillis()}", type, url)
-                DataStoreManager.saveSources(current + newSource)
+                AppPrefs.saveSources(current + newSource)
                 loadPosts()
             } catch (e: Exception) {
-                android.util.Log.e("NewsApp", "Error adding source", e)
+                Log.e("MainViewModel", "Add source error: ${e.message}")
             }
         }
     }
@@ -189,11 +204,11 @@ class MainViewModel(application: android.app.Application) : AndroidViewModel(app
     fun removeSource(sourceId: String) {
         viewModelScope.launch {
             try {
-                val current = userSources.value
-                DataStoreManager.saveSources(current.filter { it.id != sourceId })
+                val current = AppPrefs.getSources()
+                AppPrefs.saveSources(current.filter { it.id != sourceId })
                 loadPosts()
             } catch (e: Exception) {
-                android.util.Log.e("NewsApp", "Error removing source", e)
+                Log.e("MainViewModel", "Remove source error: ${e.message}")
             }
         }
     }
