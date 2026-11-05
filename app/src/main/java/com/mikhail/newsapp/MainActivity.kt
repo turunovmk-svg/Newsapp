@@ -69,7 +69,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.ImeAction as InputImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -153,14 +153,14 @@ class MainActivity : ComponentActivity() {
 }
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
-    object Home : Screen("home", "Главная", Home)
-    object Favorites : Screen("favorites", "Избранное", Favorite)
-    object Shorts : Screen("shorts", "Шортс", PlayCircle)
-    object AddSource : Screen("add_source", "Добавить", Add)
-    object Settings : Screen("settings", "Настройки", Settings)
+    object HomeScreen : Screen("home", "Главная", Home)
+    object FavoritesScreen : Screen("favorites", "Избранное", Favorite)
+    object ShortsScreen : Screen("shorts", "Шортс", PlayCircle)
+    object AddSourceScreen : Screen("add_source", "Добавить", Add)
+    object SettingsScreen : Screen("settings", "Настройки", Settings)
 
     companion object {
-        val allScreens = listOf(Home, Favorites, Shorts, AddSource, Settings)
+        val allScreens = listOf(HomeScreen, FavoritesScreen, ShortsScreen, AddSourceScreen, SettingsScreen)
     }
 }
 
@@ -172,25 +172,25 @@ fun AppNavigation() {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Home.route,
+            startDestination = Screen.HomeScreen.route,
             modifier = Modifier.padding(paddingValues)
         ) {
-            composable(Screen.Home.route) {
+            composable(Screen.HomeScreen.route) {
                 val viewModel: MainViewModel = viewModel()
                 HomeScreen(viewModel)
             }
-            composable(Screen.Favorites.route) {
+            composable(Screen.FavoritesScreen.route) {
                 val viewModel: MainViewModel = viewModel()
                 FavoritesScreen(viewModel)
             }
-            composable(Screen.Shorts.route) {
+            composable(Screen.ShortsScreen.route) {
                 ShortsScreen()
             }
-            composable(Screen.AddSource.route) {
+            composable(Screen.AddSourceScreen.route) {
                 val viewModel: MainViewModel = viewModel()
                 AddSourceScreen(viewModel)
             }
-            composable(Screen.Settings.route) {
+            composable(Screen.SettingsScreen.route) {
                 SettingsScreen()
             }
         }
