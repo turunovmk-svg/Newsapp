@@ -216,9 +216,9 @@ fun ArticleReaderScreen(navController: androidx.navigation.NavController) {
         return
     }
 
-    val bgColor = if (isDark) "#0F172A" else "#FAFAFA"
-    val textColor = if (isDark) "#F8FAFC" else "#0F172A"
-    val linkColor = "#6366F1"
+    val bgColor = if (isDark) 0xFF0F172A else 0xFFFAFAFA
+    val textColor = if (isDark) 0xFFF8FAFC else 0xFF0F172A
+    val linkColor = 0xFF6366F1
 
     val htmlContent = """
         <html>
@@ -291,6 +291,7 @@ fun FavoritesScreen(viewModel: MainViewModel, navController: androidx.navigation
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddSourceScreen(viewModel: MainViewModel) {
     var sourceUrl by remember { mutableStateOf("") }
