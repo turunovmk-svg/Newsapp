@@ -19,11 +19,8 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.input.ImeAction
 import androidx.compose.material.icons.filled.Home as IcHome
 import androidx.compose.material.icons.filled.Favorite as IcFavorite
 import androidx.compose.material.icons.filled.FavoriteBorder as IcFavoriteBorder
