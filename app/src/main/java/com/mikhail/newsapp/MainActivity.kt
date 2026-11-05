@@ -38,6 +38,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -97,7 +98,18 @@ fun AppNavigation() {
                 AddSourceScreen(viewModel) 
             }
             composable(Screen.Settings.route) { SettingsScreen() }
-            composable("article_reader") { ArticleReaderScreen(navController) }
+            composable("article_reader/{postId}") { backStackEntry ->
+                val postId = backStackEntry.arguments?.getString("postId")
+                val viewModel: MainViewModel = viewModel()
+                val posts by viewModel.posts.collectAsState()
+                val post = posts.find { it.id == postId }
+                
+                if (post != null) {
+                    ArticleReaderScreen(post = post, onBack = { navController.popBackStack() })
+                } else {
+                    navController.popBackStack()
+                }
+            }
         }
     }
 }
@@ -161,11 +173,17 @@ fun HomeScreen(viewModel: MainViewModel, navController: androidx.navigation.NavC
                     Icon(Icons.Filled.Refresh, contentDescription = "Update", tint = Color.White, modifier = Modifier.size(24.dp))
                 }
             }
-            LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                items(
-                    items = posts.distinctBy { it.id },
-                    key = { "${it.source.name}_${it.id}" }
-                ) { post -> PostCard(post, viewModel, navController) }
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = { viewModel.loadPosts() },
+                modifier = Modifier.fillMaxSize()
+            ) {
+                LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    items(
+                        items = posts.distinctBy { it.id },
+                        key = { "${it.source.name}_${it.id}" }
+                    ) { post -> PostCard(post, viewModel, navController) }
+                }
             }
         }
     }
@@ -175,8 +193,7 @@ fun HomeScreen(viewModel: MainViewModel, navController: androidx.navigation.NavC
 fun PostCard(post: UnifiedPost, viewModel: MainViewModel, navController: androidx.navigation.NavController) {
     Card(
         modifier = Modifier.fillMaxWidth().clickable { 
-            ArticleNavigator.currentPost = post
-            navController.navigate("article_reader")
+            navController.navigate("article_reader/${post.id}") 
         },
         shape = RoundedCornerShape(24.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp, pressedElevation = 8.dp),
@@ -208,19 +225,13 @@ fun PostCard(post: UnifiedPost, viewModel: MainViewModel, navController: android
 }
 
 @Composable
-fun ArticleReaderScreen(navController: androidx.navigation.NavController) {
-    val post = ArticleNavigator.currentPost
+fun ArticleReaderScreen(post: UnifiedPost, onBack: () -> Unit) {
     val isDark = isSystemInDarkTheme()
     val context = LocalContext.current
     
-    if (post == null) {
-        navController.popBackStack()
-        return
-    }
-
-    val bgColor = if (isDark) 0xFF0F172A else 0xFFFAFAFA
-    val textColor = if (isDark) 0xFFF8FAFC else 0xFF0F172A
-    val linkColor = 0xFF6366F1
+    val bgColor = if (isDark) "#0F172A" else "#FAFAFA"
+    val textColor = if (isDark) "#F8FAFC" else "#0F172A"
+    val linkColor = "#6366F1"
 
     val htmlContent = """
         <html>
@@ -232,22 +243,26 @@ fun ArticleReaderScreen(navController: androidx.navigation.NavController) {
                 video, iframe { max-width: 100%; border-radius: 16px; margin: 16px 0; }
                 a { color: $linkColor; text-decoration: none; font-weight: bold; }
                 p { margin-bottom: 16px; }
+                h1 { font-size: 24px; margin-bottom: 8px; }
             </style>
         </head>
         <body>
             <h1>${post.title}</h1>
-            <p style="color: #64748B; font-size: 14px;">${post.source.emoji} ${post.source.displayName}</p>
+            <p style="color: #64748B; font-size: 14px; margin-bottom: 24px;">${post.source.emoji} ${post.source.displayName}</p>
             ${post.description}
         </body>
         </html>
     """.trimIndent()
 
-    Column(modifier = Modifier.fillMaxSize().background(Color(bgColor))) {
+    Column(modifier = Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color(bgColor))) {
         Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = { navController.popBackStack() }) { Icon(Icons.Filled.ArrowBack, contentDescription = "Назад", tint = Color(textColor)) }
+            IconButton(onClick = onBack) { 
+                Icon(Icons.Filled.ArrowBack, contentDescription = "Назад", tint = androidx.compose.ui.graphics.Color(textColor)) 
+            }
             Spacer(modifier = Modifier.width(16.dp))
-            Text("Чтение статьи", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(textColor), modifier = Modifier.weight(1f))
+            Text("Чтение", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = androidx.compose.ui.graphics.Color(textColor), modifier = Modifier.weight(1f))
         }
+        
         AndroidView(factory = { ctx ->
             WebView(ctx).apply {
                 webViewClient = WebViewClient()
@@ -259,8 +274,8 @@ fun ArticleReaderScreen(navController: androidx.navigation.NavController) {
             }
         }, modifier = Modifier.weight(1f).fillMaxWidth())
         
-        Button(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(post.link))) }, modifier = Modifier.fillMaxWidth().padding(16.dp).height(56.dp), shape = RoundedCornerShape(16.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6366F1))) {
-            Text("Открыть оригинальный источник", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+        Button(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(post.link))) }, modifier = Modifier.fillMaxWidth().padding(16.dp).height(56.dp), shape = RoundedCornerShape(16.dp)) {
+            Text("Открыть оригинальный источник", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         }
     }
 }
