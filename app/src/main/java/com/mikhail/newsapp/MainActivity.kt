@@ -373,16 +373,79 @@ fun TelegramScreen() {
 // --- НАСТРОЙКИ ---
 @Composable
 fun SettingsScreen() {
+    var showAddDialog by remember { mutableStateOf(false) }
+    var newSourceUrl by remember { mutableStateOf("") }
+    var customSources by remember { mutableStateOf<List<String>>(emptyList()) }
+
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        modifier = Modifier.fillMaxSize().padding(16.dp)
     ) {
         Text("⚙️ Настройки", fontSize = 28.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = androidx.compose.foundation.layout.height(32.dp))
+
         Text("Версия 1.0", fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(modifier = Modifier.height(16.dp))
-        Text("Создано с ❤️ Михаилом", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(modifier = androidx.compose.foundation.layout.height(8.dp))
+        Text(
+            "Создано с ❤️ Михаилом",
+            fontSize = 14.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = androidx.compose.foundation.layout.height(32.dp))
+        Text("Мои источники", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Spacer(modifier = androidx.compose.foundation.layout.height(16.dp))
+
+        Button(onClick = { showAddDialog = true }) {
+            Icon(Icons.Filled.Add, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Добавить RSS")
+        }
+
+        Spacer(modifier = androidx.compose.foundation.layout.height(16.dp))
+
+        if (customSources.isEmpty()) {
+            Text(
+                "Нет добавленных источников",
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else {
+            customSources.forEach { url ->
+                Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                    Text(url, modifier = Modifier.padding(16.dp))
+                }
+            }
+        }
+    }
+
+    if (showAddDialog) {
+        AlertDialog(
+            onDismissRequest = { showAddDialog = false },
+            title = { Text("Добавить RSS источник") },
+            text = {
+                androidx.compose.material3.OutlinedTextField(
+                    value = newSourceUrl,
+                    onValueChange = { newSourceUrl = it },
+                    placeholder = { Text("https://example.com/rss") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    if (newSourceUrl.isNotBlank()) {
+                        customSources = customSources + newSourceUrl
+                        newSourceUrl = ""
+                        showAddDialog = false
+                    }
+                }) {
+                    Text("Добавить")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddDialog = false }) {
+                    Text("Отмена")
+                }
+            }
+        )
     }
 }
 
