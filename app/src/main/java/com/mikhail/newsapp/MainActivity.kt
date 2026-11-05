@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -37,7 +38,6 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -137,7 +137,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-sealed class Screen(val route: String, val title: String, val emoji: String) {
+sealed class Screen(val route: String, val title: String, val icon: String) {
     object HomeScreen : Screen("home", "Главная", "🏠")
     object FavoritesScreen : Screen("favorites", "Избранное", "❤️")
     object ShortsScreen : Screen("shorts", "Шортс", "▶️")
@@ -202,7 +202,7 @@ fun BottomNavigationBar(navController: androidx.navigation.NavController) {
         Screen.allScreens.forEach { screen ->
             NavigationBarItem(
                 icon = {
-                    Text(screen.emoji, fontSize = 26.dp)
+                    Text(screen.icon, fontSize = 26.dp)
                 },
                 label = {
                     Text(
@@ -279,26 +279,16 @@ fun HomeScreen(viewModel: MainViewModel) {
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primary)
                 ) {
-                    Text(
-                        "🔄",
-                        fontSize = 24.dp,
-                        color = Color.White
-                    )
+                    Text("🔄", fontSize = 24.dp, color = Color.White)
                 }
             }
 
-            PullToRefreshBox(
-                isRefreshing = isRefreshing,
-                onRefresh = { viewModel.loadPosts() },
-                modifier = Modifier.fillMaxSize()
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(posts, key = { it.id }) { post ->
-                        UnifiedPostCard(post)
-                    }
+                items(posts, key = { it.id }) { post ->
+                    UnifiedPostCard(post)
                 }
             }
         }
