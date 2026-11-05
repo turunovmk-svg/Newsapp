@@ -159,10 +159,10 @@ object UnifiedRepository {
         val rssUrl = "https://lenta.ru/rss/news"
         val youtubeUrl = "https://www.youtube.com/feeds/videos.xml?channel_id=UC_x5XG1OV2P6uZZ5FSM9Ttw"
         
-        val telegramUrls = listOf(
-            "https://rsshub.app/telegram/channel/telegram",
-            "https://rsshub.rssforever.com/telegram/channel/telegram",
-            "https://rss.fatpandac.com/telegram/channel/telegram"
+        val telegramChannels = listOf(
+            "https://rsshub.app/telegram/channel/durov",
+            "https://rsshub.app/telegram/channel/telegramru",
+            "https://rsshub.app/telegram/channel/mash"
         )
         
         Log.d("RSS_DEBUG", "Starting to fetch all posts...")
@@ -171,8 +171,8 @@ object UnifiedRepository {
         val ytPosts = NetworkClient.fetchRssAsJson(youtubeUrl, SourceType.YOUTUBE)
         
         var tgPosts = emptyList<UnifiedPost>()
-        for (url in telegramUrls) {
-            tgPosts = NetworkClient.fetchRssAsJson(url, SourceType.TELEGRAM)
+        for (channel in telegramChannels) {
+            tgPosts = NetworkClient.fetchRssAsJson(channel, SourceType.TELEGRAM)
             if (tgPosts.isNotEmpty()) break
         }
         
