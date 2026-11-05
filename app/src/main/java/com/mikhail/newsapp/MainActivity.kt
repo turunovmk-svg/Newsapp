@@ -518,7 +518,135 @@ fun AddSourceScreen(viewModel: MainViewModel) {
 
 @Composable
 fun ShortsScreen() {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("🎬 Шортс (в разработке)", fontSize = 24.sp, fontWeight = FontWeight.Bold) }
+    val shorts = remember {
+        listOf(
+            UnifiedPost(
+                id = "shorts_1",
+                title = "Новости технологий",
+                description = "Новые тенденции в разработке мобильных приложений на 2026 год",
+                imageUrl = "",
+                source = SourceType.RSS,
+                link = "https://example.com/tech-news"
+            ),
+            UnifiedPost(
+                id = "shorts_2",
+                title = "Android 16 обновление",
+                description = "Что нового в последней версии Android",
+                imageUrl = "",
+                source = SourceType.YOUTUBE,
+                link = "https://example.com/android-16"
+            ),
+            UnifiedPost(
+                id = "shorts_3",
+                title = "Компоуз уроки",
+                description = "Jetpack Compose для начинающих",
+                imageUrl = "",
+                source = SourceType.TELEGRAM,
+                link = "https://example.com/compose-lessons"
+            ),
+            UnifiedPost(
+                id = "shorts_4",
+                title = "Kotlin корутины",
+                description = "Асинхронное программирование на Kotlin",
+                imageUrl = "",
+                source = SourceType.RSS,
+                link = "https://example.com/kotlin-coroutines"
+            ),
+            UnifiedPost(
+                id = "shorts_5",
+                title = "Дизайн системы",
+                description = "Создание дизайн-системы для приложений",
+                imageUrl = "",
+                source = SourceType.REDDIT,
+                link = "https://example.com/design-system"
+            )
+        )
+    }
+
+    if (shorts.isEmpty()) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("Нет контента для Шортс", fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    } else {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(shorts, key = { it.id }) { post ->
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(400.dp)
+                        .clickable { viewModel.selectPost(post); navController.navigate("article_reader") },
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp)
+                                .background(MaterialTheme.colorScheme.primaryContainer)
+                                .padding(16.dp)
+                        ) {
+                            Text(
+                                text = post.source.emoji,
+                                fontSize = 48.sp
+                            )
+                        }
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        ) {
+                            Text(
+                                text = post.title,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 2
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = post.description,
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 3
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            IconButton(
+                                onClick = { viewModel.toggleFavorite(post.id) },
+                                modifier = Modifier.size(40.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (viewModel.isFavorite(post.id)) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                                    contentDescription = "Favorite",
+                                    tint = if (viewModel.isFavorite(post.id)) Color(0xFFFF4757) else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                            IconButton(
+                                onClick = { viewModel.selectPost(post); navController.navigate("article_reader") },
+                                modifier = Modifier.size(40.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.OpenInNew,
+                                    contentDescription = "Open",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
