@@ -38,7 +38,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -173,17 +172,11 @@ fun HomeScreen(viewModel: MainViewModel, navController: androidx.navigation.NavC
                     Icon(Icons.Filled.Refresh, contentDescription = "Update", tint = Color.White, modifier = Modifier.size(24.dp))
                 }
             }
-            PullToRefreshBox(
-                isRefreshing = isRefreshing,
-                onRefresh = { viewModel.loadPosts() },
-                modifier = Modifier.fillMaxSize()
-            ) {
-                LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    items(
-                        items = posts.distinctBy { it.id },
-                        key = { "${it.source.name}_${it.id}" }
-                    ) { post -> PostCard(post, viewModel, navController) }
-                }
+            LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                items(
+                    items = posts.distinctBy { it.id },
+                    key = { "${it.source.name}_${it.id}" }
+                ) { post -> PostCard(post, viewModel, navController) }
             }
         }
     }
@@ -229,9 +222,9 @@ fun ArticleReaderScreen(post: UnifiedPost, onBack: () -> Unit) {
     val isDark = isSystemInDarkTheme()
     val context = LocalContext.current
     
-    val bgColor = if (isDark) "#0F172A" else "#FAFAFA"
-    val textColor = if (isDark) "#F8FAFC" else "#0F172A"
-    val linkColor = "#6366F1"
+    val bgColor = if (isDark) 0xFF0F172A else 0xFFFAFAFA
+    val textColor = if (isDark) 0xFFF8FAFC else 0xFF0F172A
+    val linkColor = 0xFF6366F1
 
     val htmlContent = """
         <html>
@@ -254,13 +247,13 @@ fun ArticleReaderScreen(post: UnifiedPost, onBack: () -> Unit) {
         </html>
     """.trimIndent()
 
-    Column(modifier = Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color(bgColor))) {
+    Column(modifier = Modifier.fillMaxSize().background(Color(bgColor))) {
         Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) { 
-                Icon(Icons.Filled.ArrowBack, contentDescription = "Назад", tint = androidx.compose.ui.graphics.Color(textColor)) 
+                Icon(Icons.Filled.ArrowBack, contentDescription = "Назад", tint = Color(textColor)) 
             }
             Spacer(modifier = Modifier.width(16.dp))
-            Text("Чтение", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = androidx.compose.ui.graphics.Color(textColor), modifier = Modifier.weight(1f))
+            Text("Чтение", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(textColor), modifier = Modifier.weight(1f))
         }
         
         AndroidView(factory = { ctx ->
