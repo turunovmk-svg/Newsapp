@@ -57,7 +57,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -243,7 +242,7 @@ fun HomeScreen(viewModel: MainViewModel) {
                     modifier = Modifier
                         .size(44.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+                        .background(Color(0xFF6C63FF).copy(alpha = 0.1f))
                 ) {
                     Icon(
                         Icons.Filled.Refresh,
@@ -296,8 +295,8 @@ fun FavoritesScreen(viewModel: MainViewModel) {
                 Icon(
                     Icons.Filled.FavoriteBorder,
                     contentDescription = null,
-                    modifier = Modifier.size(80.dp).alpha(0.3f),
-                    tint = MaterialTheme.colorScheme.primary
+                    modifier = Modifier.size(80.dp),
+                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
                 )
                 Spacer(modifier = Modifier.height(20.dp))
                 Text(
@@ -359,7 +358,7 @@ fun AddSourceScreen(viewModel: MainViewModel) {
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("RSS", "YouTube", "Telegram").forEach { type ->
-                FilterChip(
+                androidx.compose.material3.FilterChip(
                     selected = sourceType == type,
                     onClick = { sourceType = type },
                     label = { Text(type) }
@@ -459,12 +458,7 @@ fun UnifiedPostCard(post: UnifiedPost) {
                     )
                 }
             }
-            .shadow(
-                elevation = 8.dp,
-                shape = RoundedCornerShape(20.dp),
-                ambientColor = Color.Black.copy(alpha = 0.08f),
-                spotColor = Color.Black.copy(alpha = 0.08f)
-            ),
+            .shadow(8.dp, RoundedCornerShape(20.dp), Color.Black.copy(alpha = 0.08f)),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -554,7 +548,7 @@ fun ShortItem(short: ShortItem) {
                 .align(Alignment.BottomCenter)
                 .background(
                     Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, Color.Black.copy(0.8f))
+                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f))
                     )
                 )
         )
@@ -581,7 +575,7 @@ fun ShortItem(short: ShortItem) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = short.description,
-                color = Color.White.copy(0.9f),
+                color = Color.White.copy(alpha = 0.9f),
                 fontSize = 14.sp,
                 maxLines = 3
             )
