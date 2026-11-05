@@ -14,7 +14,6 @@
         android:label="NewsApp"
         android:roundIcon="@android:drawable/sym_def_app_icon"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.Material.Light.NoActionBar"
         tools:targetApi="34">
         
         <activity

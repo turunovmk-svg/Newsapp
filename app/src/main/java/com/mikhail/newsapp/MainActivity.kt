@@ -7,16 +7,12 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.media.MediaPlayer
 import android.widget.MediaController
 import android.widget.VideoView
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -26,7 +22,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.foundation.text.input.ImeAction
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.AlertDialog
@@ -61,8 +57,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -88,45 +82,9 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            // Запрос разрешения на уведомления
-            val permissionLauncher = rememberLauncherForActivityResult(
-                ActivityResultContracts.RequestPermission()
-            ) { granted: Boolean ->
-                if (granted) {
-                    // Разрешение получено
-                }
-            }
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-            }
-
-            // Кастомная цветовая палитра
-            val customLightColorScheme = lightColorScheme(
-                primary = Color(0xFF6C63FF),
-                secondary = Color(0xFF00D4FF),
-                background = Color(0xFFF8F9FA),
-                surface = Color.White,
-                onPrimary = Color.White,
-                onSecondary = Color.White,
-                onBackground = Color(0xFF1A1A2E),
-                onSurface = Color(0xFF1A1A2E)
-            )
-
-            val customDarkColorScheme = darkColorScheme(
-                primary = Color(0xFF8B83FF),
-                secondary = Color(0xFF00E5FF),
-                background = Color(0xFF0F0F1E),
-                surface = Color(0xFF1A1A2E),
-                onPrimary = Color.White,
-                onSecondary = Color.White,
-                onBackground = Color(0xFFE0E0E0),
-                onSurface = Color(0xFFE0E0E0)
-            )
-
             val isSystemInDarkTheme = androidx.compose.foundation.isSystemInDarkTheme()
             MaterialTheme(
-                colorScheme = if (isSystemInDarkTheme) customDarkColorScheme else customLightColorScheme
+                colorScheme = if (isSystemInDarkTheme) darkColorScheme() else lightColorScheme()
             ) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
