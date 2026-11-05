@@ -75,6 +75,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Создание канала уведомлений
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 "news_channel",
@@ -86,6 +87,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
+            // Кастомная премиум цветовая палитра
             val customLightColorScheme = lightColorScheme(
                 primary = Color(0xFF6366F1),
                 onPrimary = Color.White,
