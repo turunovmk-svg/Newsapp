@@ -191,12 +191,14 @@ class MainViewModel(application: android.app.Application) : AndroidViewModel(app
     fun addSource(type: SourceType, url: String) {
         viewModelScope.launch {
             try {
+                Log.d("NewsApp", "Adding source: $type - $url")
                 val current = AppPrefs.getSources()
                 val newSource = SourceItem("${type.name}_${System.currentTimeMillis()}", type, url)
                 AppPrefs.saveSources(current + newSource)
+                Log.d("NewsApp", "Source saved, reloading posts")
                 loadPosts()
             } catch (e: Exception) {
-                Log.e("MainViewModel", "Add source error: ${e.message}")
+                Log.e("NewsApp", "Error in addSource: ${e.message}", e)
             }
         }
     }
