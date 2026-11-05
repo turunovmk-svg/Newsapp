@@ -63,10 +63,10 @@ object NetworkClient {
                     val enclosureType = enclosure?.get("type")?.toString()
 
                     val rawImageUrl = when {
-                        thumbnail.isNotEmpty() && thumbnail.startsWith("http") -> thumbnail
-                        enclosureLink.isNotEmpty() &&
+                        thumbnail?.isNotEmpty() == true && thumbnail.startsWith("http") -> thumbnail
+                        enclosureLink?.isNotEmpty() == true &&
                             enclosureLink.startsWith("http") &&
-                            (enclosureType.isEmpty() || enclosureType.contains("image")) -> enclosureLink
+                            (enclosureType?.isEmpty() == true || enclosureType.contains("image")) -> enclosureLink
                         else -> extractImageUrlFromHtml(description)
                             ?: extractImageUrlFromHtml(content)
                     }
