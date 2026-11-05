@@ -203,15 +203,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun addSource(type: SourceType, url: String) {
         viewModelScope.launch {
             try {
-                Toast.makeText(context, "Добавляем источник...", Toast.LENGTH_SHORT).show()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Добавляем источник...", Toast.LENGTH_SHORT).show()
+                }
                 val current = getSources()
                 val newSource = SourceItem("${type.name}_${System.currentTimeMillis()}", type, url)
                 saveSources(current + newSource)
-                Toast.makeText(context, "Источник добавлен! Загружаем новости...", Toast.LENGTH_SHORT).show()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Источник добавлен! Загружаем новости...", Toast.LENGTH_SHORT).show()
+                }
                 loadPosts()
             } catch (e: Exception) {
                 // ЕСЛИ ВЫЛЕТ ЗДЕСЬ, МЫ УВИДИМ ТЕКСТ ОШИБКИ НА ЭКРАНЕ!
-                Toast.makeText(context, "ОШИБКА: ${e.message}", Toast.LENGTH_LONG).show()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "ОШИБКА: ${e.message}", Toast.LENGTH_LONG).show()
+                }
                 Log.e("MainViewModel", "Add source CRASH: ${e.message}", e)
             }
         }
@@ -224,7 +230,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 saveSources(current.filter { it.id != sourceId })
                 loadPosts()
             } catch (e: Exception) {
-                Toast.makeText(context, "Ошибка удаления: ${e.message}", Toast.LENGTH_SHORT).show()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Ошибка удаления: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
