@@ -144,20 +144,30 @@ class MainViewModel(application: android.app.Application) : AndroidViewModel(app
     
     fun loadPosts() {
         viewModelScope.launch {
-            _isRefreshing.value = true
-            val sources = userSources.value
-            _posts.value = if (sources.isEmpty()) emptyList() else {
-                sources.map { NetworkClient.fetchRssAsJson(it.url, it.type) }.flatten().shuffled()
+            try {
+                _isRefreshing.value = true
+                val sources = userSources.value
+                _posts.value = if (sources.isEmpty()) emptyList() else {
+                    sources.map { NetworkClient.fetchRssAsJson(it.url, it.type) }.flatten().shuffled()
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("NewsApp", "Error loading posts", e)
+                _posts.value = emptyList()
+            } finally {
+                _isRefreshing.value = false
             }
-            _isRefreshing.value = false
         }
     }
     
     fun toggleFavorite(postId: String) {
         viewModelScope.launch {
-            val current = favorites.value
-            val newFav = if (current.contains(postId)) current - postId else current + postId
-            DataStoreManager.saveFavorites(newFav)
+            try {
+                val current = favorites.value
+                val newFav = if (current.contains(postId)) current - postId else current + postId
+                DataStoreManager.saveFavorites(newFav)
+            } catch (e: Exception) {
+                android.util.Log.e("NewsApp", "Error toggling favorite", e)
+            }
         }
     }
     
@@ -165,18 +175,26 @@ class MainViewModel(application: android.app.Application) : AndroidViewModel(app
     
     fun addSource(type: SourceType, url: String) {
         viewModelScope.launch {
-            val current = userSources.value
-            val newSource = SourceItem("${type.name}_${System.currentTimeMillis()}", type, url)
-            DataStoreManager.saveSources(current + newSource)
-            loadPosts()
+            try {
+                val current = userSources.value
+                val newSource = SourceItem("${type.name}_${System.currentTimeMillis()}", type, url)
+                DataStoreManager.saveSources(current + newSource)
+                loadPosts()
+            } catch (e: Exception) {
+                android.util.Log.e("NewsApp", "Error adding source", e)
+            }
         }
     }
     
     fun removeSource(sourceId: String) {
         viewModelScope.launch {
-            val current = userSources.value
-            DataStoreManager.saveSources(current.filter { it.id != sourceId })
-            loadPosts()
+            try {
+                val current = userSources.value
+                DataStoreManager.saveSources(current.filter { it.id != sourceId })
+                loadPosts()
+            } catch (e: Exception) {
+                android.util.Log.e("NewsApp", "Error removing source", e)
+            }
         }
     }
 }
