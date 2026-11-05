@@ -128,7 +128,7 @@ fun BottomNav(navController: androidx.navigation.NavController) {
 @Composable
 fun HomeScreen(viewModel: MainViewModel, navController: androidx.navigation.NavController) {
     val posts by viewModel.posts.collectAsState()
-    val sources by viewModel.userSources.collectAsState()
+    val sources = AppPrefs.getSources()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     
     if (sources.isEmpty()) {
@@ -266,7 +266,7 @@ fun ArticleReaderScreen(navController: androidx.navigation.NavController) {
 @Composable
 fun FavoritesScreen(viewModel: MainViewModel, navController: androidx.navigation.NavController) {
     val posts by viewModel.posts.collectAsState()
-    val favorites by viewModel.favorites.collectAsState()
+    val favorites = AppPrefs.getFavorites()
     val favPosts = posts.filter { it.id in favorites }
     
     if (favPosts.isEmpty()) {
@@ -296,7 +296,7 @@ fun FavoritesScreen(viewModel: MainViewModel, navController: androidx.navigation
 fun AddSourceScreen(viewModel: MainViewModel) {
     var sourceUrl by remember { mutableStateOf("") }
     var sourceType by remember { mutableStateOf(SourceType.RSS) }
-    val userSources by viewModel.userSources.collectAsState()
+    val userSources = AppPrefs.getSources()
     
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text("➕ Добавить источник", fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 24.dp))
