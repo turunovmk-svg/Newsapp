@@ -14,6 +14,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.URL
+import java.io.StringReader
+import javax.xml.parsers.DocumentBuilderFactory
+import javax.xml.transform.Transformer
+import javax.xml.transform.TransformerFactory
+import javax.xml.transform.dom.DOMSource
+import javax.xml.transform.stream.StreamResult
+import org.w3c.dom.Document
+import org.w3c.dom.Element
+import org.w3c.dom.NodeList
+import org.xml.sax.InputSource
 
 data class UnifiedPost(
     val id: String,
@@ -306,5 +316,107 @@ class MainViewModel(private val appContext: Context) : ViewModel() {
     
     fun selectPost(post: UnifiedPost?) {
         _selectedPost.value = post
+    }
+
+    // MARK: - OPML Export/Import
+
+    fun exportSourcesToOpml(): String {
+        val doc = try {
+            DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument()
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "OPML export document error: ${e.message}")
+            return ""
+        }
+
+        val opml = doc.createElement("opml")
+        opml.setAttribute("version", "1.0")
+        doc.appendChild(opml)
+
+        val head = doc.createElement("head")
+        opml.appendChild(head)
+        val title = doc.createElement("title")
+        title.appendChild(doc.createTextNode("NewsApp Sources"))
+        head.appendChild(title)
+
+        val body = doc.createElement("body")
+        opml.appendChild(body)
+
+        for (source in _sources.value) {
+            val outline = doc.createElement("outline")
+            outline.setAttribute("text", source.type.displayName)
+            outline.setAttribute("title", source.type.displayName)
+            outline.setAttribute("type", "rss")
+            outline.setAttribute("xmlUrl", source.url)
+            outline.setAttribute("htmlUrl", source.url)
+            outline.setAttribute("sourceType", source.type.name)
+            body.appendChild(outline)
+        }
+
+        return try {
+            val transformer = TransformerFactory.newInstance().newTransformer()
+            transformer.setOutputProperty(javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION, "no")
+            transformer.setOutputProperty(javax.xml.transform.OutputKeys.ENCODING, "UTF-8")
+            transformer.setOutputProperty(javax.xml.transform.OutputKeys.INDENT, "yes")
+            val writer = java.io.StringWriter()
+            transformer.transform(DOMSource(doc), StreamResult(writer))
+            writer.toString()
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "OPML export transform error: ${e.message}")
+            ""
+        }
+    }
+
+    fun importSourcesFromOpml(xml: String): Int {
+        val count = try {
+            val factory = DocumentBuilderFactory.newInstance()
+            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
+            factory.setFeature("http://xml.org/sax/features/external-general-entities", false)
+            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false)
+            val builder = factory.newDocumentBuilder()
+            val doc = builder.parse(InputSource(StringReader(xml)))
+
+            val outlineList = doc.getElementsByTagName("outline")
+            var imported = 0
+            val existingUrls = _sources.value.map { it.url }.toMutableSet()
+
+            for (i in 0 until outlineList.length) {
+                val outline = outlineList.item(i) as Element
+                val url = outline.getAttribute("xmlUrl")
+                val typeName = outline.getAttribute("sourceType")
+                val title = outline.getAttribute("title").takeIf { it.isNotBlank() } ?: url
+
+                if (url.isNullOrBlank() || !url.startsWith("http")) continue
+                if (existingUrls.contains(url)) continue
+
+                val type = try {
+                    SourceType.valueOf(typeName.takeIf { it.isNotBlank() } ?: "RSS")
+                } catch (e: Exception) {
+                    SourceType.RSS
+                }
+
+                val newSource = SourceItem(
+                    id = "${type.name}_${System.currentTimeMillis()}_${i}",
+                    type = type,
+                    url = url
+                )
+
+                _sources.value = _sources.value + newSource
+                existingUrls.add(url)
+                imported++
+            }
+
+            saveSources(_sources.value)
+            imported
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "OPML import error: ${e.message}")
+            -1
+        }
+
+        return count
+    }
+
+    fun clearAllSources() {
+        _sources.value = emptyList()
+        saveSources(emptyList())
     }
 }

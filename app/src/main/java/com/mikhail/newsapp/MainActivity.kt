@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -32,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -80,6 +82,41 @@ fun AppNavigation() {
     val context = LocalContext.current
     val viewModel: MainViewModel = remember { MainViewModel(context) }
     
+    val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/xml")) { uri ->
+        if (uri != null) {
+            try {
+                val opmlContent = viewModel.exportSourcesToOpml()
+                if (opmlContent.isNotBlank()) {
+                    context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+                        outputStream.write(opmlContent.toByteArray(Charsets.UTF_8))
+                    }
+                    Toast.makeText(context, "Источники экспортированы", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, "Нет источников для экспорта", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "Ошибка экспорта: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+    
+    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            try {
+                val inputStream = context.contentResolver.openInputStream(uri) ?: return@rememberLauncherForActivityResult
+                val opmlContent = inputStream.bufferedReader().use { it.readText() }
+                val imported = viewModel.importSourcesFromOpml(opmlContent)
+                if (imported >= 0) {
+                    Toast.makeText(context, "Импортировано источников: $imported", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, "Ошибка импорта OPML", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(context, "Ошибка чтения файла: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+    
     Scaffold(bottomBar = { BottomNav(navController) }) { padding ->
         NavHost(navController, Screen.Home.route, Modifier.padding(padding)) {
             composable(Screen.Home.route) { 
@@ -92,7 +129,17 @@ fun AppNavigation() {
             composable(Screen.AddSource.route) { 
                 AddSourceScreen(viewModel) 
             }
-            composable(Screen.Settings.route) { SettingsScreen() }
+            composable(Screen.Settings.route) { 
+                SettingsScreen(
+                    onExportSources = { exportLauncher.launch("news_app_sources.opml") },
+                    onImportSources = { importLauncher.launch() },
+                    onClearAllSources = { 
+                        viewModel.clearAllSources()
+                        Toast.makeText(context, "Источники удалены", Toast.LENGTH_SHORT).show()
+                    },
+                    sourcesCount = viewModel.getSources().size
+                ) 
+            }
             composable("article_reader") { 
                 val post = viewModel.selectedPost.value
                 if (post != null) {
@@ -344,7 +391,56 @@ fun ShortsScreen() {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("🎬 Шортс (в разработке)", fontSize = 24.sp, fontWeight = FontWeight.Bold) }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen() {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("️ Настройки (в разработке)", fontSize = 24.sp, fontWeight = FontWeight.Bold) }
+fun SettingsScreen(
+    onExportSources: () -> Unit,
+    onImportSources: () -> Unit,
+    onClearAllSources: () -> Unit,
+    sourcesCount: Int
+) {
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Text("Настройки", fontSize = 28.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 24.dp))
+        
+        Text("Источники", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
+        Text("Количество источников: $sourcesCount", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Button(
+            onClick = onExportSources,
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+        ) {
+            Text("Экспортировать источники (OPML)", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+        }
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        Button(
+            onClick = onImportSources,
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+        ) {
+            Text("Импортировать источники (OPML)", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+        }
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        Button(
+            onClick = onClearAllSources,
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+        ) {
+            Text("Удалить все источники", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+        }
+        
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        Text("О приложении", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
+        Text("NewsApp v1.0", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("Гithub: turunovmk-svg/Newsapp", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
 }
