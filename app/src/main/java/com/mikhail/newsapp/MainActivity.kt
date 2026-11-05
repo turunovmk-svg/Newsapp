@@ -23,18 +23,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home as IcHome
-import androidx.compose.material.icons.filled.Favorite as IcFavorite
-import androidx.compose.material.icons.filled.FavoriteBorder as IcFavoriteBorder
-import androidx.compose.material.icons.filled.Add as IcAdd
-import androidx.compose.material.icons.filled.Delete as IcDelete
-import androidx.compose.material.icons.filled.Refresh as IcRefresh
-import androidx.compose.material.icons.filled.Search as IcSearch
-import androidx.compose.material.icons.filled.Settings as IcSettings
-import androidx.compose.material.icons.filled.PlayCircle as IcPlayCircle
-import androidx.compose.material.icons.filled.ChatBubble as IcChatBubble
-import androidx.compose.material.icons.filled.Share as IcShare
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -151,12 +139,12 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
-    object HomeScreen : Screen("home", "Главная", IcHome)
-    object FavoritesScreen : Screen("favorites", "Избранное", IcFavorite)
-    object ShortsScreen : Screen("shorts", "Шортс", IcPlayCircle)
-    object AddSourceScreen : Screen("add_source", "Добавить", IcAdd)
-    object SettingsScreen : Screen("settings", "Настройки", IcSettings)
+sealed class Screen(val route: String, val title: String, val emoji: String) {
+    object HomeScreen : Screen("home", "Главная", "🏠")
+    object FavoritesScreen : Screen("favorites", "Избранное", "❤️")
+    object ShortsScreen : Screen("shorts", "Шортс", "▶️")
+    object AddSourceScreen : Screen("add_source", "Добавить", "➕")
+    object SettingsScreen : Screen("settings", "Настройки", "⚙️")
 
     companion object {
         val allScreens = listOf(HomeScreen, FavoritesScreen, ShortsScreen, AddSourceScreen, SettingsScreen)
@@ -226,11 +214,7 @@ fun BottomNavigationBar(navController: androidx.navigation.NavController) {
         Screen.allScreens.forEach { screen ->
             NavigationBarItem(
                 icon = {
-                    Icon(
-                        screen.icon,
-                        contentDescription = screen.title,
-                        modifier = Modifier.size(26.dp)
-                    )
+                    Text(screen.emoji, fontSize = 26.dp)
                 },
                 label = {
                     Text(
@@ -259,6 +243,7 @@ fun BottomNavigationBar(navController: androidx.navigation.NavController) {
     }
 }
 
+// --- ГЛАВНАЯ (общая лента) ---
 @Composable
 fun HomeScreen(viewModel: MainViewModel) {
     val posts by viewModel.posts.collectAsState()
@@ -322,6 +307,7 @@ fun HomeScreen(viewModel: MainViewModel) {
     }
 }
 
+// --- КАРТОЧКА ПОСТА ---
 @Composable
 fun UnifiedPostCard(post: UnifiedPost) {
     val context = LocalContext.current
@@ -415,11 +401,9 @@ fun UnifiedPostCard(post: UnifiedPost) {
                                     MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                             )
                     ) {
-                        Icon(
-                            imageVector = if (FavoritesRepository.isFavorite(post.id)) IcFavorite else IcFavoriteBorder,
-                            contentDescription = "В избранное",
-                            tint = if (FavoritesRepository.isFavorite(post.id)) Color(0xFFFF4757) else MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(22.dp)
+                        Text(
+                            text = if (FavoritesRepository.isFavorite(post.id)) "❤️" else "𖤐",
+                            fontSize = 22.dp
                         )
                     }
                 }
@@ -428,6 +412,7 @@ fun UnifiedPostCard(post: UnifiedPost) {
     }
 }
 
+// --- ЯЩИК СТАТЬИ (WEBVIEW) ---
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ArticleReaderScreen(viewModel: MainViewModel, onBack: () -> Unit) {
@@ -528,6 +513,7 @@ fun ArticleReaderScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     }
 }
 
+// --- ШОРТСЫ ---
 @Composable
 fun ShortsScreen() {
     val shortsList = remember { ShortsRepository.getShorts() }
@@ -634,6 +620,7 @@ fun ActionButton(emoji: String, count: String) {
     }
 }
 
+// --- НАСТРОЙКИ ---
 @Composable
 fun SettingsScreen() {
     var showAddDialog by remember { mutableStateOf(false) }
@@ -718,6 +705,6 @@ fun SettingsScreen() {
 data class ShortItem(val id: Int, val title: String, val description: String, val imageUrl: String, val source: String)
 object ShortsRepository {
     fun getShorts(): List<ShortItem> {
-        return emptyList()
+        return emptyList() // Убираем тестовые данные
     }
 }
