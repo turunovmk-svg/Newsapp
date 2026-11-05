@@ -58,6 +58,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
     object YouTube : Screen("youtube", "YouTube", Icons.Filled.PlayArrow)
     object Telegram : Screen("telegram", "Telegram", Icons.Filled.Send)
     object Search : Screen("search", "Поиск", Icons.Filled.Search)
+    object Favorites : Screen("favorites", "Избранное", Icons.Filled.Bookmark)
     object Settings : Screen("settings", "Ещё", Icons.Filled.Settings)
     
     companion object {
@@ -83,6 +84,10 @@ fun AppNavigation() {
             composable(Screen.Search.route) {
                 val viewModel: MainViewModel = viewModel()
                 SearchScreen(viewModel)
+            }
+            composable(Screen.Favorites.route) {
+                val viewModel: MainViewModel = viewModel()
+                FavoritesScreen(viewModel)
             }
             composable(Screen.Settings.route) { SettingsScreen() }
         }
@@ -186,6 +191,57 @@ fun SearchScreen(viewModel: MainViewModel) {
     }
 }
 
+// --- ИЗБРАННОЕ ---
+object FavoritesRepository {
+    private val _favorites = MutableStateFlow<Set<String>>(emptySet())
+    val favorites: StateFlow<Set<String>> = _favorites
+
+    fun toggleFavorite(postId: String) {
+        _favorites.value = if (_favorites.value.contains(postId)) {
+            _favorites.value - postId
+        } else {
+            _favorites.value + postId
+        }
+    }
+
+    fun isFavorite(postId: String): Boolean = _favorites.value.contains(postId)
+}
+
+@Composable
+fun FavoritesScreen(viewModel: MainViewModel) {
+    val posts by viewModel.posts.collectAsState()
+    val favorites by FavoritesRepository.favorites.collectAsState()
+    val favoritePosts = posts.filter { it.id in favorites }
+
+    if (favoritePosts.isEmpty()) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    Icons.Filled.Bookmark,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    "Нет избранных постов",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    } else {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(favoritePosts, key = { it.id }) { post ->
+                UnifiedPostCard(post)
+            }
+        }
+    }
+}
+
 @Composable
 fun UnifiedPostCard(post: UnifiedPost) {
     val context = LocalContext.current
@@ -216,6 +272,18 @@ fun UnifiedPostCard(post: UnifiedPost) {
                 Text(post.title, fontSize = 18.sp, fontWeight = FontWeight.Bold, maxLines = 2)
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(post.description, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3)
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                IconButton(onClick = { FavoritesRepository.toggleFavorite(post.id) }) {
+                    Icon(
+                        imageVector = if (FavoritesRepository.isFavorite(post.id)) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                        contentDescription = "В избранное",
+                        tint = if (FavoritesRepository.isFavorite(post.id)) Color.Red else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }
