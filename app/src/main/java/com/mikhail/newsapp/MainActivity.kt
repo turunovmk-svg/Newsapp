@@ -15,14 +15,26 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.material.icons.filled.ChatBubble
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -39,7 +51,6 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -184,10 +195,13 @@ fun AppNavigation() {
             }
             composable("article_reader") {
                 val viewModel: MainViewModel = viewModel()
-                ArticleReaderScreen(viewModel = viewModel, onBack = {
-                    viewModel.closeArticle()
-                    navController.popBackStack()
-                })
+                ArticleReaderScreen(
+                    viewModel = viewModel,
+                    onBack = {
+                        viewModel.closeArticle()
+                        navController.popBackStack()
+                    }
+                )
             }
         }
     }
@@ -299,7 +313,7 @@ fun HomeScreen(viewModel: MainViewModel) {
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 items(posts, key = { it.id }) { post ->
-                    UnifiedPostCard(post = post)
+                    UnifiedPostCard(post)
                 }
             }
         }
