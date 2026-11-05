@@ -26,7 +26,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.input.ImeAction
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.AlertDialog
@@ -35,6 +35,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -49,6 +50,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -242,7 +244,7 @@ fun HomeScreen(viewModel: MainViewModel) {
                     modifier = Modifier
                         .size(44.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF6C63FF).copy(alpha = 0.1f))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     Icon(
                         Icons.Filled.Refresh,
@@ -296,7 +298,7 @@ fun FavoritesScreen(viewModel: MainViewModel) {
                     Icons.Filled.FavoriteBorder,
                     contentDescription = null,
                     modifier = Modifier.size(80.dp),
-                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                    tint = MaterialTheme.colorScheme.primary
                 )
                 Spacer(modifier = Modifier.height(20.dp))
                 Text(
@@ -334,6 +336,7 @@ fun FavoritesScreen(viewModel: MainViewModel) {
 }
 
 // --- ДОБАВИТЬ ИСТОЧНИК ---
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddSourceScreen(viewModel: MainViewModel) {
     var sourceUrl by remember { mutableStateOf("") }
@@ -458,7 +461,7 @@ fun UnifiedPostCard(post: UnifiedPost) {
                     )
                 }
             }
-            .shadow(8.dp, RoundedCornerShape(20.dp), Color.Black.copy(alpha = 0.08f)),
+            .shadow(elevation = 8.dp, shape = RoundedCornerShape(20.dp), ambientColor = Color(0f, 0f, 0f, 0.08f), spotColor = Color(0f, 0f, 0f, 0.08f)),
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -512,7 +515,7 @@ fun UnifiedPostCard(post: UnifiedPost) {
                         tint = if (FavoritesRepository.isFavorite(post.id))
                             Color(0xFFFF4757)
                         else
-                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                            MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -548,7 +551,7 @@ fun ShortItem(short: ShortItem) {
                 .align(Alignment.BottomCenter)
                 .background(
                     Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f))
+                        colors = listOf(Color.Transparent, Color(0f, 0f, 0f, 0.8f))
                     )
                 )
         )
@@ -575,7 +578,7 @@ fun ShortItem(short: ShortItem) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = short.description,
-                color = Color.White.copy(alpha = 0.9f),
+                color = Color(1f, 1f, 1f, 0.9f),
                 fontSize = 14.sp,
                 maxLines = 3
             )
