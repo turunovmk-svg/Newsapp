@@ -18,6 +18,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.gestures.pointerInput
+import androidx.compose.foundation.gestures.orientedDrag
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.animation.Animatable
+import androidx.compose.animation.animateTo
+import androidx.compose.animation.snapTo
+import androidx.compose.animation.decay
+import androidx.compose.animation.VectorSpec
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -272,32 +280,105 @@ fun HomeScreen(viewModel: MainViewModel, navController: androidx.navigation.NavC
 
 @Composable
 fun PostCard(post: UnifiedPost, viewModel: MainViewModel, navController: androidx.navigation.NavController) {
-    Card(
-        modifier = Modifier.fillMaxWidth().clickable { 
-            viewModel.selectPost(post)
-            navController.navigate("article_reader") 
-        },
-        shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp, pressedElevation = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-    ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(32.dp)) {
-                        Box(contentAlignment = Alignment.Center) { Text(post.source.emoji, fontSize = 16.sp) }
-                    }
-                    Spacer(Modifier.width(12.dp))
-                    Text(post.source.displayName.takeIf { it.isNotBlank() } ?: "Источник", color = MaterialTheme.colorScheme.primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+    val isFavorite = viewModel.isFavorite(post.id)
+    val offsetX = remember { Animatable(0f) }
+    val offsetY = remember { Animatable(0f) }
+    val swipeOffset by remember { mutableFloatStateOf(0f) }
+    val isSwipedRight by remember { mutableStateOf(false) }
+    val isSwipedLeft by remember { mutableStateOf(false) }
+    val isFavoriteAnimating by remember { mutableStateOf(false) }
+    
+    fun resetCard() {
+        offsetX.animateTo(0f)
+        offsetY.animateTo(0f)
+        swipeOffset = 0f
+        isSwipedRight = false
+        isSwipedLeft = false
+    }
+    
+    fun completeSwipeRight() {
+        offsetX.animateTo(1000f)
+        isSwipedRight = true
+        viewModel.toggleFavorite(post.id)
+    }
+    
+    fun completeSwipeLeft() {
+        offsetX.animateTo(-1000f)
+        isSwipedLeft = true
+        viewModel.removeSource(post.id)
+    }
+    
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .offset { IntOffset(swipeOffset.roundToInt(), 0) }
+                .pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragStart = { change, dragAmount ->
+                            change.consume()
+                            offsetX.value = swipeOffset
+                            offsetY.value = 0f
+                        },
+                        onDrag = { change, dragAmount ->
+                            change.consume()
+                            swipeOffset += dragAmount.x
+                            offsetX.value = swipeOffset
+                            offsetY.value = dragAmount.y
+                        },
+                        onDragEnd = { change, dragAmount ->
+                            change.consume()
+                            val velocity = dragAmount.y / change.duration
+                            val targetValue = swipeOffset + velocity * 1000f
+                            if (swipeOffset > 150f) {
+                                completeSwipeRight()
+                            } else if (swipeOffset < -150f) {
+                                completeSwipeLeft()
+                            } else {
+                                snapTo(
+                                    targetValue = 0f,
+                                    initialValue = swipeOffset,
+                                    velocityThreshold = 0f,
+                                    decayThreshold = 0f
+                                ).update(swipeOffset)
+                                offsetX.value = swipeOffset
+                                offsetY.value = 0f
+                            }
+                        }
+                    )
                 }
-                Spacer(Modifier.height(16.dp))
-                Text(post.title.takeIf { it.isNotBlank() } ?: "Без названия", fontSize = 20.sp, fontWeight = FontWeight.Bold, maxLines = 2, color = MaterialTheme.colorScheme.onSurface, lineHeight = 26.sp)
-                Spacer(Modifier.height(12.dp))
-                Text(post.description.takeIf { it.isNotBlank() } ?: "", fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, lineHeight = 22.sp)
-                Spacer(Modifier.height(16.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    IconButton(onClick = { viewModel.toggleFavorite(post.id) }, modifier = Modifier.size(44.dp).clip(CircleShape).background(if (viewModel.isFavorite(post.id)) Color(0xFFFF4757).copy(0.1f) else MaterialTheme.colorScheme.surfaceVariant.copy(0.5f))) {
-                        Icon(imageVector = if (viewModel.isFavorite(post.id)) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder, contentDescription = "Favorite", tint = if (viewModel.isFavorite(post.id)) Color(0xFFFF4757) else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
+                .clickable { 
+                    viewModel.selectPost(post)
+                    navController.navigate("article_reader") 
+                },
+            shape = RoundedCornerShape(24.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp, pressedElevation = 8.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(32.dp)) {
+                            Box(contentAlignment = Alignment.Center) { Text(post.source.emoji, fontSize = 16.sp) }
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Text(post.source.displayName.takeIf { it.isNotBlank() } ?: "Источник", color = MaterialTheme.colorScheme.primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                        Spacer(modifier = Modifier.weight(1f))
+                        if (isSwipedRight) {
+                            Icon(Icons.Filled.Favorite, contentDescription = null, tint = Color(0xFFFF4757), modifier = Modifier.size(32.dp))
+                        } else if (isSwipedLeft) {
+                            Icon(Icons.Filled.Delete, contentDescription = null, tint = Color(0xFFF44336), modifier = Modifier.size(32.dp))
+                        }
+                    }
+                    Spacer(Modifier.height(16.dp))
+                    Text(post.title.takeIf { it.isNotBlank() } ?: "Без названия", fontSize = 20.sp, fontWeight = FontWeight.Bold, maxLines = 2, color = MaterialTheme.colorScheme.onSurface, lineHeight = 26.sp)
+                    Spacer(Modifier.height(12.dp))
+                    Text(post.description.takeIf { it.isNotBlank() } ?: "", fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, lineHeight = 22.sp)
+                    Spacer(Modifier.height(16.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        IconButton(onClick = { viewModel.toggleFavorite(post.id) }, modifier = Modifier.size(44.dp).clip(CircleShape).background(if (isFavorite) Color(0xFFFF4757).copy(0.1f) else MaterialTheme.colorScheme.surfaceVariant.copy(0.5f))) {
+                            Icon(imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder, contentDescription = "Favorite", tint = if (isFavorite) Color(0xFFFF4757) else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
+                        }
                     }
                 }
             }
