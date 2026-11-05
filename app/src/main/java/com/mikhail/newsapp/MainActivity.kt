@@ -162,7 +162,10 @@ fun HomeScreen(viewModel: MainViewModel, navController: androidx.navigation.NavC
                 }
             }
             LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                items(posts, key = { it.id }) { post -> PostCard(post, viewModel, navController) }
+                items(
+                    items = posts.distinctBy { it.id },
+                    key = { "${it.source.name}_${it.id}" }
+                ) { post -> PostCard(post, viewModel, navController) }
             }
         }
     }
@@ -284,7 +287,10 @@ fun FavoritesScreen(viewModel: MainViewModel, navController: androidx.navigation
         Column(Modifier.fillMaxSize()) {
             Text("❤️ Избранное", fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp))
             LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                items(favPosts, key = { it.id }) { post -> PostCard(post, viewModel, navController) }
+                items(
+                    items = favPosts.distinctBy { it.id },
+                    key = { "${it.source.name}_${it.id}" }
+                ) { post -> PostCard(post, viewModel, navController) }
             }
         }
     }
