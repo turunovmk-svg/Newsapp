@@ -132,7 +132,7 @@ fun AppNavigation() {
             }
             composable(Screen.Settings.route) { 
                 SettingsScreen(
-                    onExportSources = { exportLauncher.launch() },
+                    onExportSources = { exportLauncher.launch("") },
                     onImportSources = { importLauncher.launch() },
                     onClearAllSources = { 
                         viewModel.clearAllSources()
