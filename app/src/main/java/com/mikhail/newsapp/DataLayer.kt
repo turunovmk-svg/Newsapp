@@ -78,6 +78,7 @@ object NetworkClient {
                 connection.connectTimeout = 10000
                 connection.readTimeout = 10000
                 connection.requestMethod = "GET"
+                connection.addRequestProperty("User-Agent", "Mozilla/5.0")
                 
                 if (connection.responseCode != 200) {
                     Log.e("NetworkClient", "HTTP error: ${connection.responseCode} for $rssUrl")
@@ -145,12 +146,10 @@ object NetworkClient {
 }
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
-    // БЕЗОПАСНАЯ ИНИЦИАЛИЗАЦИЯ: контекст из Application
     private val context = getApplication<Application>().applicationContext
     private val prefs: SharedPreferences = context.getSharedPreferences("news_app_prefs", Context.MODE_PRIVATE)
     private val gson = Gson()
     
-    // Реактивные источники данных — единственный источник истины
     private val _sources = MutableStateFlow<List<SourceItem>>(emptyList())
     val sources: StateFlow<List<SourceItem>> = _sources
     
@@ -159,11 +158,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing
     
+    // Выбранный пост для чтения — вместо передачи ID через URL навигации
+    private val _selectedPost = MutableStateFlow<UnifiedPost?>(null)
+    val selectedPost: StateFlow<UnifiedPost?> = _selectedPost
+    
     init { 
-        // Загружаем источники при создании, но НЕ запускаем сетевые запросы здесь
         _sources.value = loadSourcesFromPrefs()
         _posts.value = emptyList()
         _isRefreshing.value = false
+        _selectedPost.value = null
     }
     
     private fun loadSourcesFromPrefs(): List<SourceItem> {
@@ -211,7 +214,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     return@launch
                 }
                 
-                // Каждый источник загружается独立 с индивидуальной защитой от ошибок
                 val allPosts = mutableListOf<UnifiedPost>()
                 for (source in currentSources) {
                     try {
@@ -222,7 +224,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 }
                 
-                _posts.value = allPosts.shuffled()
+                _posts.value = allPosts.distinctBy { it.id }.shuffled()
             } catch (e: Exception) {
                 Log.e("MainViewModel", "Load posts error: ${e.message}")
                 _posts.value = emptyList()
@@ -303,5 +305,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
         }
+    }
+    
+    fun selectPost(post: UnifiedPost?) {
+        _selectedPost.value = post
     }
 }

@@ -77,28 +77,23 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+    val viewModel: MainViewModel = viewModel()
+    
     Scaffold(bottomBar = { BottomNav(navController) }) { padding ->
         NavHost(navController, Screen.Home.route, Modifier.padding(padding)) {
             composable(Screen.Home.route) { 
-                val viewModel: MainViewModel = viewModel()
                 HomeScreen(viewModel, navController) 
             }
             composable(Screen.Favorites.route) { 
-                val viewModel: MainViewModel = viewModel()
                 FavoritesScreen(viewModel, navController) 
             }
             composable(Screen.Shorts.route) { ShortsScreen() }
             composable(Screen.AddSource.route) { 
-                val viewModel: MainViewModel = viewModel()
                 AddSourceScreen(viewModel) 
             }
             composable(Screen.Settings.route) { SettingsScreen() }
-            composable("article_reader/{postId}") { backStackEntry ->
-                val postId = backStackEntry.arguments?.getString("postId") ?: return@composable
-                val viewModel: MainViewModel = viewModel()
-                val posts by viewModel.posts.collectAsState()
-                val post = posts.find { it.id == postId }
-                
+            composable("article_reader") { 
+                val post = viewModel.selectedPost.value
                 if (post != null) {
                     ArticleReaderScreen(post = post, onBack = { navController.popBackStack() })
                 } else {
@@ -182,14 +177,22 @@ fun HomeScreen(viewModel: MainViewModel, navController: androidx.navigation.NavC
 fun PostCard(post: UnifiedPost, viewModel: MainViewModel, navController: androidx.navigation.NavController) {
     Card(
         modifier = Modifier.fillMaxWidth().clickable { 
-            navController.navigate("article_reader/${post.id}") 
+            viewModel.selectPost(post)
+            navController.navigate("article_reader") 
         },
         shape = RoundedCornerShape(24.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp, pressedElevation = 8.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            AsyncImage(model = post.imageUrl, contentDescription = null, modifier = Modifier.fillMaxWidth().height(240.dp).clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)), contentScale = ContentScale.Crop, placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant), error = ColorPainter(MaterialTheme.colorScheme.surfaceVariant))
+            AsyncImage(
+                model = post.imageUrl.takeIf { it.startsWith("http") } ?: "https://via.placeholder.com/800x600?text=No+Image",
+                contentDescription = null,
+                modifier = Modifier.fillMaxWidth().height(240.dp).clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)),
+                contentScale = ContentScale.Crop,
+                placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant),
+                error = ColorPainter(MaterialTheme.colorScheme.surfaceVariant)
+            )
             Column(modifier = Modifier.padding(24.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(32.dp)) {
@@ -220,25 +223,29 @@ fun ArticleReaderScreen(post: UnifiedPost, onBack: () -> Unit) {
     
     val bgColor = if (isDark) 0xFF0F172A else 0xFFFAFAFA
     val textColor = if (isDark) 0xFFF8FAFC else 0xFF0F172A
-    val linkColor = 0xFF6366F1
-
+    
+    val safeTitle = post.title.takeIf { it.isNotBlank() } ?: "Без названия"
+    val safeDesc = post.description.takeIf { it.isNotBlank() } ?: ""
+    val safeEmoji = post.source.emoji.takeIf { it.isNotBlank() } ?: "📰"
+    val safeDisplayName = post.source.displayName.takeIf { it.isNotBlank() } ?: "Источник"
+    
     val htmlContent = """
         <html>
         <head>
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <style>
-                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: $bgColor; color: $textColor; line-height: 1.6; padding: 16px; margin: 0; font-size: 16px; }
+                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #${bgColor.toString(16).padStart(6, '0')}; color: #${textColor.toString(16).padStart(6, '0')}; line-height: 1.6; padding: 16px; margin: 0; font-size: 16px; }
                 img { max-width: 100%; height: auto; border-radius: 16px; margin: 16px 0; display: block; }
                 video, iframe { max-width: 100%; border-radius: 16px; margin: 16px 0; }
-                a { color: $linkColor; text-decoration: none; font-weight: bold; }
+                a { color: #${linkColor.toString(16).padStart(6, '0')}; text-decoration: none; font-weight: bold; }
                 p { margin-bottom: 16px; }
                 h1 { font-size: 24px; margin-bottom: 8px; }
             </style>
         </head>
         <body>
-            <h1>${post.title}</h1>
-            <p style="color: #64748B; font-size: 14px; margin-bottom: 24px;">${post.source.emoji} ${post.source.displayName}</p>
-            ${post.description}
+            <h1>${safeTitle}</h1>
+            <p style="color: #64748B; font-size: 14px; margin-bottom: 24px;">${safeEmoji} ${safeDisplayName}</p>
+            ${safeDesc}
         </body>
         </html>
     """.trimIndent()
@@ -263,7 +270,10 @@ fun ArticleReaderScreen(post: UnifiedPost, onBack: () -> Unit) {
             }
         }, modifier = Modifier.weight(1f).fillMaxWidth())
         
-        Button(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(post.link))) }, modifier = Modifier.fillMaxWidth().padding(16.dp).height(56.dp), shape = RoundedCornerShape(16.dp)) {
+        Button(onClick = { 
+            val safeLink = post.link.takeIf { it.startsWith("http") } ?: "https://example.com"
+            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(safeLink))) 
+        }, modifier = Modifier.fillMaxWidth().padding(16.dp).height(56.dp), shape = RoundedCornerShape(16.dp)) {
             Text("Открыть оригинальный источник", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         }
     }
