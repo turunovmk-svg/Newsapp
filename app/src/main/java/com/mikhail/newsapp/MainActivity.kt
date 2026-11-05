@@ -148,7 +148,7 @@ fun HomeScreen(viewModel: MainViewModel, navController: androidx.navigation.NavC
     } else if (posts.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                CircularProgressIndicator()
+                Box(Modifier.size(24.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary))
                 Spacer(Modifier.height(16.dp))
                 Text("Загрузка новостей...", style = MaterialTheme.typography.bodyLarge)
             }
