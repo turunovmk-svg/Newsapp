@@ -24,17 +24,17 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.PlayCircle
-import androidx.compose.material.icons.filled.ChatBubble
-import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Icons.Filled.Home
+import androidx.compose.material.icons.filled.Icons.Filled.Favorite
+import androidx.compose.material.icons.filled.Icons.Filled.Icons.Filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Icons.Filled.Add
+import androidx.compose.material.icons.filled.Icons.Filled.Delete
+import androidx.compose.material.icons.filled.Icons.Filled.Refresh
+import androidx.compose.material.icons.filled.Icons.Filled.Search
+import androidx.compose.material.icons.filled.Icons.Filled.Settings
+import androidx.compose.material.icons.filled.Icons.Filled.PlayCircle
+import androidx.compose.material.icons.filled.Icons.Filled.ChatBubble
+import androidx.compose.material.icons.filled.Icons.Filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -49,8 +49,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToIcons.Filled.RefreshBox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -152,14 +153,14 @@ class MainActivity : ComponentActivity() {
 }
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
-    object Home : Screen("home", "Главная", Home)
-    object Favorites : Screen("favorites", "Избранное", Favorite)
-    object Shorts : Screen("shorts", "Шортс", PlayCircle)
-    object AddSource : Screen("add_source", "Добавить", Add)
-    object Settings : Screen("settings", "Настройки", Settings)
+    object Icons.Filled.Home : Screen("home", "Главная", Icons.Filled.Home)
+    object Icons.Filled.Favorites : Screen("favorites", "Избранное", Icons.Filled.Favorite)
+    object Shorts : Screen("shorts", "Шортс", Icons.Filled.PlayCircle)
+    object Icons.Filled.AddSource : Screen("add_source", "Добавить", Icons.Filled.Add)
+    object Icons.Filled.Settings : Screen("settings", "Настройки", Icons.Filled.Settings)
 
     companion object {
-        val allScreens = listOf(Home, Favorites, Shorts, AddSource, Settings)
+        val allScreens = listOf(Icons.Filled.Home, Icons.Filled.Favorites, Shorts, Icons.Filled.AddSource, Icons.Filled.Settings)
     }
 }
 
@@ -171,26 +172,26 @@ fun AppNavigation() {
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Home.route,
+            startDestination = Screen.Icons.Filled.Home.route,
             modifier = Modifier.padding(paddingValues)
         ) {
-            composable(Screen.Home.route) {
+            composable(Screen.Icons.Filled.Home.route) {
                 val viewModel: MainViewModel = viewModel()
-                HomeScreen(viewModel)
+                Icons.Filled.HomeScreen(viewModel)
             }
-            composable(Screen.Favorites.route) {
+            composable(Screen.Icons.Filled.Favorites.route) {
                 val viewModel: MainViewModel = viewModel()
-                FavoritesScreen(viewModel)
+                Icons.Filled.FavoritesScreen(viewModel)
             }
             composable(Screen.Shorts.route) {
                 ShortsScreen()
             }
-            composable(Screen.AddSource.route) {
+            composable(Screen.Icons.Filled.AddSource.route) {
                 val viewModel: MainViewModel = viewModel()
-                AddSourceScreen(viewModel)
+                Icons.Filled.AddSourceScreen(viewModel)
             }
-            composable(Screen.Settings.route) {
-                SettingsScreen()
+            composable(Screen.Icons.Filled.Settings.route) {
+                Icons.Filled.SettingsScreen()
             }
         }
     }
@@ -251,9 +252,9 @@ fun BottomNavigationBar(navController: androidx.navigation.NavController) {
 
 // --- ГЛАВНАЯ (общая лента) ---
 @Composable
-fun HomeScreen(viewModel: MainViewModel) {
+fun Icons.Filled.HomeScreen(viewModel: MainViewModel) {
     val posts by viewModel.posts.collectAsState()
-    val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val isIcons.Filled.Refreshing by viewModel.isIcons.Filled.Refreshing.collectAsState()
 
     if (posts.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -298,7 +299,7 @@ fun HomeScreen(viewModel: MainViewModel) {
                         .background(MaterialTheme.colorScheme.primary)
                 ) {
                     Icon(
-                        Refresh,
+                        Icons.Filled.Refresh,
                         contentDescription = "Обновить",
                         tint = Color.White,
                         modifier = Modifier.size(24.dp)
@@ -306,9 +307,9 @@ fun HomeScreen(viewModel: MainViewModel) {
                 }
             }
 
-            PullToRefreshBox(
-                isRefreshing = isRefreshing,
-                onRefresh = { viewModel.loadPosts() },
+            PullToIcons.Filled.RefreshBox(
+                isIcons.Filled.Refreshing = isIcons.Filled.Refreshing,
+                onIcons.Filled.Refresh = { viewModel.loadPosts() },
                 modifier = Modifier.fillMaxSize()
             ) {
                 LazyColumn(
@@ -325,11 +326,11 @@ fun HomeScreen(viewModel: MainViewModel) {
 }
 
 // --- ИЗБРАННОЕ ---
-object FavoritesRepository {
+object Icons.Filled.FavoritesRepository {
     private val _favorites = MutableStateFlow<Set<String>>(emptySet())
     val favorites: StateFlow<Set<String>> = _favorites
 
-    fun toggleFavorite(postId: String) {
+    fun toggleIcons.Filled.Favorite(postId: String) {
         _favorites.value = if (_favorites.value.contains(postId)) {
             _favorites.value - postId
         } else {
@@ -337,13 +338,13 @@ object FavoritesRepository {
         }
     }
 
-    fun isFavorite(postId: String): Boolean = _favorites.value.contains(postId)
+    fun isIcons.Filled.Favorite(postId: String): Boolean = _favorites.value.contains(postId)
 }
 
 @Composable
-fun FavoritesScreen(viewModel: MainViewModel) {
+fun Icons.Filled.FavoritesScreen(viewModel: MainViewModel) {
     val posts by viewModel.posts.collectAsState()
-    val favorites by FavoritesRepository.favorites.collectAsState()
+    val favorites by Icons.Filled.FavoritesRepository.favorites.collectAsState()
     val favoritePosts = posts.filter { it.id in favorites }
 
     if (favoritePosts.isEmpty()) {
@@ -359,7 +360,7 @@ fun FavoritesScreen(viewModel: MainViewModel) {
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            FavoriteBorder,
+                            Icons.Filled.Icons.Filled.FavoriteBorder,
                             contentDescription = null,
                             modifier = Modifier.size(60.dp),
                             tint = MaterialTheme.colorScheme.primary
@@ -405,7 +406,7 @@ fun FavoritesScreen(viewModel: MainViewModel) {
 // --- ДОБАВИТЬ ИСТОЧНИК ---
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddSourceScreen(viewModel: MainViewModel) {
+fun Icons.Filled.AddSourceScreen(viewModel: MainViewModel) {
     var sourceUrl by remember { mutableStateOf("") }
     var sourceType by remember { mutableStateOf("RSS") }
     var addedSources by remember { mutableStateOf<List<String>>(emptyList()) }
@@ -444,10 +445,8 @@ fun AddSourceScreen(viewModel: MainViewModel) {
                         labelColor = MaterialTheme.colorScheme.onSurfaceVariant
                     ),
                     border = FilterChipDefaults.filterChipBorder(
-                        enabled = true,
-                        selected = sourceType == type,
-                        borderColor = if (sourceType == type) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-                    )
+                    borderColor = if (sourceType == type) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                )
                 )
             }
         }
@@ -521,7 +520,7 @@ fun AddSourceScreen(viewModel: MainViewModel) {
                         IconButton(onClick = {
                             addedSources = addedSources.filter { it != source }
                         }) {
-                            Icon(Delete, contentDescription = "Удалить")
+                            Icon(Icons.Filled.Delete, contentDescription = "Удалить")
                         }
                     }
                 }
@@ -621,24 +620,24 @@ fun UnifiedPostCard(post: UnifiedPost) {
                     horizontalArrangement = Arrangement.End
                 ) {
                     IconButton(
-                        onClick = { FavoritesRepository.toggleFavorite(post.id) },
+                        onClick = { Icons.Filled.FavoritesRepository.toggleIcons.Filled.Favorite(post.id) },
                         modifier = Modifier
                             .size(44.dp)
                             .clip(CircleShape)
                             .background(
-                                if (FavoritesRepository.isFavorite(post.id))
+                                if (Icons.Filled.FavoritesRepository.isIcons.Filled.Favorite(post.id))
                                     Color(0xFFFF4757).copy(alpha = 0.1f)
                                 else
                                     MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                             )
                     ) {
                         Icon(
-                            imageVector = if (FavoritesRepository.isFavorite(post.id))
-                                Favorite
+                            imageVector = if (Icons.Filled.FavoritesRepository.isIcons.Filled.Favorite(post.id))
+                                Icons.Filled.Favorite
                             else
-                                FavoriteBorder,
+                                Icons.Filled.Icons.Filled.FavoriteBorder,
                             contentDescription = "В избранное",
-                            tint = if (FavoritesRepository.isFavorite(post.id))
+                            tint = if (Icons.Filled.FavoritesRepository.isIcons.Filled.Favorite(post.id))
                                 Color(0xFFFF4757)
                             else
                                 MaterialTheme.colorScheme.onSurfaceVariant,
@@ -666,7 +665,7 @@ fun ShortsScreen() {
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            PlayCircle,
+                            Icons.Filled.PlayCircle,
                             contentDescription = null,
                             modifier = Modifier.size(56.dp),
                             tint = MaterialTheme.colorScheme.primary
@@ -748,9 +747,9 @@ fun ShortItem(short: ShortItem) {
             verticalArrangement = Arrangement.spacedBy(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            ActionButton(Favorite, "12K")
-            ActionButton(ChatBubble, "342")
-            ActionButton(Share, "89")
+            ActionButton(Icons.Filled.Favorite, "12K")
+            ActionButton(Icons.Filled.ChatBubble, "342")
+            ActionButton(Icons.Filled.Share, "89")
         }
     }
 }
@@ -770,8 +769,8 @@ fun ActionButton(icon: ImageVector, count: String) {
 
 // --- НАСТРОЙКИ ---
 @Composable
-fun SettingsScreen() {
-    var showAddDialog by remember { mutableStateOf(false) }
+fun Icons.Filled.SettingsScreen() {
+    var showIcons.Filled.AddDialog by remember { mutableStateOf(false) }
     var newSourceUrl by remember { mutableStateOf("") }
     var customSources by remember { mutableStateOf<List<String>>(emptyList()) }
 
@@ -793,8 +792,8 @@ fun SettingsScreen() {
         Text("Мои источники", fontSize = 20.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(onClick = { showAddDialog = true }) {
-            Icon(Add, contentDescription = null)
+        Button(onClick = { showIcons.Filled.AddDialog = true }) {
+            Icon(Icons.Filled.Add, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
             Text("Добавить RSS")
         }
@@ -818,9 +817,9 @@ fun SettingsScreen() {
         }
     }
 
-    if (showAddDialog) {
+    if (showIcons.Filled.AddDialog) {
         AlertDialog(
-            onDismissRequest = { showAddDialog = false },
+            onDismissRequest = { showIcons.Filled.AddDialog = false },
             title = { Text("Добавить RSS источник") },
             text = {
                 OutlinedTextField(
@@ -835,14 +834,14 @@ fun SettingsScreen() {
                     if (newSourceUrl.isNotBlank()) {
                         customSources = customSources + newSourceUrl
                         newSourceUrl = ""
-                        showAddDialog = false
+                        showIcons.Filled.AddDialog = false
                     }
                 }) {
                     Text("Добавить")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showAddDialog = false }) {
+                TextButton(onClick = { showIcons.Filled.AddDialog = false }) {
                     Text("Отмена")
                 }
             }
