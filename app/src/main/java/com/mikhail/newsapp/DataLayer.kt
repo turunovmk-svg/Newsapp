@@ -65,6 +65,11 @@ object NetworkClient {
     suspend fun fetchRssAsJson(rssUrl: String, type: SourceType): List<UnifiedPost> {
         return withContext(Dispatchers.IO) {
             try {
+                if (rssUrl.isNullOrBlank() || !rssUrl.startsWith("http")) {
+                    Log.e("NetworkClient", "Invalid URL: $rssUrl")
+                    return@withContext emptyList()
+                }
+                
                 val encodedUrl = java.net.URLEncoder.encode(rssUrl, "UTF-8")
                 val apiUrl = "https://api.rss2json.com/v1/api.json?rss_url=$encodedUrl"
                 
@@ -83,8 +88,14 @@ object NetworkClient {
                 val json = connection.inputStream.bufferedReader().use { it.readText() }
                 connection.disconnect()
                 
+                if (json.isNullOrBlank()) {
+                    Log.e("NetworkClient", "Empty response for: $rssUrl")
+                    return@withContext emptyList()
+                }
+                
                 val root = gson.fromJson(json, Map::class.java)
-                if (root["status"] as? String != "ok") {
+                if (root == null || root["status"] as? String != "ok") {
+                    Log.e("NetworkClient", "API status not ok for: $rssUrl")
                     return@withContext emptyList()
                 }
                 
@@ -120,6 +131,9 @@ object NetworkClient {
             } catch (e: java.net.SocketTimeoutException) {
                 Log.e("NetworkClient", "Connection timed out for: $rssUrl")
                 emptyList()
+            } catch (e: java.net.MalformedURLException) {
+                Log.e("NetworkClient", "Malformed URL: $rssUrl")
+                emptyList()
             } catch (e: Exception) {
                 Log.e("NetworkClient", "Fetch error: ${e.message}")
                 emptyList()
@@ -140,17 +154,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val isRefreshing: StateFlow<Boolean> = _isRefreshing
     
     init { 
-        try {
-            loadPosts() 
-        } catch (e: Exception) {
-            Log.e("MainViewModel", "Init error: ${e.message}", e)
-            _posts.value = emptyList()
-        }
+        // Не загружаем посты в init — делаем это только когда пользователь явно запрашивает
+        _posts.value = emptyList()
+        _isRefreshing.value = false
     }
     
     fun getSources(): List<SourceItem> {
         return try {
             val json = prefs.getString("sources", "[]") ?: "[]"
+            if (json.isNullOrBlank()) return emptyList()
             val type = object : TypeToken<List<SourceItem>>() {}.type
             val result = gson.fromJson(json, type) as? List<SourceItem>
             if (result == null) emptyList() else result
@@ -171,8 +183,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     
     fun getFavorites(): Set<String> {
         return try {
-            prefs.getStringSet("favorites", emptySet()) ?: emptySet()
+            val set = prefs.getStringSet("favorites", emptySet())
+            if (set == null) emptySet() else set.toMutableSet()
         } catch (e: Exception) {
+            Log.e("MainViewModel", "Read favorites error: ${e.message}")
             emptySet()
         }
     }
@@ -205,12 +219,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
     
     fun toggleFavorite(postId: String) {
-        try {
-            val current = getFavorites()
-            val newFav = if (current.contains(postId)) current - postId else current + postId
-            prefs.edit().putStringSet("favorites", newFav).apply()
-        } catch (e: Exception) {
-            Log.e("MainViewModel", "Toggle favorite error: ${e.message}")
+        viewModelScope.launch {
+            try {
+                val current = getFavorites()
+                val newFav = if (current.contains(postId)) current - postId else current + postId
+                // putStringSet не принимает null и пустой set на некоторых устройствах
+                if (newFav.isNotEmpty()) {
+                    prefs.edit().putStringSet("favorites", newFav).apply()
+                } else {
+                    prefs.edit().remove("favorites").apply()
+                }
+            } catch (e: Exception) {
+                Log.e("MainViewModel", "Toggle favorite error: ${e.message}")
+            }
         }
     }
     
