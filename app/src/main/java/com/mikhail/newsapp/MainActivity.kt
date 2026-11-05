@@ -38,7 +38,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -163,10 +162,8 @@ fun HomeScreen(viewModel: MainViewModel, navController: androidx.navigation.NavC
                     Icon(Icons.Filled.Refresh, contentDescription = "Update", tint = Color.White, modifier = Modifier.size(24.dp))
                 }
             }
-            PullToRefreshBox(isRefreshing = isRefreshing, onRefresh = { viewModel.loadPosts() }, modifier = Modifier.fillMaxSize()) {
-                LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    items(posts, key = { it.id }) { post -> PostCard(post, viewModel, navController) }
-                }
+            LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                items(posts, key = { it.id }) { post -> PostCard(post, viewModel, navController) }
             }
         }
     }
