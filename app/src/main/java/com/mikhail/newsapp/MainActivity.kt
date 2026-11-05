@@ -192,7 +192,12 @@ fun AppNavigation(viewModel: MainViewModel) {
                             },
                             sourcesCount = viewModel.getSources().size,
                             currentTheme = appTheme,
-                            onThemeChange = { viewModel.setTheme(it) }
+                            onThemeChange = { viewModel.setTheme(it) },
+                            currentLanguage = viewModel.getAppLanguage(),
+                            onLanguageChange = { viewModel.setAppLanguage(it) },
+                            onClearCache = { viewModel.clearCache() },
+                            onClearReadHistory = { viewModel.clearReadHistory() },
+                            readHistoryCount = viewModel.getReadHistory().size
                         ) 
                     }
                     composable("article_reader") { 
@@ -657,7 +662,12 @@ fun SettingsScreen(
     onClearAllSources: () -> Unit,
     sourcesCount: Int,
     currentTheme: AppTheme,
-    onThemeChange: (AppTheme) -> Unit
+    onThemeChange: (AppTheme) -> Unit,
+    currentLanguage: String,
+    onLanguageChange: (String) -> Unit,
+    onClearCache: () -> Unit,
+    onClearReadHistory: () -> Unit,
+    readHistoryCount: Int
 ) {
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text("Настройки", fontSize = 28.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 24.dp))
@@ -729,10 +739,63 @@ fun SettingsScreen(
             }
         }
         
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        Text("Язык", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
+        
+        listOf(
+            Pair("system", "Системный"),
+            Pair("ru", "Русский"),
+            Pair("en", "Английский"),
+            Pair("uk", "Украинский")
+        ).forEach { (code, name) ->
+            RadioButton(
+                selected = currentLanguage == code,
+                onClick = { onLanguageChange(code) },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.RadioButtonChecked,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.alpha(if (currentLanguage == code) 1f else 0.3f)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(name, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        Text("Данные", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
+        
+        Button(
+            onClick = onClearCache,
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            Text("Очистить кэш", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+        }
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        Button(
+            onClick = onClearReadHistory,
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            Text("Очистить историю прочтения ($readHistoryCount)", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+        }
+        
         Spacer(modifier = Modifier.height(32.dp))
         
         Text("О приложении", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
         Text("NewsApp v1.0", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text("GitHub: turunovmk-svg/Newsapp", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("Политика конфиденциальности", fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
     }
 }

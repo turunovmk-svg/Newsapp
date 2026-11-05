@@ -442,4 +442,62 @@ class MainViewModel(private val appContext: Context) : ViewModel() {
         _sources.value = emptyList()
         saveSources(emptyList())
     }
+
+    // MARK: - Language
+
+    fun getAppLanguage(): String {
+        return prefs.getString("app_language", "system") ?: "system"
+    }
+
+    fun setAppLanguage(language: String) {
+        try {
+            prefs.edit().putString("app_language", language).apply()
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "Save language error: ${e.message}")
+        }
+    }
+
+    // MARK: - Reading history
+
+    fun getReadHistory(): Set<String> {
+        return try {
+            val set = prefs.getStringSet("read_history", emptySet())
+            if (set == null) emptySet() else set.toMutableSet()
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "Read history error: ${e.message}")
+            emptySet()
+        }
+    }
+
+    fun isRead(postId: String): Boolean {
+        return getReadHistory().contains(postId)
+    }
+
+    fun markAsRead(postId: String) {
+        viewModelScope.launch {
+            try {
+                val current = getReadHistory()
+                val newHistory = current + postId
+                prefs.edit().putStringSet("read_history", newHistory).apply()
+            } catch (e: Exception) {
+                Log.e("MainViewModel", "Mark as read error: ${e.message}")
+            }
+        }
+    }
+
+    fun clearReadHistory() {
+        viewModelScope.launch {
+            try {
+                prefs.edit().remove("read_history").apply()
+            } catch (e: Exception) {
+                Log.e("MainViewModel", "Clear read history error: ${e.message}")
+            }
+        }
+    }
+
+    fun clearCache() {
+        // В реальном приложении здесь была бы очистка кэша изображений и т.д.
+        // Пока просто логируем
+        Log.d("MainViewModel", "Cache cleared")
+    }
 }
