@@ -158,7 +158,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing
     
-    // Выбранный пост для чтения — вместо передачи ID через URL навигации
     private val _selectedPost = MutableStateFlow<UnifiedPost?>(null)
     val selectedPost: StateFlow<UnifiedPost?> = _selectedPost
     

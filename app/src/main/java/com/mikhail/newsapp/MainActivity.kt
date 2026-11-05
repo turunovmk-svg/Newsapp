@@ -185,26 +185,27 @@ fun PostCard(post: UnifiedPost, viewModel: MainViewModel, navController: android
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
+            // Безопасная загрузка изображения с fallback
             AsyncImage(
                 model = post.imageUrl.takeIf { it.startsWith("http") } ?: "https://via.placeholder.com/800x600?text=No+Image",
                 contentDescription = null,
-                modifier = Modifier.fillMaxWidth().height(240.dp).clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)),
+                modifier = Modifier.fillMaxWidth().height(200.dp).clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)),
                 contentScale = ContentScale.Crop,
                 placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant),
                 error = ColorPainter(MaterialTheme.colorScheme.surfaceVariant)
             )
-            Column(modifier = Modifier.padding(24.dp)) {
+            Column(modifier = Modifier.padding(20.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(32.dp)) {
                         Box(contentAlignment = Alignment.Center) { Text(post.source.emoji, fontSize = 16.sp) }
                     }
                     Spacer(Modifier.width(12.dp))
-                    Text(post.source.displayName, color = MaterialTheme.colorScheme.primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    Text(post.source.displayName.takeIf { it.isNotBlank() } ?: "Источник", color = MaterialTheme.colorScheme.primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                 }
                 Spacer(Modifier.height(16.dp))
-                Text(post.title, fontSize = 20.sp, fontWeight = FontWeight.Bold, maxLines = 2, color = MaterialTheme.colorScheme.onSurface, lineHeight = 26.sp)
+                Text(post.title.takeIf { it.isNotBlank() } ?: "Без названия", fontSize = 20.sp, fontWeight = FontWeight.Bold, maxLines = 2, color = MaterialTheme.colorScheme.onSurface, lineHeight = 26.sp)
                 Spacer(Modifier.height(12.dp))
-                Text(post.description, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, lineHeight = 22.sp)
+                Text(post.description.takeIf { it.isNotBlank() } ?: "", fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, lineHeight = 22.sp)
                 Spacer(Modifier.height(16.dp))
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     IconButton(onClick = { viewModel.toggleFavorite(post.id) }, modifier = Modifier.size(44.dp).clip(CircleShape).background(if (viewModel.isFavorite(post.id)) Color(0xFFFF4757).copy(0.1f) else MaterialTheme.colorScheme.surfaceVariant.copy(0.5f))) {
@@ -230,27 +231,6 @@ fun ArticleReaderScreen(post: UnifiedPost, onBack: () -> Unit) {
     val safeEmoji = post.source.emoji.takeIf { it.isNotBlank() } ?: "📰"
     val safeDisplayName = post.source.displayName.takeIf { it.isNotBlank() } ?: "Источник"
     
-    val htmlContent = """
-        <html>
-        <head>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #${bgColor.toString(16).padStart(6, '0')}; color: #${textColor.toString(16).padStart(6, '0')}; line-height: 1.6; padding: 16px; margin: 0; font-size: 16px; }
-                img { max-width: 100%; height: auto; border-radius: 16px; margin: 16px 0; display: block; }
-                video, iframe { max-width: 100%; border-radius: 16px; margin: 16px 0; }
-                a { color: #${linkColor.toString(16).padStart(6, '0')}; text-decoration: none; font-weight: bold; }
-                p { margin-bottom: 16px; }
-                h1 { font-size: 24px; margin-bottom: 8px; }
-            </style>
-        </head>
-        <body>
-            <h1>${safeTitle}</h1>
-            <p style="color: #64748B; font-size: 14px; margin-bottom: 24px;">${safeEmoji} ${safeDisplayName}</p>
-            ${safeDesc}
-        </body>
-        </html>
-    """.trimIndent()
-
     Column(modifier = Modifier.fillMaxSize().background(Color(bgColor))) {
         Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) { 
@@ -260,23 +240,32 @@ fun ArticleReaderScreen(post: UnifiedPost, onBack: () -> Unit) {
             Text("Чтение", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(textColor), modifier = Modifier.weight(1f))
         }
         
-        AndroidView(factory = { ctx ->
-            WebView(ctx).apply {
-                webViewClient = WebViewClient()
-                settings.javaScriptEnabled = true
-                settings.loadWithOverviewMode = true
-                settings.useWideViewPort = true
-                setBackgroundColor(android.graphics.Color.TRANSPARENT)
-                loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null)
-            }
-        }, modifier = Modifier.weight(1f).fillMaxWidth())
+        Spacer(modifier = Modifier.height(20.dp))
+        
+        Text(safeTitle, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(textColor), modifier = Modifier.padding(horizontal = 20.dp))
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        Row(modifier = Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(safeEmoji, fontSize = 18.sp)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(safeDisplayName, fontSize = 14.sp, color = Color(0xFF64748B), fontWeight = FontWeight.Medium)
+        }
+        
+        Spacer(modifier = Modifier.height(20.dp))
+        
+        Text(safeDesc, fontSize = 16.sp, color = Color(textColor), lineHeight = 24.sp, modifier = Modifier.padding(horizontal = 20.dp))
+        
+        Spacer(modifier = Modifier.height(30.dp))
         
         Button(onClick = { 
             val safeLink = post.link.takeIf { it.startsWith("http") } ?: "https://example.com"
             context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(safeLink))) 
-        }, modifier = Modifier.fillMaxWidth().padding(16.dp).height(56.dp), shape = RoundedCornerShape(16.dp)) {
+        }, modifier = Modifier.fillMaxWidth().padding(20.dp).height(56.dp), shape = RoundedCornerShape(16.dp)) {
             Text("Открыть оригинальный источник", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         }
+        
+        Spacer(modifier = Modifier.height(20.dp))
     }
 }
 
