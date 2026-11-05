@@ -187,17 +187,7 @@ object UnifiedRepository {
     }
     
     private fun getFallbackData(): List<UnifiedPost> {
-        return listOf(
-            UnifiedPost("1", "Нет интернета", "Показываем тестовые данные", 
-                "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800", 
-                SourceType.RSS, ""),
-            UnifiedPost("2", "YouTube канал", "Тестовое видео", 
-                "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800", 
-                SourceType.YOUTUBE, ""),
-            UnifiedPost("3", "Telegram пост", "Тестовый пост", 
-                "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800", 
-                SourceType.TELEGRAM, "")
-        )
+        return emptyList()
     }
 }
 
