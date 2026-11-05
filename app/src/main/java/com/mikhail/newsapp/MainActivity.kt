@@ -1,5 +1,6 @@
 package com.mikhail.newsapp
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
