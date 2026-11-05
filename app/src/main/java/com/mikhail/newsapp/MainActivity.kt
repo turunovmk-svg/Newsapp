@@ -51,7 +51,6 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -460,8 +459,7 @@ fun UnifiedPostCard(post: UnifiedPost) {
                         Intent(Intent.ACTION_VIEW, Uri.parse(post.link))
                     )
                 }
-            }
-            .shadow(elevation = 8.dp, shape = RoundedCornerShape(20.dp), ambientColor = Color(0f, 0f, 0f, 0.08f), spotColor = Color(0f, 0f, 0f, 0.08f)),
+            },
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -549,11 +547,7 @@ fun ShortItem(short: ShortItem) {
                 .fillMaxWidth()
                 .height(300.dp)
                 .align(Alignment.BottomCenter)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, Color(0f, 0f, 0f, 0.8f))
-                    )
-                )
+                .background(Color(0f, 0f, 0f, 0.8f))
         )
         Column(
             modifier = Modifier
