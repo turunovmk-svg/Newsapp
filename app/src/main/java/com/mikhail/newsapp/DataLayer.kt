@@ -50,6 +50,35 @@ object NetworkClient {
         }
     }
     
+    private fun getYouTubeThumbnail(videoLink: String?): String {
+        if (videoLink.isNullOrEmpty()) return getFallbackImage(SourceType.YOUTUBE)
+        
+        // Извлекаем video ID из различных форматов YouTube ссылок
+        // https://www.youtube.com/watch?v=VIDEO_ID
+        // https://youtu.be/VIDEO_ID
+        // https://www.youtube.com/v/VIDEO_ID?version=3
+        var videoId = videoLink
+            .substringAfter("v=")
+            .takeIf { it != videoLink }
+            ?.substringBefore("&")
+            ?.substringBefore("/")
+            ?.take(11)
+        
+        if (videoId.isNullOrEmpty()) {
+            // Пробуем формат youtu.be/VIDEO_ID
+            videoId = videoLink
+                .substringAfterLast("/")
+                .substringBefore("?")
+                .takeIf { it.length == 11 }
+        }
+        
+        return if (videoId.isNotEmpty()) {
+            "https://img.youtube.com/vi/$videoId/maxresdefault.jpg"
+        } else {
+            getFallbackImage(SourceType.YOUTUBE)
+        }
+    }
+    
     suspend fun fetchRssAsJson(rssUrl: String, type: SourceType): List<UnifiedPost> {
         return withContext(Dispatchers.IO) {
             try {
@@ -71,18 +100,37 @@ object NetworkClient {
                         val enclosure = item["enclosure"] as? Map<*, *>
                         val thumbnail = item["thumbnail"]?.toString()
                         
-                        val rawImageUrl = enclosure?.get("link")?.toString()
-                            ?: thumbnail
-                            ?: extractImageUrlFromHtml(description)
+                        val enclosureLink = enclosure?.get("link")?.toString()
+                        val enclosureType = enclosure?.get("type")?.toString()
                         
-                        val imageUrl = if (!rawImageUrl.isNullOrEmpty() && rawImageUrl.startsWith("http")) {
-                            rawImageUrl.trim().replace(" ", "%20")
-                        } else {
-                            getFallbackImage(type)
+                        Log.d("RSS_DEBUG", "=== Item: $title ===")
+                        Log.d("RSS_DEBUG", "Thumbnail: $thumbnail")
+                        Log.d("RSS_DEBUG", "Enclosure link: $enclosureLink | type: $enclosureType")
+                        Log.d("RSS_DEBUG", "Link: $link")
+                        
+                        // Приоритет для YouTube: thumbnail → enclosure → HTML → getYouTubeThumbnail → fallback
+                        // Приоритет для остальных: enclosure → thumbnail → HTML → fallback
+                        val rawImageUrl = when (type) {
+                            SourceType.YOUTUBE -> {
+                                thumbnail.takeIf { it.isNotEmpty() && it.startsWith("http") }
+                                    ?: enclosureLink.takeIf { it.isNotEmpty() && it.startsWith("http") && (enclosureType.isEmpty() || enclosureType.contains("image")) }
+                                    ?: extractImageUrlFromHtml(description)
+                                    ?: link.takeIf { it.startsWith("http") }
+                            }
+                            else -> {
+                                enclosureLink.takeIf { it.isNotEmpty() && it.startsWith("http") && (enclosureType.isEmpty() || enclosureType.contains("image")) }
+                                    ?: thumbnail.takeIf { it.isNotEmpty() && it.startsWith("http") }
+                                    ?: extractImageUrlFromHtml(description)
+                            }
                         }
                         
-                        Log.d("RSS_DEBUG", "Title: $title")
-                        Log.d("RSS_DEBUG", "Image URL: $imageUrl")
+                        val imageUrl = when {
+                            type == SourceType.YOUTUBE && rawImageUrl == null -> getYouTubeThumbnail(link)
+                            rawImageUrl != null && rawImageUrl.startsWith("http") -> rawImageUrl.trim().replace(" ", "%20")
+                            else -> getFallbackImage(type)
+                        }
+                        
+                        Log.d("RSS_DEBUG", "Final Image URL: $imageUrl")
                         
                         UnifiedPost(
                             id = item["guid"]?.toString() ?: link,
