@@ -1,8 +1,10 @@
 package com.mikhail.newsapp
 
+import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
@@ -126,72 +128,54 @@ object NetworkClient {
     }
 }
 
-object AppPrefs {
-    private const val PREFS_NAME = "news_app_prefs"
-    private const val KEY_SOURCES = "sources"
-    private const val KEY_FAVORITES = "favorites"
+class MainViewModel(application: Application) : AndroidViewModel(application) {
+    // БЕЗОПАСНАЯ ИНИЦИАЛИЗАЦИЯ: берем контекст напрямую из Application
+    private val context = getApplication<Application>().applicationContext
+    private val prefs: SharedPreferences = context.getSharedPreferences("news_app_prefs", Context.MODE_PRIVATE)
+    private val gson = Gson()
     
-    private lateinit var prefs: SharedPreferences
-    
-    fun init(context: Context) {
-        prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    }
-    
-    fun saveSources(sources: List<SourceItem>) {
-        try {
-            val json = Gson().toJson(sources)
-            prefs.edit().putString(KEY_SOURCES, json).apply()
-        } catch (e: Exception) {
-            Log.e("AppPrefs", "Save sources error: ${e.message}")
-        }
-    }
-    
-    fun getSources(): List<SourceItem> {
-        return try {
-            val json = prefs.getString(KEY_SOURCES, "[]") ?: "[]"
-            val type = object : TypeToken<List<SourceItem>>() {}.type
-            Gson().fromJson(json, type) ?: emptyList()
-        } catch (e: Exception) {
-            Log.e("AppPrefs", "Read sources error: ${e.message}")
-            emptyList()
-        }
-    }
-    
-    fun saveFavorites(favorites: Set<String>) {
-        try {
-            prefs.edit().putStringSet(KEY_FAVORITES, favorites).apply()
-        } catch (e: Exception) {
-            Log.e("AppPrefs", "Save favorites error: ${e.message}")
-        }
-    }
-    
-    fun getFavorites(): Set<String> {
-        return try {
-            prefs.getStringSet(KEY_FAVORITES, emptySet()) ?: emptySet()
-        } catch (e: Exception) {
-            Log.e("AppPrefs", "Read favorites error: ${e.message}")
-            emptySet()
-        }
-    }
-}
-
-class MainViewModel(application: android.app.Application) : AndroidViewModel(application) {
     private val _posts = MutableStateFlow<List<UnifiedPost>>(emptyList())
     val posts: StateFlow<List<UnifiedPost>> = _posts
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing
     
     init { 
-        AppPrefs.init(application)
         loadPosts() 
+    }
+    
+    fun getSources(): List<SourceItem> {
+        return try {
+            val json = prefs.getString("sources", "[]") ?: "[]"
+            val type = object : TypeToken<List<SourceItem>>() {}.type
+            gson.fromJson(json, type) ?: emptyList()
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "Read sources error: ${e.message}")
+            emptyList()
+        }
+    }
+    
+    private fun saveSources(sources: List<SourceItem>) {
+        try {
+            val json = gson.toJson(sources)
+            prefs.edit().putString("sources", json).apply()
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "Save sources error: ${e.message}")
+        }
+    }
+    
+    fun getFavorites(): Set<String> {
+        return try {
+            prefs.getStringSet("favorites", emptySet()) ?: emptySet()
+        } catch (e: Exception) {
+            emptySet()
+        }
     }
     
     fun loadPosts() {
         viewModelScope.launch {
             try {
                 _isRefreshing.value = true
-                val sources = AppPrefs.getSources()
-                Log.d("NewsApp", "Loading posts for ${sources.size} sources")
+                val sources = getSources()
                 _posts.value = if (sources.isEmpty()) emptyList() else {
                     sources.map { NetworkClient.fetchRssAsJson(it.url, it.type) }.flatten().shuffled()
                 }
@@ -206,27 +190,29 @@ class MainViewModel(application: android.app.Application) : AndroidViewModel(app
     
     fun toggleFavorite(postId: String) {
         try {
-            val current = AppPrefs.getFavorites()
+            val current = getFavorites()
             val newFav = if (current.contains(postId)) current - postId else current + postId
-            AppPrefs.saveFavorites(newFav)
+            prefs.edit().putStringSet("favorites", newFav).apply()
         } catch (e: Exception) {
             Log.e("MainViewModel", "Toggle favorite error: ${e.message}")
         }
     }
     
-    fun isFavorite(postId: String): Boolean = AppPrefs.getFavorites().contains(postId)
+    fun isFavorite(postId: String): Boolean = getFavorites().contains(postId)
     
     fun addSource(type: SourceType, url: String) {
         viewModelScope.launch {
             try {
-                Log.d("NewsApp", "Adding source: $type - $url")
-                val current = AppPrefs.getSources()
+                Toast.makeText(context, "Добавляем источник...", Toast.LENGTH_SHORT).show()
+                val current = getSources()
                 val newSource = SourceItem("${type.name}_${System.currentTimeMillis()}", type, url)
-                AppPrefs.saveSources(current + newSource)
-                Log.d("NewsApp", "Source saved, reloading posts")
+                saveSources(current + newSource)
+                Toast.makeText(context, "Источник добавлен! Загружаем новости...", Toast.LENGTH_SHORT).show()
                 loadPosts()
             } catch (e: Exception) {
-                Log.e("MainViewModel", "Add source error: ${e.message}", e)
+                // ЕСЛИ ВЫЛЕТ ЗДЕСЬ, МЫ УВИДИМ ТЕКСТ ОШИБКИ НА ЭКРАНЕ!
+                Toast.makeText(context, "ОШИБКА: ${e.message}", Toast.LENGTH_LONG).show()
+                Log.e("MainViewModel", "Add source CRASH: ${e.message}", e)
             }
         }
     }
@@ -234,11 +220,11 @@ class MainViewModel(application: android.app.Application) : AndroidViewModel(app
     fun removeSource(sourceId: String) {
         viewModelScope.launch {
             try {
-                val current = AppPrefs.getSources()
-                AppPrefs.saveSources(current.filter { it.id != sourceId })
+                val current = getSources()
+                saveSources(current.filter { it.id != sourceId })
                 loadPosts()
             } catch (e: Exception) {
-                Log.e("MainViewModel", "Remove source error: ${e.message}", e)
+                Toast.makeText(context, "Ошибка удаления: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }

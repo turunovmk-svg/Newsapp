@@ -38,11 +38,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        AppPrefs.init(applicationContext)
         
         setContent {
             val isDark = isSystemInDarkTheme()
@@ -128,7 +128,7 @@ fun BottomNav(navController: androidx.navigation.NavController) {
 @Composable
 fun HomeScreen(viewModel: MainViewModel, navController: androidx.navigation.NavController) {
     val posts by viewModel.posts.collectAsState()
-    val sources = AppPrefs.getSources()
+    val sources = viewModel.getSources()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     
     if (sources.isEmpty()) {
@@ -266,7 +266,7 @@ fun ArticleReaderScreen(navController: androidx.navigation.NavController) {
 @Composable
 fun FavoritesScreen(viewModel: MainViewModel, navController: androidx.navigation.NavController) {
     val posts by viewModel.posts.collectAsState()
-    val favorites = AppPrefs.getFavorites()
+    val favorites = viewModel.getFavorites()
     val favPosts = posts.filter { it.id in favorites }
     
     if (favPosts.isEmpty()) {
@@ -296,7 +296,7 @@ fun FavoritesScreen(viewModel: MainViewModel, navController: androidx.navigation
 fun AddSourceScreen(viewModel: MainViewModel) {
     var sourceUrl by remember { mutableStateOf("") }
     var sourceType by remember { mutableStateOf(SourceType.RSS) }
-    val userSources = AppPrefs.getSources()
+    val userSources = viewModel.getSources()
     
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text("➕ Добавить источник", fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 24.dp))
