@@ -63,37 +63,64 @@ object NetworkClient {
     suspend fun fetchRssAsJson(rssUrl: String, type: SourceType): List<UnifiedPost> {
         return withContext(Dispatchers.IO) {
             try {
-                val apiUrl = "https://api.rss2json.com/v1/api.json?rss_url=${java.net.URLEncoder.encode(rssUrl, "UTF-8")}"
-                val json = URL(apiUrl).readText()
+                val encodedUrl = java.net.URLEncoder.encode(rssUrl, "UTF-8")
+                val apiUrl = "https://api.rss2json.com/v1/api.json?rss_url=$encodedUrl"
+                
+                val url = URL(apiUrl)
+                val connection = url.openConnection() as java.net.HttpURLConnection
+                connection.connectTimeout = 10000
+                connection.readTimeout = 10000
+                connection.requestMethod = "GET"
+                
+                if (connection.responseCode != 200) {
+                    Log.e("NetworkClient", "HTTP error: ${connection.responseCode}")
+                    connection.disconnect()
+                    return@withContext emptyList()
+                }
+                
+                val json = connection.inputStream.bufferedReader().use { it.readText() }
+                connection.disconnect()
+                
                 val root = gson.fromJson(json, Map::class.java)
+                if (root["status"] as? String != "ok") {
+                    return@withContext emptyList()
+                }
+                
                 val items = root["items"] as? List<Map<String, Any>> ?: emptyList()
                 
-                items.take(8).mapNotNull { item ->
+                items.take(5).mapNotNull { item ->
                     try {
-                        val title = item["title"]?.toString() ?: return@mapNotNull null
-                        val link = item["link"]?.toString() ?: return@mapNotNull null
-                        val description = item["description"]?.toString() ?: ""
-                        val enclosure = item["enclosure"] as? Map<*, *>
-                        val thumbnail = item["thumbnail"]?.toString()
-                        val rawImageUrl = enclosure?.get("link")?.toString() ?: thumbnail ?: extractImageUrlFromHtml(description)
+                        val title = (item["title"] as? String)?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+                        val link = (item["link"] as? String)?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+                        val description = (item["description"] as? String) ?: ""
+                        val thumbnail = (item["thumbnail"] as? String) ?: ""
+                        
+                        val rawImageUrl = thumbnail ?: extractImageUrlFromHtml(description)
                         val imageUrl = if (!rawImageUrl.isNullOrEmpty() && rawImageUrl.startsWith("http")) {
                             rawImageUrl.trim().replace(" ", "%20")
-                        } else { getFallbackImage(type) }
+                        } else {
+                            getFallbackImage(type)
+                        }
                         
                         UnifiedPost(
-                            id = item["guid"]?.toString() ?: link,
+                            id = (item["guid"] as? String) ?: link,
                             title = title,
-                            description = description.replace(Regex("<[^>]*>"), "").take(200),
+                            description = description.replace(Regex("<[^>]*>"), "").take(150),
                             imageUrl = imageUrl,
                             source = type,
-                            link = link,
-                            videoUrl = if (type == SourceType.YOUTUBE) link else null
+                            link = link
                         )
-                    } catch (e: Exception) { null }
+                    } catch (e: Exception) {
+                        Log.e("NetworkClient", "Parse item error: ${e.message}")
+                        null
+                    }
                 }
-            } catch (e: Exception) { 
+            } catch (e: java.net.SocketTimeoutException) {
+                Log.e("NetworkClient", "Connection timed out for: $rssUrl")
+                emptyList()
+            } catch (e: Exception) {
                 Log.e("NetworkClient", "Fetch error: ${e.message}")
-                emptyList() 
+                emptyList()
             }
         }
     }
@@ -164,6 +191,7 @@ class MainViewModel(application: android.app.Application) : AndroidViewModel(app
             try {
                 _isRefreshing.value = true
                 val sources = AppPrefs.getSources()
+                Log.d("NewsApp", "Loading posts for ${sources.size} sources")
                 _posts.value = if (sources.isEmpty()) emptyList() else {
                     sources.map { NetworkClient.fetchRssAsJson(it.url, it.type) }.flatten().shuffled()
                 }
@@ -198,7 +226,7 @@ class MainViewModel(application: android.app.Application) : AndroidViewModel(app
                 Log.d("NewsApp", "Source saved, reloading posts")
                 loadPosts()
             } catch (e: Exception) {
-                Log.e("NewsApp", "Error in addSource: ${e.message}", e)
+                Log.e("MainViewModel", "Add source error: ${e.message}", e)
             }
         }
     }
@@ -210,7 +238,7 @@ class MainViewModel(application: android.app.Application) : AndroidViewModel(app
                 AppPrefs.saveSources(current.filter { it.id != sourceId })
                 loadPosts()
             } catch (e: Exception) {
-                Log.e("MainViewModel", "Remove source error: ${e.message}")
+                Log.e("MainViewModel", "Remove source error: ${e.message}", e)
             }
         }
     }

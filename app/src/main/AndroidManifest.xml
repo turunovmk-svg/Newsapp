@@ -4,6 +4,7 @@
 
     <!-- Разрешение на доступ к интернету для загрузки новостей -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- Разрешение на отправку push-уведомлений -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
