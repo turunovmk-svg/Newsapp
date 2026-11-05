@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.URL
-import java.util.regex.Regex
 
 data class UnifiedPost(
     val id: String,
@@ -30,13 +29,22 @@ enum class SourceType(val displayName: String, val emoji: String) {
 
 object NetworkClient {
     private val gson = Gson()
-    private val imgRegex = Regex("""<img[^>]+src=["']([^"']+)["']""")
 
     private fun extractImageUrlFromHtml(html: String?): String? {
         if (html.isNullOrEmpty()) return null
-        return imgRegex.find(html)?.groupValues?.get(1)
-            ?.trim()
-            ?.takeIf { it.startsWith("http") }
+        val startTag = "<img"
+        val srcTag = "src="
+        val startIdx = html.indexOf(startTag, ignoreCase = true)
+        if (startIdx < 0) return null
+        val srcIdx = html.indexOf(srcTag, startIdx, ignoreCase = true)
+        if (srcIdx < 0) return null
+        val quoteStart = srcIdx + srcTag.length
+        val quoteChar = if (quoteStart < html.length && html[quoteStart] == '"') '"' else if (quoteStart < html.length && html[quoteStart] == '\'') '\'' else return null
+        val urlStart = quoteStart + 1
+        val urlEnd = html.indexOf(quoteChar, urlStart)
+        if (urlEnd < 0) return null
+        val url = html.substring(urlStart, urlEnd).trim()
+        return if (url.startsWith("http")) url else null
     }
 
     private fun getFallbackImage(type: SourceType): String = when (type) {
@@ -55,7 +63,7 @@ object NetworkClient {
 
                 items.take(8).map { item ->
                     val enclosure = item["enclosure"] as? Map<*, *>
-                    val thumbnail = item["thumbnail"]?.toString()
+                    val thumbnail = item["thumbnail"]?.toString() ?: ""
                     val description = item["description"]?.toString() ?: ""
                     val content = item["content"]?.toString() ?: ""
 
@@ -71,21 +79,22 @@ object NetworkClient {
                             ?: extractImageUrlFromHtml(content)
                     }
 
-                    val imageUrl = if (rawImageUrl != null && rawImageUrl.startsWith("http")) {
-                        rawImageUrl.trim().replace(" ", "%20")
+                    val finalImageUrl: String
+                    if (rawImageUrl != null && rawImageUrl.startsWith("http")) {
+                        finalImageUrl = rawImageUrl.trim().replace(" ", "%20")
                     } else {
-                        getFallbackImage(type)
+                        finalImageUrl = getFallbackImage(type)
                     }
 
                     Log.d("RSS_DEBUG", "Title: ${item["title"]}")
-                    Log.d("RSS_DEBUG", "Image URL: $imageUrl")
+                    Log.d("RSS_DEBUG", "Image URL: $finalImageUrl")
                     Log.d("RSS_DEBUG", "Source: $type | enclosure=$enclosureLink | thumbnail=$thumbnail")
 
                     UnifiedPost(
                         id = item["guid"]?.toString() ?: item["link"].toString(),
                         title = item["title"].toString(),
-                        description = item["description"]?.toString().replace(Regex("<[^>]*>"), "") ?: "",
-                        imageUrl = imageUrl,
+                        description = item["description"]?.toString().replace("<[^>]*>".toRegex(), "") ?: "",
+                        imageUrl = finalImageUrl,
                         source = type,
                         link = item["link"].toString(),
                         videoUrl = if (type == SourceType.YOUTUBE) item["link"].toString() else null
