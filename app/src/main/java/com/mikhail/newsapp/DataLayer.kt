@@ -318,6 +318,29 @@ class MainViewModel(private val appContext: Context) : ViewModel() {
         _selectedPost.value = post
     }
 
+    // MARK: - Theme
+
+    enum class AppTheme(val value: Int) {
+        SYSTEM(0), LIGHT(1), DARK(2), AMOLED(3)
+    }
+
+    fun getTheme(): AppTheme {
+        return try {
+            val saved = prefs.getInt("app_theme", AppTheme.SYSTEM.value)
+            AppTheme.values().first { it.value == saved }
+        } catch (e: Exception) {
+            AppTheme.SYSTEM
+        }
+    }
+
+    fun setTheme(theme: AppTheme) {
+        try {
+            prefs.edit().putInt("app_theme", theme.value).apply()
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "Save theme error: ${e.message}")
+        }
+    }
+
     // MARK: - OPML Export/Import
 
     fun exportSourcesToOpml(): String {

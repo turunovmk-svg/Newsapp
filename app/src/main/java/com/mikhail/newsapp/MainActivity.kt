@@ -21,6 +21,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,23 +50,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         
         setContent {
-            val isDark = isSystemInDarkTheme()
-            val lightScheme = lightColorScheme(
-                primary = Color(0xFF6366F1), onPrimary = Color.White, primaryContainer = Color(0xFFE0E7FF),
-                secondary = Color(0xFFEC4899), background = Color(0xFFFAFAFA), surface = Color.White,
-                onSurface = Color(0xFF0F172A), surfaceVariant = Color(0xFFF1F5F9), onSurfaceVariant = Color(0xFF64748B)
-            )
-            val darkScheme = darkColorScheme(
-                primary = Color(0xFF818CF8), onPrimary = Color(0xFF1E1B4B), primaryContainer = Color(0xFF312E81),
-                secondary = Color(0xFFF472B6), background = Color(0xFF0F172A), surface = Color(0xFF1E293B),
-                onSurface = Color(0xFFF8FAFC), surfaceVariant = Color(0xFF334155), onSurfaceVariant = Color(0xFF94A3B8)
-            )
+            val context = LocalContext.current
+            val viewModel: MainViewModel = remember { MainViewModel(context) }
             
-            MaterialTheme(colorScheme = if (isDark) darkScheme else lightScheme) {
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    AppNavigation()
-                }
-            }
+            AppNavigation(viewModel = viewModel)
         }
     }
 }
@@ -79,10 +68,32 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
 }
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(viewModel: MainViewModel) {
     val navController = rememberNavController()
     val context = LocalContext.current
-    val viewModel: MainViewModel = remember { MainViewModel(context) }
+    val appTheme by viewModel.theme.collectAsState()
+    
+    val colorScheme = when (appTheme) {
+        AppTheme.SYSTEM -> {
+            val isDark = isSystemInDarkTheme()
+            if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+        }
+        AppTheme.LIGHT -> lightColorScheme(
+            primary = Color(0xFF6366F1), onPrimary = Color.White, primaryContainer = Color(0xFFE0E7FF),
+            secondary = Color(0xFFEC4899), background = Color(0xFFFAFAFA), surface = Color.White,
+            onSurface = Color(0xFF0F172A), surfaceVariant = Color(0xFFF1F5F9), onSurfaceVariant = Color(0xFF64748B)
+        )
+        AppTheme.DARK -> darkColorScheme(
+            primary = Color(0xFF818CF8), onPrimary = Color(0xFF1E1B4B), primaryContainer = Color(0xFF312E81),
+            secondary = Color(0xFFF472B6), background = Color(0xFF0F172A), surface = Color(0xFF1E293B),
+            onSurface = Color(0xFFF8FAFC), surfaceVariant = Color(0xFF334155), onSurfaceVariant = Color(0xFF94A3B8)
+        )
+        AppTheme.AMOLED -> darkColorScheme(
+            primary = Color(0xFFBB86FC), onPrimary = Color(0xFF000000), primaryContainer = Color(0xFF3700B3),
+            secondary = Color(0xFF03DAC6), background = Color(0xFF000000), surface = Color(0xFF121212),
+            onSurface = Color(0xFFE1E1E1), surfaceVariant = Color(0xFF1E1E1E), onSurfaceVariant = Color(0xFF03DAC6)
+        )
+    }
     
     var exportFileUri by remember { mutableStateOf<Uri?>(null) }
     var importFileUri by remember { mutableStateOf<Uri?>(null) }
@@ -130,47 +141,60 @@ fun AppNavigation() {
         }
     }
     
-    Scaffold(bottomBar = { BottomNav(navController) }) { padding ->
-        NavHost(navController, Screen.Home.route, Modifier.padding(padding)) {
-            composable(Screen.Home.route) { 
-                HomeScreen(viewModel, navController) 
-            }
-            composable(Screen.Favorites.route) { 
-                FavoritesScreen(viewModel, navController) 
-            }
-            composable(Screen.Shorts.route) { ShortsScreen() }
-            composable(Screen.AddSource.route) { 
-                AddSourceScreen(viewModel) 
-            }
-            composable(Screen.Settings.route) { 
-                SettingsScreen(
-                    onExportSources = { 
-                    val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                        type = "application/xml"
-                        putExtra(Intent.EXTRA_TITLE, "news_app_sources.opml")
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        bottomBar = { BottomNav(navController) }
+    ) { padding ->
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = MaterialTheme.typography,
+            shapes = MaterialTheme.shapes
+        ) {
+            Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                NavHost(navController, Screen.Home.route, Modifier.padding(padding)) {
+                    composable(Screen.Home.route) { 
+                        HomeScreen(viewModel, navController) 
                     }
-                    exportLauncher.launch(intent)
-                },
-                    onImportSources = { 
-                    val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-                        type = "*/*"
-                        addCategory(Intent.CATEGORY_OPENABLE)
+                    composable(Screen.Favorites.route) { 
+                        FavoritesScreen(viewModel, navController) 
                     }
-                    importLauncher.launch(intent)
-                },
-                    onClearAllSources = { 
-                        viewModel.clearAllSources()
-                        Toast.makeText(context, "Источники удалены", Toast.LENGTH_SHORT).show()
-                    },
-                    sourcesCount = viewModel.getSources().size
-                ) 
-            }
-            composable("article_reader") { 
-                val post = viewModel.selectedPost.value
-                if (post != null) {
-                    ArticleReaderScreen(post = post, onBack = { navController.popBackStack() })
-                } else {
-                    navController.popBackStack()
+                    composable(Screen.Shorts.route) { ShortsScreen() }
+                    composable(Screen.AddSource.route) { 
+                        AddSourceScreen(viewModel) 
+                    }
+                    composable(Screen.Settings.route) { 
+                        SettingsScreen(
+                            onExportSources = { 
+                                val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                                    type = "application/xml"
+                                    putExtra(Intent.EXTRA_TITLE, "news_app_sources.opml")
+                                }
+                                exportLauncher.launch(intent)
+                            },
+                            onImportSources = { 
+                                val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                                    type = "*/*"
+                                    addCategory(Intent.CATEGORY_OPENABLE)
+                                }
+                                importLauncher.launch(intent)
+                            },
+                            onClearAllSources = { 
+                                viewModel.clearAllSources()
+                                Toast.makeText(context, "Источники удалены", Toast.LENGTH_SHORT).show()
+                            },
+                            sourcesCount = viewModel.getSources().size,
+                            currentTheme = appTheme,
+                            onThemeChange = { viewModel.setTheme(it) }
+                        ) 
+                    }
+                    composable("article_reader") { 
+                        val post = viewModel.selectedPost.value
+                        if (post != null) {
+                            ArticleReaderScreen(post = post, onBack = { navController.popBackStack() })
+                        } else {
+                            navController.popBackStack()
+                        }
+                    }
                 }
             }
         }
@@ -422,7 +446,9 @@ fun SettingsScreen(
     onExportSources: () -> Unit,
     onImportSources: () -> Unit,
     onClearAllSources: () -> Unit,
-    sourcesCount: Int
+    sourcesCount: Int,
+    currentTheme: AppTheme,
+    onThemeChange: (AppTheme) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text("Настройки", fontSize = 28.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 24.dp))
@@ -464,8 +490,40 @@ fun SettingsScreen(
         
         Spacer(modifier = Modifier.height(32.dp))
         
+        Text("Тема оформления", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
+        
+        AppTheme.values().forEach { theme ->
+            RadioButton(
+                selected = currentTheme == theme,
+                onClick = { onThemeChange(theme) },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.RadioButtonChecked,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.alpha(if (currentTheme == theme) 1f else 0.3f)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        when (theme) {
+                            AppTheme.SYSTEM -> "Системная"
+                            AppTheme.LIGHT -> "Светлая"
+                            AppTheme.DARK -> "Тёмная"
+                            AppTheme.AMOLED -> "AMOLED"
+                        },
+                        fontSize = 16.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(32.dp))
+        
         Text("О приложении", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
         Text("NewsApp v1.0", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text("Гithub: turunovmk-svg/Newsapp", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("GitHub: turunovmk-svg/Newsapp", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
