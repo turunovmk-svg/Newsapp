@@ -27,12 +27,7 @@ data class NewsArticle(
     val publishedAt: String?
 )
 
-// Companion object for type adapters
-object {
 
-    // Gson type for list of news articles
-    private val LIST_TYPE: Type = object : TypeToken<List<NewsArticle>>() {}.type
-}
 
 // Main Activity with Jetpack Compose UI
 class MainActivity : ComponentActivity() {
