@@ -4,6 +4,7 @@ plugins {
 }
 
 android {
+    namespace "com.mikhail.newsapp"
     compileSdk 34
     defaultConfig {
         applicationId "com.mikhail.newsapp"
