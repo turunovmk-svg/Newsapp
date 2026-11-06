@@ -32,7 +32,10 @@ jobs:
       run: gradle assembleDebug --stacktrace 2>&1 | tail -200
 
     - name: List APK files
-      run: find app/build/outputs/apk/debug/ -type f -name "*.apk" 2>/dev/null || echo "No APK files found"
+      run: ls -la app/build/outputs/apk/debug/ 2>/dev/null || echo "APK directory does not exist"
+    
+    - name: List all APKs recursively
+      run: find app/build/ -name "*.apk" -type f 2>/dev/null || echo "No APK files found anywhere"
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
