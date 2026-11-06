@@ -34,9 +34,9 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0"
     implementation "androidx.activity:activity-compose:1.7.2"
     // PullToRefresh for Compose (Material 3 experimental API)
-    implementation "androidx.compose.material3:material3-pulltorefresh:1.2.1"
+    implementation "androidx.compose.material3:material3-pulltorefresh:1.0.0"
     // Coil for AsyncImage
-    implementation "io.coil-kt.coil:coil:2.4.0"
+    implementation "io.coil-kt.coil:coil:2.3.0"
     // OkHttp for network requests
     implementation "com.squareup.okhttp3:okhttp:4.12.0"
 }
