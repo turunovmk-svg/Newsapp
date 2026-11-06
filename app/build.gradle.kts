@@ -44,7 +44,8 @@ android {
 }
 
 dependencies {
-    val composeBom = platform("androidx.compose:compose-bom:2024.07.00")
+    // Compose BOM 2024.06.00 (stable, exists in Maven)
+    val composeBom = platform("androidx.compose:compose-bom:2024.06.00")
 
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
@@ -59,7 +60,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
     implementation("androidx.datastore:datastore-preferences:1.1.4")
     
-    // Coil 2.x (stable with Compose BOM 2024.07)
+    // Coil 2.x
     implementation("io.coil-kt:coil-compose:2.6.0")
     
     // JSON

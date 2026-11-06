@@ -33,14 +33,6 @@ jobs:
 
     - name: Build Debug APK
       run: ./gradlew :app:assembleDebug --no-daemon --stacktrace --info
-      env:
-        GRADLE_OPTS: "-Dorg.gradle.workers.max=2 -Dorg.gradle.configuration-cache=false"
-
-    - name: Find APK
-      run: |
-        echo "=== Looking for APK ==="
-        find . -name "*.apk" -type f 2>/dev/null | head -20
-        ls -la app/build/outputs/apk/debug/ 2>/dev/null || echo "debug dir not found"
 
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
@@ -57,13 +49,6 @@ jobs:
         else
           echo "No keystore, skipping release build"
         fi
-
-    - name: Find AAB
-      if: always()
-      run: |
-        echo "=== Looking for AAB ==="
-        find . -name "*.aab" -type f 2>/dev/null | head -20
-        ls -la app/build/outputs/bundle/release/ 2>/dev/null || echo "release bundle dir not found"
 
     - name: Upload Release AAB
       if: always()
