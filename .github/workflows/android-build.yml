@@ -32,8 +32,6 @@ jobs:
       - name: Install Android SDK components
         run: |
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" > /dev/null 2>&1
-          chmod -R 777 $ANDROID_HOME/cmdline-tools
-          chmod -R 777 $ANDROID_HOME/platform-tools
 
       - name: Increase Gradle memory limits
         run: |
@@ -41,15 +39,12 @@ jobs:
           echo "kotlin.compiler.jvm.opts=-Xmx4g" >> gradle.properties
 
       - name: Build Debug APK
-        run: |
-          cd /var/minis/workspace/NewsApp
-          # Build only the debug APK, skip tests to save memory
-          ./gradlew assembleDebug -x test --no-daemon 2>&1 | tail -50
+        run: ./gradlew assembleDebug -x test --no-daemon 2>&1 | tail -50
 
       - name: Upload APK artifact
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: newsapp-debug-apk
-          path: /var/minis/workspace/NewsApp/app/build/outputs/apk/debug/app-debug.apk
+          path: app/build/outputs/apk/debug/app-debug.apk
           retention-days: 7
