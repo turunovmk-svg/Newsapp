@@ -760,7 +760,6 @@ fun ShortCard(post: UnifiedPost, viewModel: MainViewModel, navController: androi
                         model = ImageRequest.Builder(LocalContext.current)
                             .data(post.imageUrl)
                             .crossfade(true)
-                            .resize(400.dp)
                             .build(),
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
