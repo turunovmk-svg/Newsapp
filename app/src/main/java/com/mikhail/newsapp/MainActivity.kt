@@ -53,10 +53,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import coil3.compose.AsyncImage
-import coil3.compose.Crossfade
-import coil3.request.Crossfade
 import coil3.request.ImageRequest
 import coil3.transform.RoundedCorners
+import com.mikhail.newsapp.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
