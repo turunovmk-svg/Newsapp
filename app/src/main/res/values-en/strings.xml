@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">NewsApp</string>
+    <string name="loading_news">Loading news...</string>
+    <string name="pull_to_refresh">Pull down to refresh</string>
+    <string name="settings_title">Settings</string>
+    <string name="import_opml">Import OPML</string>
+    <string name="export_opml">Export OPML</string>
+    <string name="back">Back</string>
+</resources>

@@ -1,1 +1,9 @@
-<string name="app_name">NewsApp</string>
+<resources>
+    <string name="app_name">NewsApp</string>
+    <string name="loading_news">Загрузка новостей...</string>
+    <string name="pull_to_refresh">Pull down to refresh</string>
+    <string name="settings_title">Настройки</string>
+    <string name="import_opml">Импорт OPML</string>
+    <string name="export_opml">Экспорт OPML</string>
+    <string name="back">Назад</string>
+</resources>

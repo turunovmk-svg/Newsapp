@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -12,6 +13,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.Arrangement
 import androidx.compose.foundation.layout.Arrangement.Horizontal
@@ -21,8 +25,6 @@ import androidx.compose.runtime.experimental.optin.OptIn
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.material3.IconButton
 import android.content.Context
 import android.content.SharedPreferences
 
@@ -87,7 +89,7 @@ fun NewsAppScreen() {
                     color = MaterialTheme.primaryColor
                 ) {
                     Text(
-                        text = "Pull down to refresh",
+                        text = stringResource(R.string.pull_to_refresh),
                         modifier = Modifier.align(Alignment.Center),
                         style = MaterialTheme.typography.h6,
                         color = MaterialTheme.onPrimary
@@ -102,7 +104,7 @@ fun NewsAppScreen() {
             ) {
                 if (articles == null || articles.isEmpty()) {
                     Text(
-                        text = "Loading news...",
+                        text = stringResource(R.string.loading_news),
                         modifier = Modifier.padding(32.dp)
                     )
                 } else {
@@ -128,10 +130,10 @@ fun NewsAppScreen() {
                                     modifier = Modifier.wrapContentWidth(100.dp)
                                 )
                                 Text(
-                                    text = article.description ?: "No description",
+                                    text = article.description ?: stringResource(R.string.no_description),
                                     style = MaterialTheme.typography.body2,
                                     maxLines = 3,
-                                    overflow = androidx.compose.ui.text.style.Overflow.Clip
+                                    overflow = TextOverflow.Clip
                                 )
                                 Text(
                                     text = "Published: " + article.publishedAt,
