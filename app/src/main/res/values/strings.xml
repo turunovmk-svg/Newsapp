@@ -6,4 +6,6 @@
     <string name="import_opml">Импорт OPML</string>
     <string name="export_opml">Экспорт OPML</string>
     <string name="back">Назад</string>
+    <string name="empty_shorts">Добавьте источники</string>
+    <string name="add_sources_hint">Нажмите «Добавить источник», чтобы загрузить новини</string>
 </resources>

@@ -31,10 +31,14 @@ dependencies {
     implementation "androidx.compose.foundation:foundation-layout:1.5.0"
     testImplementation "junit:junit:4.13.2"
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:1.5.0"
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.8.0"
+    // Lifecycle ViewModel + Compose state
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.0"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0"
     implementation "androidx.activity:activity-compose:2.8.0"
     // PullToRefresh for Compose (Material 3 experimental API)
     implementation "androidx.compose.material3:material3-pulltorefresh:1.2.1"
+    // Coil for AsyncImage
+    implementation "io.coil-kt.coil3:coil3:2.4.0"
     // OkHttp for network requests
     implementation "com.squareup.okhttp3:okhttp:4.12.0"
 }
