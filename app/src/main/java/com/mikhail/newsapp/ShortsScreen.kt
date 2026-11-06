@@ -16,8 +16,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.experimental.optin.OptIn
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
