@@ -33,6 +33,9 @@ android {
     buildFeatures {
         compose = true
     }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.14"
+    }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1,DEPENDENCIES,LICENSE,NOTICE,NOTICE.txt,LICENSE.txt,ASL2.0}"
@@ -41,7 +44,7 @@ android {
 }
 
 dependencies {
-    val composeBom = platform("androidx.compose:compose-bom:2024.08.00")
+    val composeBom = platform("androidx.compose:compose-bom:2024.07.00")
 
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
@@ -56,8 +59,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
     implementation("androidx.datastore:datastore-preferences:1.1.4")
     
-    // Coil 3.x
-    implementation("io.coil-kt:coil-compose:3.1.0")
+    // Coil 2.x (stable with Compose BOM 2024.07)
+    implementation("io.coil-kt:coil-compose:2.6.0")
     
     // JSON
     implementation("com.google.code.gson:gson:2.11.0")
