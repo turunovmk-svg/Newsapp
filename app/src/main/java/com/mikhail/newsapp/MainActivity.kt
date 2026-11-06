@@ -1,3 +1,62 @@
+package com.mikhail.newsapp
+
+import android.app.Activity
+import android.content.Intent
+import android.net.Uri
+import android.os.Bundle
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            val context = LocalContext.current
+            val viewModel: MainViewModel = remember { MainViewModel(context) }
+            AppNavigation(viewModel = viewModel)
+        }
+    }
+}
+
+sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
+    object Home : Screen("home", "Главная", Icons.Filled.Home)
+    object Favorites : Screen("favorites", "Избранное", Icons.Filled.Favorite)
+    object Shorts : Screen("shorts", "Шортс", Icons.Filled.PlayCircle)
+    object AddSource : Screen("add_source", "Добавить", Icons.Filled.Add)
+    object Settings : Screen("settings", "Настройки", Icons.Filled.Settings)
+    companion object { val allScreens = listOf(Home, Favorites, Shorts, AddSource, Settings) }
+}
 
 @Composable
 fun AppNavigation(viewModel: MainViewModel) {
@@ -27,17 +86,13 @@ fun AppNavigation(viewModel: MainViewModel) {
         )
     }
 
-    val exportLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
+    val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
                 try {
                     val opmlContent = viewModel.exportSourcesToOpml()
                     if (opmlContent.isNotBlank()) {
-                        context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                            outputStream.write(opmlContent.toByteArray(Charsets.UTF_8))
-                        }
+                        context.contentResolver.openOutputStream(uri)?.use { it.write(opmlContent.toByteArray(Charsets.UTF_8)) }
                         Toast.makeText(context, "Источники экспортированы", Toast.LENGTH_SHORT).show()
                     }
                 } catch (e: Exception) {
@@ -47,22 +102,16 @@ fun AppNavigation(viewModel: MainViewModel) {
         }
     }
 
-    val importLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
+    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
                 try {
                     val inputStream = context.contentResolver.openInputStream(uri) ?: return@rememberLauncherForActivityResult
                     val opmlContent = inputStream.bufferedReader().use { it.readText() }
                     val imported = viewModel.importSourcesFromOpml(opmlContent)
-                    if (imported >= 0) {
-                        Toast.makeText(context, "Импортировано источников: $imported", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(context, "Ошибка импорта OPML", Toast.LENGTH_SHORT).show()
-                    }
+                    Toast.makeText(context, "Импортировано: $imported", Toast.LENGTH_SHORT).show()
                 } catch (e: Exception) {
-                    Toast.makeText(context, "Ошибка чтения файла: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Ошибка чтения: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -98,10 +147,7 @@ fun AppNavigation(viewModel: MainViewModel) {
                             },
                             sourcesCount = viewModel.getSources().size,
                             currentTheme = appTheme,
-                            onThemeChange = {
-                                appTheme = it
-                                viewModel.setTheme(it)
-                            },
+                            onThemeChange = { appTheme = it; viewModel.setTheme(it) },
                             currentLanguage = viewModel.getAppLanguage(),
                             onLanguageChange = { viewModel.setAppLanguage(it) },
                             onClearCache = { viewModel.clearCache() },
@@ -111,11 +157,8 @@ fun AppNavigation(viewModel: MainViewModel) {
                     }
                     composable("article_reader") {
                         val post = viewModel.selectedPost.value
-                        if (post != null) {
-                            ArticleReaderScreen(post = post, onBack = { navController.popBackStack() })
-                        } else {
-                            navController.popBackStack()
-                        }
+                        if (post != null) ArticleReaderScreen(post) { navController.popBackStack() }
+                        else navController.popBackStack()
                     }
                 }
             }
@@ -123,18 +166,17 @@ fun AppNavigation(viewModel: MainViewModel) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BottomNav(navController: androidx.navigation.NavController) {
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 12.dp,
-        modifier = Modifier.fillMaxWidth().shadow(8.dp, RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp), ambientColor = Color.Black.copy(0.08f), spotColor = Color.Black.copy(0.08f))
+        modifier = Modifier.fillMaxWidth().shadow(8.dp, RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
     ) {
         val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
         Screen.allScreens.forEach { screen ->
             NavigationBarItem(
-                icon = { Icon(screen.icon, contentDescription = screen.title, modifier = Modifier.size(26.dp)) },
+                icon = { Icon(screen.icon, screen.title, modifier = Modifier.size(26.dp)) },
                 label = { Text(screen.title, fontSize = 11.sp, fontWeight = if (currentRoute == screen.route) FontWeight.Bold else FontWeight.Medium) },
                 selected = currentRoute == screen.route,
                 onClick = { navController.navigate(screen.route) { popUpTo(navController.graph.startDestinationId) { saveState = true }; launchSingleTop = true; restoreState = true } },
@@ -154,7 +196,6 @@ fun BottomNav(navController: androidx.navigation.NavController) {
 fun HomeScreen(viewModel: MainViewModel, navController: androidx.navigation.NavController) {
     val posts by viewModel.posts.collectAsState()
     val sources by viewModel.sources.collectAsState()
-    val isRefreshing by viewModel.isRefreshing.collectAsState()
 
     if (sources.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -184,14 +225,11 @@ fun HomeScreen(viewModel: MainViewModel, navController: androidx.navigation.NavC
                     Text("Свежие новости из ваших источников", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
                 }
                 IconButton(onClick = { viewModel.loadPosts() }, modifier = Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary)) {
-                    Icon(Icons.Filled.Refresh, contentDescription = "Update", tint = Color.White, modifier = Modifier.size(24.dp))
+                    Icon(Icons.Filled.Refresh, "Update", tint = Color.White, modifier = Modifier.size(24.dp))
                 }
             }
             LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                items(
-                    items = posts.distinctBy { it.id },
-                    key = { "${it.source.name}_${it.id}" }
-                ) { post -> PostCard(post, viewModel, navController) }
+                items(items = posts.distinctBy { it.id }, key = { "${it.source.name}_${it.id}" }) { post -> PostCard(post, viewModel, navController) }
             }
         }
     }
@@ -202,13 +240,11 @@ fun PostCard(post: UnifiedPost, viewModel: MainViewModel, navController: android
     val isFavorite = viewModel.isFavorite(post.id)
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-                viewModel.selectPost(post)
-                viewModel.markAsRead(post.id)
-                navController.navigate("article_reader")
-            },
+        modifier = Modifier.fillMaxWidth().clickable {
+            viewModel.selectPost(post)
+            viewModel.markAsRead(post.id)
+            navController.navigate("article_reader")
+        },
         shape = RoundedCornerShape(24.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp, pressedElevation = 8.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -221,9 +257,6 @@ fun PostCard(post: UnifiedPost, viewModel: MainViewModel, navController: android
                 Spacer(Modifier.width(12.dp))
                 Text(post.source.displayName.takeIf { it.isNotBlank() } ?: "Источник", color = MaterialTheme.colorScheme.primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(modifier = Modifier.weight(1f))
-                if (viewModel.isRead(post.id)) {
-                    Icon(Icons.Filled.CheckCircle, contentDescription = "Read", tint = MaterialTheme.colorScheme.primary.copy(0.5f), modifier = Modifier.size(20.dp))
-                }
             }
             Spacer(Modifier.height(16.dp))
             Text(post.title.takeIf { it.isNotBlank() } ?: "Без названия", fontSize = 20.sp, fontWeight = FontWeight.Bold, maxLines = 2, color = MaterialTheme.colorScheme.onSurface, lineHeight = 26.sp)
@@ -258,33 +291,25 @@ fun ArticleReaderScreen(post: UnifiedPost, onBack: () -> Unit) {
     val safeEmoji = post.source.emoji.takeIf { it.isNotBlank() } ?: "📰"
     val safeDisplayName = post.source.displayName.takeIf { it.isNotBlank() } ?: "Источник"
 
-    DisposableEffect(Unit) {
-        onDispose {
-            // Cleanup TTS on dispose
-        }
-    }
-
     Column(modifier = Modifier.fillMaxSize().background(Color(bgColor))) {
         Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) {
-                Icon(Icons.Filled.ArrowBack, contentDescription = "Назад", tint = Color(textColor))
+                Icon(Icons.Filled.ArrowBack, "Назад", tint = Color(textColor))
             }
             Spacer(modifier = Modifier.width(16.dp))
             Text("Чтение", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(textColor), modifier = Modifier.weight(1f))
             IconButton(onClick = {
-                if (isSpeaking) {
-                    // Stop TTS
-                    isSpeaking = false
-                } else {
-                    // Start TTS
-                    isSpeaking = true
-                    android.speech.tts.TextToSpeech(context) { tts ->
-                        if (tts == android.speech.tts.TextToSpeech.SUCCESS) {
-                            tts.language = java.util.Locale("ru")
-                            tts.speak(safeTitle + ". " + safeDesc, android.speech.tts.TextToSpeech.QUEUE_FLUSH, null, null)
+                isSpeaking = !isSpeaking
+                try {
+                    val tts = android.speech.tts.TextToSpeech(context) { status ->
+                        if (status == android.speech.tts.TextToSpeech.SUCCESS) {
+                            // TTS ready
                         }
                     }
-                }
+                    tts.language = java.util.Locale("ru")
+                    if (isSpeaking) tts.speak("$safeTitle. $safeDesc", android.speech.tts.TextToSpeech.QUEUE_FLUSH, null, null)
+                    else tts.stop()
+                } catch (e: Exception) { }
             }) {
                 Icon(
                     imageVector = if (isSpeaking) Icons.Filled.VolumeOff else Icons.Filled.VolumeUp,
@@ -341,10 +366,7 @@ fun FavoritesScreen(viewModel: MainViewModel, navController: androidx.navigation
         Column(Modifier.fillMaxSize()) {
             Text("❤️ Избранное", fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp))
             LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                items(
-                    items = favPosts.distinctBy { it.id },
-                    key = { "${it.source.name}_${it.id}" }
-                ) { post -> PostCard(post, viewModel, navController) }
+                items(items = favPosts.distinctBy { it.id }, key = { "${it.source.name}_${it.id}" }) { post -> PostCard(post, viewModel, navController) }
             }
         }
     }
@@ -430,7 +452,7 @@ fun AddSourceScreen(viewModel: MainViewModel) {
                                 Text(source.url, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
                             }
                             IconButton(onClick = { viewModel.removeSource(source.id) }) {
-                                Icon(Icons.Filled.Delete, contentDescription = "Удалить", tint = MaterialTheme.colorScheme.error)
+                                Icon(Icons.Filled.Delete, "Удалить", tint = MaterialTheme.colorScheme.error)
                             }
                         }
                     }
@@ -457,61 +479,32 @@ fun ShortsScreen(viewModel: MainViewModel, navController: androidx.navigation.Na
             Text("Нет контента для Шортс", fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     } else {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
+        LazyColumn(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             items(shorts, key = { it.id }) { post ->
                 Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(400.dp)
-                        .clickable {
-                            viewModel.selectPost(post)
-                            navController.navigate("article_reader")
-                        },
+                    modifier = Modifier.fillMaxWidth().height(400.dp).clickable {
+                        viewModel.selectPost(post)
+                        navController.navigate("article_reader")
+                    },
                     shape = RoundedCornerShape(24.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
                     Column(modifier = Modifier.fillMaxSize()) {
                         Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(200.dp)
-                                .background(MaterialTheme.colorScheme.primaryContainer)
-                                .padding(16.dp)
+                            modifier = Modifier.fillMaxWidth().height(200.dp).background(MaterialTheme.colorScheme.primaryContainer).padding(16.dp)
                         ) {
                             Text(text = post.source.emoji, fontSize = 48.sp)
                         }
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp)
-                        ) {
-                            Text(
-                                text = post.title,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                maxLines = 2
-                            )
+                        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                            Text(text = post.title, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, maxLines = 2)
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = post.description,
-                                fontSize = 14.sp,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 3
-                            )
+                            Text(text = post.description, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3)
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.Start
                         ) {
-                            IconButton(
-                                onClick = { viewModel.toggleFavorite(post.id) },
-                                modifier = Modifier.size(40.dp)
-                            ) {
+                            IconButton(onClick = { viewModel.toggleFavorite(post.id) }, modifier = Modifier.size(40.dp)) {
                                 Icon(
                                     imageVector = if (viewModel.isFavorite(post.id)) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
                                     contentDescription = "Favorite",
@@ -545,7 +538,6 @@ fun SettingsScreen(
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text("Настройки", fontSize = 28.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 24.dp))
 
-        // Источники
         Text("Источники", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
         Text("Количество источников: $sourcesCount", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(modifier = Modifier.height(16.dp))
@@ -581,7 +573,6 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Тема
         Text("Тема оформления", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
         listOf(
             MainViewModel.AppTheme.SYSTEM to "Системная",
@@ -609,7 +600,6 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Язык
         Text("Язык", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
         listOf(
             "system" to "Системный",
@@ -637,7 +627,6 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Данные
         Text("Данные", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
         Button(
             onClick = onClearCache,
@@ -659,7 +648,6 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // О приложении
         Text("О приложении", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
         Text("NewsApp v1.0", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text("GitHub: turunovmk-svg/Newsapp", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
