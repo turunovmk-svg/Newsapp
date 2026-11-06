@@ -34,7 +34,8 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.3"
+        // Compose Compiler 1.5.14 ↔ Kotlin 1.9.24 (совместимая пара)
+        kotlinCompilerExtensionVersion = "1.5.14"
     }
     packaging {
         resources {
@@ -58,7 +59,6 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.navigation:navigation-compose:2.8.3")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
-    implementation("androidx.datastore:datastore-preferences:1.1.4")
     
     // Coil 2.x
     implementation("io.coil-kt:coil-compose:2.6.0")
