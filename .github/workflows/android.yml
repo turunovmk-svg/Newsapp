@@ -1,4 +1,4 @@
-name: NewsApp CI/CD
+# Added a trivial change to force a new build trigger
 
 on:
   push:
