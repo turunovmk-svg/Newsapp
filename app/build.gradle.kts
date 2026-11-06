@@ -29,13 +29,9 @@ android {
     }
     kotlinOptions {
         jvmTarget = "1.8"
-        freeCompilerArgs += listOf("-Xopt-in=kotlin.RequiresOptIn")
     }
     buildFeatures {
         compose = true
-    }
-    composeOptions {
-        // Kotlin 2.0: Compose compiler встроен в Kotlin, версия определяется автоматически
     }
     packaging {
         resources {
@@ -60,11 +56,10 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
     implementation("androidx.datastore:datastore-preferences:1.1.4")
     
-    // Coil 3.x for image loading
+    // Coil 3.x
     implementation("io.coil-kt:coil-compose:3.1.0")
-    implementation("io.coil-kt:coil-network-okhttp:3.1.0")
     
-    // JSON parsing
+    // JSON
     implementation("com.google.code.gson:gson:2.11.0")
     
     // Coroutines
