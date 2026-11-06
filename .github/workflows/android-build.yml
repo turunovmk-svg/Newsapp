@@ -12,7 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ANDROID_HOME: /opt/android-sdk
-      ORG_GRADLE_PROJECT_javaArgs: "-Xmx4g"
+      # Set sufficient JVM memory for Android Gradle builds
+      ORG_GRADLE_PROJECT_jvmArgs: "-Xmx4g"
 
     steps:
       - name: Checkout repository
@@ -31,17 +32,18 @@ jobs:
       - name: Install Android SDK components
         run: |
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" > /dev/null 2>&1
-          chmod -R 777 $ANDROID_HOME/cmdline-tools latest/bin/sdkmanager
+          chmod -R 777 $ANDROID_HOME/cmdline-tools
           chmod -R 777 $ANDROID_HOME/platform-tools
+
+      - name: Increase Gradle memory limits
+        run: |
+          echo "org.gradle.jvmargs=-Xmx4g" > gradle.properties
+          echo "kotlin.compiler.jvm.opts=-Xmx4g" >> gradle.properties
 
       - name: Build Debug APK
         run: |
           cd /var/minis/workspace/NewsApp
-          # Disable test execution to save time and memory
-          echo "Building Debug APK..."
-          # Set Gradle JVM args for sufficient memory
-          export GRADLE_OPTS="-Xmx4g -Dorg.gradle.jvmargs=-Xmx4g"
-          # Build only the debug APK, skip tests
+          # Build only the debug APK, skip tests to save memory
           ./gradlew assembleDebug -x test --no-daemon 2>&1 | tail -50
 
       - name: Upload APK artifact
