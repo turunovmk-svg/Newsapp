@@ -1,127 +1,32 @@
-package com.mikhail.newsapp
-
-import android.app.Activity
-import android.content.Intent
-import com.mikhail.newsapp.DataLayer.MainViewModel.AppTheme
-import android.net.Uri
-import android.os.Bundle
-import android.widget.Toast
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.pointerInput
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.animateTo
-import androidx.compose.animation.core.decay
-import androidx.compose.animation.core.snapTo
-import androidx.compose.animation.core.VectorSpec
-import androidx.compose.material3.*
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.ColorPainter
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
-import coil.compose.AsyncImage
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
-import coil.compose.AsyncImage
-
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        
-        setContent {
-            val context = LocalContext.current
-            val viewModel: MainViewModel = remember { MainViewModel(context) }
-            
-            AppNavigation(viewModel = viewModel)
-        }
-    }
-}
-
-sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
-    object Home : Screen("home", "Главная", Icons.Filled.Home)
-    object Favorites : Screen("favorites", "Избранное", Icons.Filled.Favorite)
-    object Shorts : Screen("shorts", "Шортс", Icons.Filled.PlayCircle)
-    object AddSource : Screen("add_source", "Добавить", Icons.Filled.Add)
-    object Settings : Screen("settings", "Настройки", Icons.Filled.Settings)
-    companion object { val allScreens = listOf(Home, Favorites, Shorts, AddSource, Settings) }
-}
 
 @Composable
 fun AppNavigation(viewModel: MainViewModel) {
     val navController = rememberNavController()
     val context = LocalContext.current
-    val appTheme by viewModel.theme.collectAsState()
-    
+    var appTheme by remember { mutableStateOf(viewModel.getTheme()) }
+
     val colorScheme = when (appTheme) {
-        AppTheme.SYSTEM -> {
+        MainViewModel.AppTheme.SYSTEM -> {
             val isDark = isSystemInDarkTheme()
             if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-        AppTheme.LIGHT -> lightColorScheme(
+        MainViewModel.AppTheme.LIGHT -> lightColorScheme(
             primary = Color(0xFF6366F1), onPrimary = Color.White, primaryContainer = Color(0xFFE0E7FF),
             secondary = Color(0xFFEC4899), background = Color(0xFFFAFAFA), surface = Color.White,
             onSurface = Color(0xFF0F172A), surfaceVariant = Color(0xFFF1F5F9), onSurfaceVariant = Color(0xFF64748B)
         )
-        AppTheme.DARK -> darkColorScheme(
+        MainViewModel.AppTheme.DARK -> darkColorScheme(
             primary = Color(0xFF818CF8), onPrimary = Color(0xFF1E1B4B), primaryContainer = Color(0xFF312E81),
             secondary = Color(0xFFF472B6), background = Color(0xFF0F172A), surface = Color(0xFF1E293B),
             onSurface = Color(0xFFF8FAFC), surfaceVariant = Color(0xFF334155), onSurfaceVariant = Color(0xFF94A3B8)
         )
-        AppTheme.AMOLED -> darkColorScheme(
+        MainViewModel.AppTheme.AMOLED -> darkColorScheme(
             primary = Color(0xFFBB86FC), onPrimary = Color(0xFF000000), primaryContainer = Color(0xFF3700B3),
             secondary = Color(0xFF03DAC6), background = Color(0xFF000000), surface = Color(0xFF121212),
             onSurface = Color(0xFFE1E1E1), surfaceVariant = Color(0xFF1E1E1E), onSurfaceVariant = Color(0xFF03DAC6)
         )
     }
-    
-    var exportFileUri by remember { mutableStateOf<Uri?>(null) }
-    var importFileUri by remember { mutableStateOf<Uri?>(null) }
-    
+
     val exportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -134,8 +39,6 @@ fun AppNavigation(viewModel: MainViewModel) {
                             outputStream.write(opmlContent.toByteArray(Charsets.UTF_8))
                         }
                         Toast.makeText(context, "Источники экспортированы", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(context, "Нет источников для экспорта", Toast.LENGTH_SHORT).show()
                     }
                 } catch (e: Exception) {
                     Toast.makeText(context, "Ошибка экспорта: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -143,7 +46,7 @@ fun AppNavigation(viewModel: MainViewModel) {
             }
         }
     }
-    
+
     val importLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -164,59 +67,49 @@ fun AppNavigation(viewModel: MainViewModel) {
             }
         }
     }
-    
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        bottomBar = { BottomNav(navController) }
-    ) { padding ->
-        MaterialTheme(
-            colorScheme = colorScheme,
-            typography = MaterialTheme.typography,
-            shapes = MaterialTheme.shapes
-        ) {
-            Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+
+    MaterialTheme(colorScheme = colorScheme) {
+        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+            Scaffold(bottomBar = { BottomNav(navController) }) { padding ->
                 NavHost(navController, Screen.Home.route, Modifier.padding(padding)) {
-                    composable(Screen.Home.route) { 
-                        HomeScreen(viewModel, navController) 
-                    }
-                    composable(Screen.Favorites.route) { 
-                        FavoritesScreen(viewModel, navController) 
-                    }
-                    composable(Screen.Shorts.route) { ShortsScreen() }
-                    composable(Screen.AddSource.route) { 
-                        AddSourceScreen(viewModel) 
-                    }
-                    composable(Screen.Settings.route) { 
+                    composable(Screen.Home.route) { HomeScreen(viewModel, navController) }
+                    composable(Screen.Favorites.route) { FavoritesScreen(viewModel, navController) }
+                    composable(Screen.Shorts.route) { ShortsScreen(viewModel, navController) }
+                    composable(Screen.AddSource.route) { AddSourceScreen(viewModel) }
+                    composable(Screen.Settings.route) {
                         SettingsScreen(
-                            onExportSources = { 
+                            onExportSources = {
                                 val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
                                     type = "application/xml"
                                     putExtra(Intent.EXTRA_TITLE, "news_app_sources.opml")
                                 }
                                 exportLauncher.launch(intent)
                             },
-                            onImportSources = { 
+                            onImportSources = {
                                 val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
                                     type = "*/*"
                                     addCategory(Intent.CATEGORY_OPENABLE)
                                 }
                                 importLauncher.launch(intent)
                             },
-                            onClearAllSources = { 
+                            onClearAllSources = {
                                 viewModel.clearAllSources()
                                 Toast.makeText(context, "Источники удалены", Toast.LENGTH_SHORT).show()
                             },
                             sourcesCount = viewModel.getSources().size,
                             currentTheme = appTheme,
-                            onThemeChange = { viewModel.setTheme(it) },
+                            onThemeChange = {
+                                appTheme = it
+                                viewModel.setTheme(it)
+                            },
                             currentLanguage = viewModel.getAppLanguage(),
                             onLanguageChange = { viewModel.setAppLanguage(it) },
                             onClearCache = { viewModel.clearCache() },
                             onClearReadHistory = { viewModel.clearReadHistory() },
                             readHistoryCount = viewModel.getReadHistory().size
-                        ) 
+                        )
                     }
-                    composable("article_reader") { 
+                    composable("article_reader") {
                         val post = viewModel.selectedPost.value
                         if (post != null) {
                             ArticleReaderScreen(post = post, onBack = { navController.popBackStack() })
@@ -245,19 +138,24 @@ fun BottomNav(navController: androidx.navigation.NavController) {
                 label = { Text(screen.title, fontSize = 11.sp, fontWeight = if (currentRoute == screen.route) FontWeight.Bold else FontWeight.Medium) },
                 selected = currentRoute == screen.route,
                 onClick = { navController.navigate(screen.route) { popUpTo(navController.graph.startDestinationId) { saveState = true }; launchSingleTop = true; restoreState = true } },
-                colors = NavigationBarItemDefaults.colors(selectedIconColor = MaterialTheme.colorScheme.primary, selectedTextColor = MaterialTheme.colorScheme.primary, indicatorColor = MaterialTheme.colorScheme.primaryContainer, unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.5f), unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.5f))
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = MaterialTheme.colorScheme.primary,
+                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.5f),
+                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.5f)
+                )
             )
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(viewModel: MainViewModel, navController: androidx.navigation.NavController) {
     val posts by viewModel.posts.collectAsState()
     val sources by viewModel.sources.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
-    
+
     if (sources.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(40.dp)) {
@@ -302,111 +200,44 @@ fun HomeScreen(viewModel: MainViewModel, navController: androidx.navigation.NavC
 @Composable
 fun PostCard(post: UnifiedPost, viewModel: MainViewModel, navController: androidx.navigation.NavController) {
     val isFavorite = viewModel.isFavorite(post.id)
-    val offsetX = remember { Animatable(0f) }
-    val offsetY = remember { Animatable(0f) }
-    var swipeOffset by remember { mutableStateOf(0f) }
-    var isSwipedRight by remember { mutableStateOf(false) }
-    var isSwipedLeft by remember { mutableStateOf(false) }
-    
-    fun resetCard() {
-        launch {
-            offsetX.animateTo(0f)
-            offsetY.animateTo(0f)
-        }
-        swipeOffset = 0f
-        isSwipedRight = false
-        isSwipedLeft = false
-    }
-    
-    fun completeSwipeRight() {
-        launch {
-            offsetX.animateTo(1000f)
-        }
-        isSwipedRight = true
-        viewModel.toggleFavorite(post.id)
-    }
-    
-    fun completeSwipeLeft() {
-        launch {
-            offsetX.animateTo(-1000f)
-        }
-        isSwipedLeft = true
-        viewModel.removeSource(post.id)
-    }
-    
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .offset { IntOffset(swipeOffset.roundToInt(), 0) }
-                .pointerInput(Unit) {
-                    detectDragGestures(
-                        onDragStart = { change, dragAmount ->
-                            change.consume()
-                            offsetX.value = swipeOffset
-                            offsetY.value = 0f
-                        },
-                        onDrag = { change, dragAmount ->
-                            change.consume()
-                            swipeOffset += dragAmount.x
-                            offsetX.value = swipeOffset
-                            offsetY.value = dragAmount.y
-                        },
-                        onDragEnd = { change, dragAmount ->
-                            change.consume()
-                            val velocity = dragAmount.velocity
-                            val targetValue = swipeOffset + velocity.x * 1000f
-                            if (swipeOffset > 150f) {
-                                completeSwipeRight()
-                            } else if (swipeOffset < -150f) {
-                                completeSwipeLeft()
-                            } else {
-                                launch {
-                                    snapTo(
-                                        targetValue = 0f,
-                                        initialValue = swipeOffset,
-                                        decayThreshold = 0f
-                                    ).update(swipeOffset)
-                                }
-                                offsetX.value = swipeOffset
-                                offsetY.value = 0f
-                            }
-                        }
-                    )
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                viewModel.selectPost(post)
+                viewModel.markAsRead(post.id)
+                navController.navigate("article_reader")
+            },
+        shape = RoundedCornerShape(24.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp, pressedElevation = 8.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(32.dp)) {
+                    Box(contentAlignment = Alignment.Center) { Text(post.source.emoji, fontSize = 16.sp) }
                 }
-                .clickable { 
-                    viewModel.selectPost(post)
-                    navController.navigate("article_reader") 
-                },
-            shape = RoundedCornerShape(24.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp, pressedElevation = 8.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-        ) {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(32.dp)) {
-                            Box(contentAlignment = Alignment.Center) { Text(post.source.emoji, fontSize = 16.sp) }
-                        }
-                        Spacer(Modifier.width(12.dp))
-                        Text(post.source.displayName.takeIf { it.isNotBlank() } ?: "Источник", color = MaterialTheme.colorScheme.primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                        Spacer(modifier = Modifier.weight(1f))
-                        if (isSwipedRight) {
-                            Icon(Icons.Filled.Favorite, contentDescription = null, tint = Color(0xFFFF4757), modifier = Modifier.size(32.dp))
-                        } else if (isSwipedLeft) {
-                            Icon(Icons.Filled.Delete, contentDescription = null, tint = Color(0xFFF44336), modifier = Modifier.size(32.dp))
-                        }
-                    }
-                    Spacer(Modifier.height(16.dp))
-                    Text(post.title.takeIf { it.isNotBlank() } ?: "Без названия", fontSize = 20.sp, fontWeight = FontWeight.Bold, maxLines = 2, color = MaterialTheme.colorScheme.onSurface, lineHeight = 26.sp)
-                    Spacer(Modifier.height(12.dp))
-                    Text(post.description.takeIf { it.isNotBlank() } ?: "", fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, lineHeight = 22.sp)
-                    Spacer(Modifier.height(16.dp))
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        IconButton(onClick = { viewModel.toggleFavorite(post.id) }, modifier = Modifier.size(44.dp).clip(CircleShape).background(if (isFavorite) Color(0xFFFF4757).copy(0.1f) else MaterialTheme.colorScheme.surfaceVariant.copy(0.5f))) {
-                            Icon(imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder, contentDescription = "Favorite", tint = if (isFavorite) Color(0xFFFF4757) else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
-                        }
-                    }
+                Spacer(Modifier.width(12.dp))
+                Text(post.source.displayName.takeIf { it.isNotBlank() } ?: "Источник", color = MaterialTheme.colorScheme.primary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Spacer(modifier = Modifier.weight(1f))
+                if (viewModel.isRead(post.id)) {
+                    Icon(Icons.Filled.CheckCircle, contentDescription = "Read", tint = MaterialTheme.colorScheme.primary.copy(0.5f), modifier = Modifier.size(20.dp))
+                }
+            }
+            Spacer(Modifier.height(16.dp))
+            Text(post.title.takeIf { it.isNotBlank() } ?: "Без названия", fontSize = 20.sp, fontWeight = FontWeight.Bold, maxLines = 2, color = MaterialTheme.colorScheme.onSurface, lineHeight = 26.sp)
+            Spacer(Modifier.height(12.dp))
+            Text(post.description.takeIf { it.isNotBlank() } ?: "", fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, lineHeight = 22.sp)
+            Spacer(Modifier.height(16.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                IconButton(onClick = { viewModel.toggleFavorite(post.id) }, modifier = Modifier.size(44.dp).clip(CircleShape).background(if (isFavorite) Color(0xFFFF4757).copy(0.1f) else MaterialTheme.colorScheme.surfaceVariant.copy(0.5f))) {
+                    Icon(
+                        imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                        contentDescription = "Favorite",
+                        tint = if (isFavorite) Color(0xFFFF4757) else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(22.dp)
+                    )
                 }
             }
         }
@@ -417,49 +248,73 @@ fun PostCard(post: UnifiedPost, viewModel: MainViewModel, navController: android
 fun ArticleReaderScreen(post: UnifiedPost, onBack: () -> Unit) {
     val isDark = isSystemInDarkTheme()
     val context = LocalContext.current
-    
+    var isSpeaking by remember { mutableStateOf(false) }
+
     val bgColor = if (isDark) 0xFF0F172A else 0xFFFAFAFA
     val textColor = if (isDark) 0xFFF8FAFC else 0xFF0F172A
-    
+
     val safeTitle = post.title.takeIf { it.isNotBlank() } ?: "Без названия"
     val safeDesc = post.description.takeIf { it.isNotBlank() } ?: ""
     val safeEmoji = post.source.emoji.takeIf { it.isNotBlank() } ?: "📰"
     val safeDisplayName = post.source.displayName.takeIf { it.isNotBlank() } ?: "Источник"
-    
+
+    DisposableEffect(Unit) {
+        onDispose {
+            // Cleanup TTS on dispose
+        }
+    }
+
     Column(modifier = Modifier.fillMaxSize().background(Color(bgColor))) {
         Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = onBack) { 
-                Icon(Icons.Filled.ArrowBack, contentDescription = "Назад", tint = Color(textColor)) 
+            IconButton(onClick = onBack) {
+                Icon(Icons.Filled.ArrowBack, contentDescription = "Назад", tint = Color(textColor))
             }
             Spacer(modifier = Modifier.width(16.dp))
             Text("Чтение", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(textColor), modifier = Modifier.weight(1f))
+            IconButton(onClick = {
+                if (isSpeaking) {
+                    // Stop TTS
+                    isSpeaking = false
+                } else {
+                    // Start TTS
+                    isSpeaking = true
+                    android.speech.tts.TextToSpeech(context) { tts ->
+                        if (tts == android.speech.tts.TextToSpeech.SUCCESS) {
+                            tts.language = java.util.Locale("ru")
+                            tts.speak(safeTitle + ". " + safeDesc, android.speech.tts.TextToSpeech.QUEUE_FLUSH, null, null)
+                        }
+                    }
+                }
+            }) {
+                Icon(
+                    imageVector = if (isSpeaking) Icons.Filled.VolumeOff else Icons.Filled.VolumeUp,
+                    contentDescription = "TTS",
+                    tint = Color(textColor)
+                )
+            }
         }
-        
+
         Spacer(modifier = Modifier.height(20.dp))
-        
         Text(safeTitle, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color(textColor), modifier = Modifier.padding(horizontal = 20.dp))
-        
         Spacer(modifier = Modifier.height(12.dp))
-        
         Row(modifier = Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(safeEmoji, fontSize = 18.sp)
             Spacer(modifier = Modifier.width(8.dp))
             Text(safeDisplayName, fontSize = 14.sp, color = Color(0xFF64748B), fontWeight = FontWeight.Medium)
         }
-        
         Spacer(modifier = Modifier.height(20.dp))
-        
         Text(safeDesc, fontSize = 16.sp, color = Color(textColor), lineHeight = 24.sp, modifier = Modifier.padding(horizontal = 20.dp))
-        
         Spacer(modifier = Modifier.height(30.dp))
-        
-        Button(onClick = { 
-            val safeLink = post.link.takeIf { it.startsWith("http") } ?: "https://example.com"
-            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(safeLink))) 
-        }, modifier = Modifier.fillMaxWidth().padding(20.dp).height(56.dp), shape = RoundedCornerShape(16.dp)) {
+        Button(
+            onClick = {
+                val safeLink = post.link.takeIf { it.startsWith("http") } ?: "https://example.com"
+                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(safeLink)))
+            },
+            modifier = Modifier.fillMaxWidth().padding(20.dp).height(56.dp),
+            shape = RoundedCornerShape(16.dp)
+        ) {
             Text("Открыть оригинальный источник", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         }
-        
         Spacer(modifier = Modifier.height(20.dp))
     }
 }
@@ -469,7 +324,7 @@ fun FavoritesScreen(viewModel: MainViewModel, navController: androidx.navigation
     val posts by viewModel.posts.collectAsState()
     val favorites = viewModel.getFavorites()
     val favPosts = posts.filter { it.id in favorites }
-    
+
     if (favPosts.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(40.dp)) {
@@ -500,23 +355,55 @@ fun FavoritesScreen(viewModel: MainViewModel, navController: androidx.navigation
 fun AddSourceScreen(viewModel: MainViewModel) {
     var sourceUrl by remember { mutableStateOf("") }
     var sourceType by remember { mutableStateOf(SourceType.RSS) }
-    val sources = viewModel.getSources()
-    
+    val sources by viewModel.sources.collectAsState()
+
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text("➕ Добавить источник", fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 24.dp))
         Text("Тип источника:", fontSize = 16.sp, fontWeight = FontWeight.Medium)
         Spacer(modifier = Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             SourceType.values().forEach { type ->
-                FilterChip(selected = sourceType == type, onClick = { sourceType = type }, label = { Text(type.displayName) }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = MaterialTheme.colorScheme.primary, selectedLabelColor = Color.White))
+                FilterChip(
+                    selected = sourceType == type,
+                    onClick = { sourceType = type },
+                    label = { Text(type.displayName) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                        selectedLabelColor = Color.White
+                    )
+                )
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
         Text("URL источника:", fontSize = 16.sp, fontWeight = FontWeight.Medium)
         Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(value = sourceUrl, onValueChange = { sourceUrl = it }, modifier = Modifier.fillMaxWidth(), placeholder = { Text(when(sourceType) { SourceType.RSS -> "https://example.com/rss"; SourceType.YOUTUBE -> "https://www.youtube.com/feeds/videos.xml?channel_id=..."; SourceType.TELEGRAM -> "https://t.me/channelname или https://rsshub.app/telegram/channel/..."; SourceType.REDDIT -> "https://www.reddit.com/r/technology/.rss"; SourceType.TWITTER -> "https://rsshub.app/twitter/user/username" }) }, singleLine = true)
+        OutlinedTextField(
+            value = sourceUrl,
+            onValueChange = { sourceUrl = it },
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = {
+                Text(when (sourceType) {
+                    SourceType.RSS -> "https://example.com/rss"
+                    SourceType.YOUTUBE -> "https://www.youtube.com/feeds/videos.xml?channel_id=..."
+                    SourceType.TELEGRAM -> "https://t.me/channelname"
+                    SourceType.REDDIT -> "https://www.reddit.com/r/technology/.rss"
+                    SourceType.TWITTER -> "https://rsshub.app/twitter/user/username"
+                })
+            },
+            singleLine = true
+        )
         Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = { if (sourceUrl.isNotBlank()) { viewModel.addSource(sourceType, sourceUrl); sourceUrl = "" } }, modifier = Modifier.fillMaxWidth().height(56.dp), shape = RoundedCornerShape(16.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)) {
+        Button(
+            onClick = {
+                if (sourceUrl.isNotBlank()) {
+                    viewModel.addSource(sourceType, sourceUrl)
+                    sourceUrl = ""
+                }
+            },
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+        ) {
             Text("Добавить источник", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         }
         Spacer(modifier = Modifier.height(32.dp))
@@ -527,14 +414,24 @@ fun AddSourceScreen(viewModel: MainViewModel) {
         } else {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(sources, key = { it.id }) { source ->
-                    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-                        Row(modifier = Modifier.padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text("${source.type.emoji} ${source.type.displayName}", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(source.url, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
                             }
-                            IconButton(onClick = { viewModel.removeSource(source.id) }) { Icon(Icons.Filled.Delete, contentDescription = "Удалить", tint = MaterialTheme.colorScheme.error) }
+                            IconButton(onClick = { viewModel.removeSource(source.id) }) {
+                                Icon(Icons.Filled.Delete, contentDescription = "Удалить", tint = MaterialTheme.colorScheme.error)
+                            }
                         }
                     }
                 }
@@ -544,49 +441,14 @@ fun AddSourceScreen(viewModel: MainViewModel) {
 }
 
 @Composable
-fun ShortsScreen() {
+fun ShortsScreen(viewModel: MainViewModel, navController: androidx.navigation.NavController) {
     val shorts = remember {
         listOf(
-            UnifiedPost(
-                id = "shorts_1",
-                title = "Новости технологий",
-                description = "Новые тенденции в разработке мобильных приложений на 2026 год",
-                imageUrl = "",
-                source = SourceType.RSS,
-                link = "https://example.com/tech-news"
-            ),
-            UnifiedPost(
-                id = "shorts_2",
-                title = "Android 16 обновление",
-                description = "Что нового в последней версии Android",
-                imageUrl = "",
-                source = SourceType.YOUTUBE,
-                link = "https://example.com/android-16"
-            ),
-            UnifiedPost(
-                id = "shorts_3",
-                title = "Компоуз уроки",
-                description = "Jetpack Compose для начинающих",
-                imageUrl = "",
-                source = SourceType.TELEGRAM,
-                link = "https://example.com/compose-lessons"
-            ),
-            UnifiedPost(
-                id = "shorts_4",
-                title = "Kotlin корутины",
-                description = "Асинхронное программирование на Kotlin",
-                imageUrl = "",
-                source = SourceType.RSS,
-                link = "https://example.com/kotlin-coroutines"
-            ),
-            UnifiedPost(
-                id = "shorts_5",
-                title = "Дизайн системы",
-                description = "Создание дизайн-системы для приложений",
-                imageUrl = "",
-                source = SourceType.REDDIT,
-                link = "https://example.com/design-system"
-            )
+            UnifiedPost("shorts_1", "Новости технологий", "Новые тенденции в разработке мобильных приложений на 2026 год", "", SourceType.RSS, "https://example.com/tech-news"),
+            UnifiedPost("shorts_2", "Android 16 обновление", "Что нового в последней версии Android", "", SourceType.YOUTUBE, "https://example.com/android-16"),
+            UnifiedPost("shorts_3", "Компоуз уроки", "Jetpack Compose для начинающих", "", SourceType.TELEGRAM, "https://example.com/compose-lessons"),
+            UnifiedPost("shorts_4", "Kotlin корутины", "Асинхронное программирование на Kotlin", "", SourceType.RSS, "https://example.com/kotlin-coroutines"),
+            UnifiedPost("shorts_5", "Дизайн системы", "Создание дизайн-системы для приложений", "", SourceType.REDDIT, "https://example.com/design-system")
         )
     }
 
@@ -604,7 +466,10 @@ fun ShortsScreen() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(400.dp)
-                        .clickable { viewModel.selectPost(post); navController.navigate("article_reader") },
+                        .clickable {
+                            viewModel.selectPost(post)
+                            navController.navigate("article_reader")
+                        },
                     shape = RoundedCornerShape(24.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
@@ -616,10 +481,7 @@ fun ShortsScreen() {
                                 .background(MaterialTheme.colorScheme.primaryContainer)
                                 .padding(16.dp)
                         ) {
-                            Text(
-                                text = post.source.emoji,
-                                fontSize = 48.sp
-                            )
+                            Text(text = post.source.emoji, fontSize = 48.sp)
                         }
                         Column(
                             modifier = Modifier
@@ -657,17 +519,6 @@ fun ShortsScreen() {
                                     modifier = Modifier.size(24.dp)
                                 )
                             }
-                            IconButton(
-                                onClick = { viewModel.selectPost(post); navController.navigate("article_reader") },
-                                modifier = Modifier.size(40.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.OpenInNew,
-                                    contentDescription = "Open",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
                         }
                     }
                 }
@@ -683,8 +534,8 @@ fun SettingsScreen(
     onImportSources: () -> Unit,
     onClearAllSources: () -> Unit,
     sourcesCount: Int,
-    currentTheme: AppTheme,
-    onThemeChange: (AppTheme) -> Unit,
+    currentTheme: MainViewModel.AppTheme,
+    onThemeChange: (MainViewModel.AppTheme) -> Unit,
     currentLanguage: String,
     onLanguageChange: (String) -> Unit,
     onClearCache: () -> Unit,
@@ -693,11 +544,12 @@ fun SettingsScreen(
 ) {
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text("Настройки", fontSize = 28.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 24.dp))
-        
+
+        // Источники
         Text("Источники", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
         Text("Количество источников: $sourcesCount", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(modifier = Modifier.height(16.dp))
-        
+
         Button(
             onClick = onExportSources,
             modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -706,9 +558,8 @@ fun SettingsScreen(
         ) {
             Text("Экспортировать источники (OPML)", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         }
-        
         Spacer(modifier = Modifier.height(12.dp))
-        
+
         Button(
             onClick = onImportSources,
             modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -717,9 +568,8 @@ fun SettingsScreen(
         ) {
             Text("Импортировать источники (OPML)", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         }
-        
         Spacer(modifier = Modifier.height(12.dp))
-        
+
         Button(
             onClick = onClearAllSources,
             modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -728,57 +578,53 @@ fun SettingsScreen(
         ) {
             Text("Удалить все источники", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         }
-        
+
         Spacer(modifier = Modifier.height(32.dp))
-        
+
+        // Тема
         Text("Тема оформления", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
-        
-        AppTheme.values().forEach { theme ->
+        listOf(
+            MainViewModel.AppTheme.SYSTEM to "Системная",
+            MainViewModel.AppTheme.LIGHT to "Светлая",
+            MainViewModel.AppTheme.DARK to "Тёмная",
+            MainViewModel.AppTheme.AMOLED to "AMOLED"
+        ).forEach { (theme, name) ->
             RadioButton(
                 selected = currentTheme == theme,
                 onClick = { onThemeChange(theme) },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Default.RadioButtonChecked,
+                        imageVector = Icons.Filled.Check,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.alpha(if (currentTheme == theme) 1f else 0.3f)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        when (theme) {
-                            AppTheme.SYSTEM -> "Системная"
-                            AppTheme.LIGHT -> "Светлая"
-                            AppTheme.DARK -> "Тёмная"
-                            AppTheme.AMOLED -> "AMOLED"
-                        },
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+                    Text(name, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
                 }
             }
         }
-        
+
         Spacer(modifier = Modifier.height(24.dp))
-        
+
+        // Язык
         Text("Язык", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
-        
         listOf(
-            Pair("system", "Системный"),
-            Pair("ru", "Русский"),
-            Pair("en", "Английский"),
-            Pair("uk", "Украинский")
+            "system" to "Системный",
+            "ru" to "Русский",
+            "en" to "Английский",
+            "uk" to "Українська"
         ).forEach { (code, name) ->
             RadioButton(
                 selected = currentLanguage == code,
                 onClick = { onLanguageChange(code) },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Default.RadioButtonChecked,
+                        imageVector = Icons.Filled.Check,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.alpha(if (currentLanguage == code) 1f else 0.3f)
@@ -788,11 +634,11 @@ fun SettingsScreen(
                 }
             }
         }
-        
+
         Spacer(modifier = Modifier.height(24.dp))
-        
+
+        // Данные
         Text("Данные", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
-        
         Button(
             onClick = onClearCache,
             modifier = Modifier.fillMaxWidth().height(48.dp),
@@ -801,9 +647,7 @@ fun SettingsScreen(
         ) {
             Text("Очистить кэш", fontSize = 14.sp, fontWeight = FontWeight.Medium)
         }
-        
         Spacer(modifier = Modifier.height(8.dp))
-        
         Button(
             onClick = onClearReadHistory,
             modifier = Modifier.fillMaxWidth().height(48.dp),
@@ -812,12 +656,12 @@ fun SettingsScreen(
         ) {
             Text("Очистить историю прочтения ($readHistoryCount)", fontSize = 14.sp, fontWeight = FontWeight.Medium)
         }
-        
+
         Spacer(modifier = Modifier.height(32.dp))
-        
+
+        // О приложении
         Text("О приложении", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
         Text("NewsApp v1.0", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text("GitHub: turunovmk-svg/Newsapp", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text("Политика конфиденциальности", fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
     }
 }
