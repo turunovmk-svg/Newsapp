@@ -52,9 +52,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import coil3.transform.RoundedCorners
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import coil.transform.RoundedCorners
 import com.mikhail.newsapp.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -760,7 +760,7 @@ fun ShortCard(post: UnifiedPost, viewModel: MainViewModel, navController: androi
                         model = ImageRequest.Builder(LocalContext.current)
                             .data(post.imageUrl)
                             .crossfade(true)
-                            .size(400.dp)
+                            .resize(400.dp)
                             .build(),
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
