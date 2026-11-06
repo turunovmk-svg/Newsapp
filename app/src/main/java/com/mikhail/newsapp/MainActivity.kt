@@ -2,6 +2,7 @@ package com.mikhail.newsapp
 
 import android.app.Activity
 import android.content.Intent
+import com.mikhail.newsapp.DataLayer.MainViewModel.AppTheme
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
@@ -18,16 +19,23 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.gestures.pointerInput
-import androidx.compose.foundation.gestures.orientedDrag
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.animation.Animatable
-import androidx.compose.animation.animateTo
-import androidx.compose.animation.snapTo
-import androidx.compose.animation.decay
-import androidx.compose.animation.VectorSpec
+import androidx.compose.foundation.gestures.pointerInput
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateTo
+import androidx.compose.animation.core.decay
+import androidx.compose.animation.core.snapTo
+import androidx.compose.animation.core.VectorSpec
 import androidx.compose.material3.*
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -43,8 +51,16 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -288,27 +304,32 @@ fun PostCard(post: UnifiedPost, viewModel: MainViewModel, navController: android
     val isFavorite = viewModel.isFavorite(post.id)
     val offsetX = remember { Animatable(0f) }
     val offsetY = remember { Animatable(0f) }
-    val swipeOffset by remember { mutableFloatStateOf(0f) }
-    val isSwipedRight by remember { mutableStateOf(false) }
-    val isSwipedLeft by remember { mutableStateOf(false) }
-    val isFavoriteAnimating by remember { mutableStateOf(false) }
+    var swipeOffset by remember { mutableStateOf(0f) }
+    var isSwipedRight by remember { mutableStateOf(false) }
+    var isSwipedLeft by remember { mutableStateOf(false) }
     
     fun resetCard() {
-        offsetX.animateTo(0f)
-        offsetY.animateTo(0f)
+        launch {
+            offsetX.animateTo(0f)
+            offsetY.animateTo(0f)
+        }
         swipeOffset = 0f
         isSwipedRight = false
         isSwipedLeft = false
     }
     
     fun completeSwipeRight() {
-        offsetX.animateTo(1000f)
+        launch {
+            offsetX.animateTo(1000f)
+        }
         isSwipedRight = true
         viewModel.toggleFavorite(post.id)
     }
     
     fun completeSwipeLeft() {
-        offsetX.animateTo(-1000f)
+        launch {
+            offsetX.animateTo(-1000f)
+        }
         isSwipedLeft = true
         viewModel.removeSource(post.id)
     }
@@ -333,19 +354,20 @@ fun PostCard(post: UnifiedPost, viewModel: MainViewModel, navController: android
                         },
                         onDragEnd = { change, dragAmount ->
                             change.consume()
-                            val velocity = dragAmount.y / change.duration
-                            val targetValue = swipeOffset + velocity * 1000f
+                            val velocity = dragAmount.velocity
+                            val targetValue = swipeOffset + velocity.x * 1000f
                             if (swipeOffset > 150f) {
                                 completeSwipeRight()
                             } else if (swipeOffset < -150f) {
                                 completeSwipeLeft()
                             } else {
-                                snapTo(
-                                    targetValue = 0f,
-                                    initialValue = swipeOffset,
-                                    velocityThreshold = 0f,
-                                    decayThreshold = 0f
-                                ).update(swipeOffset)
+                                launch {
+                                    snapTo(
+                                        targetValue = 0f,
+                                        initialValue = swipeOffset,
+                                        decayThreshold = 0f
+                                    ).update(swipeOffset)
+                                }
                                 offsetX.value = swipeOffset
                                 offsetY.value = 0f
                             }
