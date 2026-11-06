@@ -5,10 +5,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.Arrangement
@@ -19,6 +21,10 @@ import androidx.compose.runtime.experimental.optin.OptIn
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material3.IconButton
+import android.content.Context
+import android.content.SharedPreferences
 
 // Data model for news article
 data class NewsArticle(
@@ -28,13 +34,15 @@ data class NewsArticle(
     val publishedAt: String?
 )
 
-
-
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.launch
-
-// ... (остальная часть класса MainActivity остается без изменений)
+// Main Activity with Jetpack Compose UI
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            NewsAppScreen()
+        }
+    }
+}
 
 // Composable screen that displays news with PullToRefresh
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,8 +52,23 @@ fun NewsAppScreen() {
     val context = LocalContext.current
     val articles by remember { mutableStateOf<List<NewsArticle>?>(null) }
     val prefsManager = remember { SharedPreferencesManager(context) }
-    
-    // ... (DisposableEffect остается без изменений)
+
+    // Load news from API on first composition
+    DisposableEffect(Unit) {
+        val client = OkHttpClient()
+        val request = Request.Builder()
+            .url("https://newsapi.org/v2/top-headlines?country=us&category=technology")
+            .build()
+        try {
+            val response = client.newCall(request).execute()
+            if (response.isSuccessful && response.body != null) {
+                val json = response.body.string()
+                articles = parseArticles(json)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -108,19 +131,19 @@ fun NewsAppScreen() {
                                     text = article.description ?: "No description",
                                     style = MaterialTheme.typography.body2,
                                     maxLines = 3,
-                                    overflow = Overflow.Clip
+                                    overflow = androidx.compose.ui.text.style.Overflow.Clip
                                 )
                                 Text(
                                     text = "Published: " + article.publishedAt,
                                     style = MaterialTheme.typography.caption,
-                                    textColor = MaterialTheme.onSurfaceVariant
+                                    textColor = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                                 // Кнопка избранного (простая)
                                 IconButton(onClick = { prefsManager.toggleFavorite(article.id) }) {
                                     Icon(
                                         imageVector = if (isFav) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                                         contentDescription = "Toggle Favorite",
-                                        tint = if (isFav) MaterialTheme.colorScheme.Primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                        tint = if (isFav) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
                             }
@@ -144,6 +167,8 @@ fun parseArticles(json: String): List<NewsArticle> {
     while (pos < json.length && result.size < 20) {
         var titleEnd = json.indexOf("\"", json.indexOf(titleStart, pos) + titleStart.length)
         if (titleEnd < 0) break
+        // *** ВАЖНО: Присваиваем ID, используя комбинацию полей, так как реального ID в парсере нет ***
+        val articleId = title.hashCode().toString() 
         val title = json.substring(json.indexOf(titleStart, pos) + titleStart.length, titleEnd)
 
         var descEnd = json.indexOf("\"", json.indexOf(descStart, pos) + descStart.length)
@@ -160,7 +185,7 @@ fun parseArticles(json: String): List<NewsArticle> {
             ""
         }
 
-        result.add(NewsArticle(title = title, description = description, publishedAt = publishedAt))
+        result.add(NewsArticle(id = articleId, title = title, description = description, publishedAt = publishedAt))
 
         pos = titleEnd + 1
     }
