@@ -19,27 +19,17 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
-    - name: List files
-      run: find . -maxdepth 3 -type f | sort
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
 
-    - name: Check build.gradle
-      run: cat app/build.gradle
-
-    - name: Try Gradle build
-      run: gradle tasks 2>&1 | head -100
-
-    - name: Build with Gradle
-      run: gradle assembleDebug --stacktrace 2>&1 | tail -200
+    - name: Build with Gradle Wrapper
+      run: ./gradlew assembleDebug --stacktrace
 
     - name: List APK files
-      run: ls -la app/build/outputs/apk/debug/ 2>/dev/null || echo "APK directory does not exist"
-    
-    - name: List all APKs recursively
-      run: find app/build/ -name "*.apk" -type f 2>/dev/null || echo "No APK files found anywhere"
+      run: find app/build/outputs/apk/debug/ -type f -name "*.apk" 2>/dev/null || echo "No APK files found"
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: newsapp-debug-apk
-        path: app/build/outputs/apk/debug/
-        if-no-files-found: error
+        path: app/build/outputs/apk/debug/*.apk
