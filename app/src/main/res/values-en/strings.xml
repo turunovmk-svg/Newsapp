@@ -13,33 +13,44 @@
     <!-- Home screen -->
     <string name="main_events">Main Events</string>
     <string name="fresh_news">Fresh news from your sources</string>
-    <string name="loading_news">Loading news...</string>
+    <string name="loading_news">Loading news…</string>
     <string name="no_sources">Add sources</string>
-    <string name="no_sources_subtitle">Go to the \"Add Source\" tab and specify RSS, YouTube or Telegram</string>
+    <string name="no_sources_subtitle">Go to the "Add Source" tab and specify RSS, YouTube or Telegram</string>
     <string name="refresh">Refresh</string>
+    <string name="no_news">No news available</string>
+    <string name="check_connection">Check your connection or add more sources</string>
 
     <!-- Favorites screen -->
+    <string name="favorites_title">Favorites</string>
     <string name="no_favorites">No favorites yet</string>
     <string name="tap_heart">Tap heart to add</string>
+    <string name="favorite_add">Add to favorites</string>
+    <string name="favorite_remove">Remove from favorites</string>
 
     <!-- Shorts screen -->
-    <string name="shorts_placeholder">Shorts coming soon</string>
+    <string name="shorts_empty_title">No Shorts content</string>
+    <string name="shorts_empty_subtitle">Add sources to see short videos and articles</string>
+    <string name="double_tap_like">Double tap to like</string>
 
     <!-- Add source screen -->
     <string name="add_source_title">Add Source</string>
     <string name="source_type">Source type</string>
     <string name="source_url">Source URL</string>
     <string name="add_source_button">Add Source</string>
+    <string name="adding_source">Adding source…</string>
     <string name="my_sources">My sources</string>
     <string name="no_sources_added">No sources added</string>
+    <string name="popular_sources">Popular sources</string>
+    <string name="url_validation_error">URL must start with http:// or https://</string>
 
     <!-- Settings screen -->
     <string name="settings_title">Settings</string>
     <string name="settings_sources">Sources</string>
-    <string name="sources_count">Number of sources: %1$d</string>
+    <string name="sources_count_fmt">Number of sources: %1$d</string>
     <string name="export_sources">Export sources (OPML)</string>
     <string name="import_sources">Import sources (OPML)</string>
     <string name="clear_all_sources">Delete all sources</string>
+    <string name="confirm_delete_all">This will remove all your sources. Are you sure?</string>
     <string name="theme_title">Theme</string>
     <string name="theme_system">System</string>
     <string name="theme_light">Light</string>
@@ -61,13 +72,28 @@
     <!-- Article reader -->
     <string name="article_reader_title">Reading</string>
     <string name="open_original">Open original source</string>
+    <string name="back">Back</string>
+    <string name="tts">Text to speech</string>
+    <string name="tts_not_implemented">TTS not implemented</string>
 
     <!-- Add source -->
     <string name="add_source">Add</string>
     <string name="source_added">Source added!</string>
     <string name="sources_deleted">Sources deleted</string>
-    <string name="favorite_added">Source added to favorites</string>
-    <string name="favorite_removed">Source removed from favorites</string>
+    <string name="favorite_added">Added to favorites</string>
+    <string name="favorite_removed">Removed from favorites</string>
+
+    <!-- Toast / status -->
+    <string name="export_success">Sources exported</string>
+    <string name="export_error">Export error</string>
+    <string name="import_result">Imported</string>
+    <string name="import_error">Import error</string>
+    <string name="cache_cleared">Cache cleared</string>
+    <string name="read_history_cleared">Reading history cleared</string>
+    <string name="error_title">Error</string>
+    <string name="retry">Retry</string>
+    <string name="no_title">Untitled</string>
+    <string name="unknown_source">Unknown source</string>
 
     <!-- Dialog -->
     <string name="dialog_ok">OK</string>

@@ -13,33 +13,44 @@
     <!-- Home screen -->
     <string name="main_events">Головні події</string>
     <string name="fresh_news">Свіжі новини з ваших джерел</string>
-    <string name="loading_news">Завантаження новин...</string>
+    <string name="loading_news">Завантаження новин…</string>
     <string name="no_sources">Додайте джерела</string>
-    <string name="no_sources_subtitle">Перейдіть на вкладку \"Додати\" та вкажіть RSS, YouTube або Telegram</string>
+    <string name="no_sources_subtitle">Перейдіть на вкладку "Додати" та вкажіть RSS, YouTube або Telegram</string>
     <string name="refresh">Оновити</string>
+    <string name="no_news">Немає новин</string>
+    <string name="check_connection">Перевірте з'єднання або додайте джерела</string>
 
     <!-- Favorites screen -->
+    <string name="favorites_title">Обране</string>
     <string name="no_favorites">Немає обраних постів</string>
-    <string name="tap_heart">Натисніть на серце щоб додати</string>
+    <string name="tap_heart">Натисніть на серце, щоб додати</string>
+    <string name="favorite_add">Додати до обраного</string>
+    <string name="favorite_remove">Видалити з обраного</string>
 
     <!-- Shorts screen -->
-    <string name="shorts_placeholder">Шорти скоро з\'являться</string>
+    <string name="shorts_empty_title">Немає контенту для Шортс</string>
+    <string name="shorts_empty_subtitle">Додайте джерела, щоб бачити короткі відео та статті</string>
+    <string name="double_tap_like">Подвійний клік для лайка</string>
 
     <!-- Add source screen -->
     <string name="add_source_title">Додати джерело</string>
     <string name="source_type">Тип джерела</string>
     <string name="source_url">URL джерела</string>
     <string name="add_source_button">Додати джерело</string>
+    <string name="adding_source">Додаємо джерело…</string>
     <string name="my_sources">Мої джерела</string>
     <string name="no_sources_added">Немає доданих джерел</string>
+    <string name="popular_sources">Популярні джерела</string>
+    <string name="url_validation_error">URL повинен починатися з http:// або https://</string>
 
     <!-- Settings screen -->
     <string name="settings_title">Налаштування</string>
     <string name="settings_sources">Джерела</string>
-    <string name="sources_count">Кількість джерел: %1$d</string>
+    <string name="sources_count_fmt">Кількість джерел: %1$d</string>
     <string name="export_sources">Експорт джерел (OPML)</string>
     <string name="import_sources">Імпорт джерел (OPML)</string>
     <string name="clear_all_sources">Видалити всі джерела</string>
+    <string name="confirm_delete_all">Це видалить всі ваші джерела. Ви впевнені?</string>
     <string name="theme_title">Тема оформлення</string>
     <string name="theme_system">Системна</string>
     <string name="theme_light">Світла</string>
@@ -61,13 +72,28 @@
     <!-- Article reader -->
     <string name="article_reader_title">Читання</string>
     <string name="open_original">Відкрити оригінальне джерело</string>
+    <string name="back">Назад</string>
+    <string name="tts">Озвучка</string>
+    <string name="tts_not_implemented">Озвучка не реалізована</string>
 
     <!-- Add source -->
     <string name="add_source">Додати</string>
     <string name="source_added">Джерело додано!</string>
     <string name="sources_deleted">Джерела видалено</string>
-    <string name="favorite_added">Джерело додано до обраного</string>
-    <string name="favorite_removed">Джерело видалено з обраного</string>
+    <string name="favorite_added">Додано до обраного</string>
+    <string name="favorite_removed">Видалено з обраного</string>
+
+    <!-- Toast / status -->
+    <string name="export_success">Джерела експортовано</string>
+    <string name="export_error">Помилка експорту</string>
+    <string name="import_result">Імпортовано</string>
+    <string name="import_error">Помилка імпорту</string>
+    <string name="cache_cleared">Кеш очищено</string>
+    <string name="read_history_cleared">Історію читання очищено</string>
+    <string name="error_title">Помилка</string>
+    <string name="retry">Спробувати знову</string>
+    <string name="no_title">Без назви</string>
+    <string name="unknown_source">Невідоме джерело</string>
 
     <!-- Dialog -->
     <string name="dialog_ok">ОК</string>

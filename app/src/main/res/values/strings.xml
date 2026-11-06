@@ -13,33 +13,44 @@
     <!-- Home screen -->
     <string name="main_events">Главные события</string>
     <string name="fresh_news">Свежие новости из ваших источников</string>
-    <string name="loading_news">Загрузка новостей...</string>
+    <string name="loading_news">Загрузка новостей…</string>
     <string name="no_sources">Добавьте источники</string>
-    <string name="no_sources_subtitle">Перейдите во вкладку \"Добавить\" и укажите RSS, YouTube или Telegram</string>
+    <string name="no_sources_subtitle">Перейдите во вкладку "Добавить" и укажите RSS, YouTube или Telegram</string>
     <string name="refresh">Обновить</string>
+    <string name="no_news">Нет новостей</string>
+    <string name="check_connection">Проверьте соединение или добавьте источники</string>
 
     <!-- Favorites screen -->
+    <string name="favorites_title">Избранное</string>
     <string name="no_favorites">Нет избранных постов</string>
-    <string name="tap_heart">Нажмите на сердечко чтобы добавить</string>
+    <string name="tap_heart">Нажмите на сердечко, чтобы добавить</string>
+    <string name="favorite_add">Добавить в избранное</string>
+    <string name="favorite_remove">Удалить из избранного</string>
 
     <!-- Shorts screen -->
-    <string name="shorts_placeholder">Шорты скоро появятся</string>
+    <string name="shorts_empty_title">Нет контента для Шортс</string>
+    <string name="shorts_empty_subtitle">Добавьте источники, чтобы увидеть короткие видео и статьи</string>
+    <string name="double_tap_like">Дважды нажмите для лайка</string>
 
     <!-- Add source screen -->
     <string name="add_source_title">Добавить источник</string>
     <string name="source_type">Тип источника</string>
     <string name="source_url">URL источника</string>
     <string name="add_source_button">Добавить источник</string>
+    <string name="adding_source">Добавляем источник…</string>
     <string name="my_sources">Мои источники</string>
     <string name="no_sources_added">Нет добавленных источников</string>
+    <string name="popular_sources">Популярные источники</string>
+    <string name="url_validation_error">URL должен начинаться с http:// или https://</string>
 
     <!-- Settings screen -->
     <string name="settings_title">Настройки</string>
     <string name="settings_sources">Источники</string>
-    <string name="sources_count">Количество источников: %1$d</string>
+    <string name="sources_count_fmt">Количество источников: %1$d</string>
     <string name="export_sources">Экспортировать источники (OPML)</string>
     <string name="import_sources">Импортировать источники (OPML)</string>
     <string name="clear_all_sources">Удалить все источники</string>
+    <string name="confirm_delete_all">Это удалит все ваши источники. Вы уверены?</string>
     <string name="theme_title">Тема оформления</string>
     <string name="theme_system">Системная</string>
     <string name="theme_light">Светлая</string>
@@ -61,13 +72,28 @@
     <!-- Article reader -->
     <string name="article_reader_title">Чтение</string>
     <string name="open_original">Открыть оригинальный источник</string>
+    <string name="back">Назад</string>
+    <string name="tts">Озвучка</string>
+    <string name="tts_not_implemented">Озвучка не реализована</string>
 
     <!-- Add source -->
     <string name="add_source">Добавить</string>
     <string name="source_added">Источник добавлен!</string>
     <string name="sources_deleted">Источники удалены</string>
-    <string name="favorite_added">Источник добавлен в избранное</string>
-    <string name="favorite_removed">Источник удалён из избранного</string>
+    <string name="favorite_added">Добавлено в избранное</string>
+    <string name="favorite_removed">Удалено из избранного</string>
+
+    <!-- Toast / status -->
+    <string name="export_success">Источники экспортированы</string>
+    <string name="export_error">Ошибка экспорта</string>
+    <string name="import_result">Импортировано</string>
+    <string name="import_error">Ошибка импорта</string>
+    <string name="cache_cleared">Кэш очищен</string>
+    <string name="read_history_cleared">История прочтения очищена</string>
+    <string name="error_title">Ошибка</string>
+    <string name="retry">Повторить</string>
+    <string name="no_title">Без названия</string>
+    <string name="unknown_source">Неизвестный источник</string>
 
     <!-- Dialog -->
     <string name="dialog_ok">ОК</string>

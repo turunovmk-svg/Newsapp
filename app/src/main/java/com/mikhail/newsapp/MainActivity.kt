@@ -219,50 +219,78 @@ fun BottomNav(navController: androidx.navigation.NavController) {
 
 @Composable
 fun HomeScreen(viewModel: MainViewModel, navController: androidx.navigation.NavController) {
-    val posts by viewModel.posts.collectAsState()
+    val postsResult by viewModel.posts.collectAsState()
     val sources by viewModel.sources.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
 
-    if (sources.isEmpty()) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(40.dp)) {
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    modifier = Modifier
-                        .size(120.dp)
-                        .fillMaxWidth()
-                        .clickable { navController.navigate(Screen.AddSource.route) }
-                        .padding(16.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) { Icon(Icons.Filled.Add, null, modifier = Modifier.size(60.dp), tint = MaterialTheme.colorScheme.primary) }
-                }
-                Spacer(Modifier.height(32.dp))
-                Text(stringResource(R.string.no_sources), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(12.dp))
-                Text(stringResource(R.string.no_sources_subtitle), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-    } else if (posts.isEmpty()) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Box(Modifier.size(24.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary))
-                Spacer(Modifier.height(16.dp))
-                Text("Загрузка новостей...", style = MaterialTheme.typography.bodyLarge)
-            }
-        }
-    } else {
-        Column(Modifier.fillMaxSize()) {
-            Row(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 20.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .verticalScroll(rememberScrollState())
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // Header
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 20.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Column {
-                    Text("🔥 Главные события", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-                    Text("Свежие новости из ваших источников", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+                    Text(stringResource(R.string.main_events), fontSize = 28.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                    Text(stringResource(R.string.fresh_news), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
                 }
-                IconButton(onClick = { viewModel.loadPosts() }, modifier = Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary)) {
-                    Icon(Icons.Filled.Refresh, "Update", tint = Color.White, modifier = Modifier.size(24.dp))
+                IconButton(
+                    onClick = { viewModel.loadPosts() },
+                    modifier = Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary),
+                    enabled = !isRefreshing
+                ) {
+                    if (isRefreshing) {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                    } else {
+                        Icon(Icons.Filled.Refresh, stringResource(R.string.refresh), tint = Color.White, modifier = Modifier.size(24.dp))
+                    }
                 }
             }
-            LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                items(items = posts.distinctBy { it.id }, key = { "${it.source.name}_${it.id}" }) { post -> PostCard(post, viewModel, navController) }
+
+            // Content
+            when {
+                sources.isEmpty() -> EmptyState(
+                    icon = Icons.Filled.Add,
+                    title = stringResource(R.string.no_sources),
+                    subtitle = stringResource(R.string.no_sources_subtitle),
+                    buttonText = stringResource(R.string.add_source),
+                    onButtonClick = { navController.navigate(Screen.AddSource.route) }
+                )
+                postsResult is PostsResult.Loading -> SkeletonList(itemCount = 5)
+                postsResult is PostsResult.Error -> ErrorState(
+                    message = postsResult.message,
+                    onRetry = { viewModel.loadPosts() }
+                )
+                postsResult is PostsResult.Success -> {
+                    val posts = postsResult.posts
+                    if (posts.isEmpty()) {
+                        EmptyState(
+                            icon = Icons.Filled.Newspaper,
+                            title = stringResource(R.string.no_news),
+                            subtitle = stringResource(R.string.check_connection),
+                            buttonText = stringResource(R.string.refresh),
+                            onButtonClick = { viewModel.loadPosts() }
+                        )
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                            contentPadding = PaddingValues(bottom = 80.dp)
+                        ) {
+                            items(items = posts.distinctBy { it.id }, key = { "${it.source.name}_${it.id}" }) { post ->
+                                PostCard(post, viewModel, navController)
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -379,27 +407,33 @@ fun ArticleReaderScreen(post: UnifiedPost, onBack: () -> Unit) {
 
 @Composable
 fun FavoritesScreen(viewModel: MainViewModel, navController: androidx.navigation.NavController) {
-    val posts by viewModel.posts.collectAsState()
+    val postsResult by viewModel.posts.collectAsState()
     val favorites = viewModel.getFavorites()
-    val favPosts = posts.filter { it.id in favorites }
+
+    val favPosts = when (postsResult) {
+        is PostsResult.Success -> postsResult.posts.filter { it.id in favorites }
+        else -> emptyList<UnifiedPost>()
+    }
 
     if (favPosts.isEmpty()) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(40.dp)) {
-                Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(120.dp)) {
-                    Box(contentAlignment = Alignment.Center) { Icon(Icons.Filled.FavoriteBorder, null, modifier = Modifier.size(60.dp), tint = MaterialTheme.colorScheme.primary) }
-                }
-                Spacer(Modifier.height(32.dp))
-                Text("Нет избранных постов", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(12.dp))
-                Text("Нажмите на сердечко, чтобы добавить", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
+        EmptyState(
+            icon = Icons.Filled.FavoriteBorder,
+            title = stringResource(R.string.no_favorites),
+            subtitle = stringResource(R.string.tap_heart),
+            buttonText = stringResource(R.string.add_source),
+            onButtonClick = { }
+        )
     } else {
         Column(Modifier.fillMaxSize()) {
-            Text("❤️ Избранное", fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp))
-            LazyColumn(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                items(items = favPosts.distinctBy { it.id }, key = { "${it.source.name}_${it.id}" }) { post -> PostCard(post, viewModel, navController) }
+            Text(stringResource(R.string.favorites_title), fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 24.dp, vertical = 20.dp))
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(bottom = 80.dp)
+            ) {
+                items(items = favPosts.distinctBy { it.id }, key = { "${it.source.name}_${it.id}" }) { post ->
+                    PostCard(post, viewModel, navController)
+                }
             }
         }
     }
@@ -587,6 +621,108 @@ fun ShortsScreen(viewModel: MainViewModel, navController: androidx.navigation.Na
                 items(items = shortsPosts, key = { "${it.source.name}_${it.id}" }) { post ->
                     ShortCard(post, viewModel, navController)
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun SkeletonList(itemCount: Int = 3) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        items(itemCount) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(modifier = Modifier.size(32.dp).background(MaterialTheme.colorScheme.surfaceVariant).clip(RoundedCornerShape(8.dp)))
+                        Spacer(Modifier.width(12.dp))
+                        Box(modifier = Modifier
+                            .width(80.dp)
+                            .height(16.dp)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .clip(RoundedCornerShape(4.dp)))
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
+                    Spacer(Modifier.height(16.dp))
+                    Box(modifier = Modifier
+                        .fillMaxWidth()
+                        .height(26.dp)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .clip(RoundedCornerShape(4.dp)))
+                    Spacer(Modifier.height(8.dp))
+                    Box(modifier = Modifier
+                        .fillMaxWidth()
+                        .height(20.dp)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .clip(RoundedCornerShape(4.dp)))
+                    Spacer(Modifier.height(12.dp))
+                    repeat(3) {
+                        Box(modifier = Modifier
+                            .fillMaxWidth()
+                            .height(16.dp)
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
+                            .clip(RoundedCornerShape(4.dp)))
+                        Spacer(Modifier.height(4.dp))
+                    }
+                    Spacer(Modifier.height(16.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun EmptyState(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    buttonText: String,
+    onButtonClick: () -> Unit
+) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(40.dp)
+        ) {
+            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.size(120.dp)) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(icon, null, modifier = Modifier.size(60.dp), tint = MaterialTheme.colorScheme.primary)
+                }
+            }
+            Spacer(Modifier.height(32.dp))
+            Text(title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+            Spacer(Modifier.height(12.dp))
+            Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+            Spacer(Modifier.height(24.dp))
+            Button(onClick = onButtonClick, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)) {
+                Text(buttonText, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            }
+        }
+    }
+}
+
+@Composable
+fun ErrorState(message: String, onRetry: () -> Unit) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(40.dp)) {
+            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.errorContainer, modifier = Modifier.size(120.dp)) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(Icons.Filled.ErrorOutline, null, modifier = Modifier.size(60.dp), tint = MaterialTheme.colorScheme.error)
+                }
+            }
+            Spacer(Modifier.height(24.dp))
+            Text(stringResource(R.string.error_title), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(12.dp))
+            Text(message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+            Spacer(Modifier.height(24.dp))
+            Button(onClick = onRetry, colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) {
+                Text(stringResource(R.string.retry), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
             }
         }
     }
