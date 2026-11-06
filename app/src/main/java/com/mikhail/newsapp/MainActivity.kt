@@ -1,6 +1,7 @@
 package com.mikhail.newsapp
 
 import android.app.Activity
+import androidx.activity.ComponentActivity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -24,6 +25,7 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
@@ -580,21 +582,13 @@ fun SettingsScreen(
             MainViewModel.AppTheme.DARK to "Тёмная",
             MainViewModel.AppTheme.AMOLED to "AMOLED"
         ).forEach { (theme, name) ->
-            RadioButton(
-                selected = currentTheme == theme,
-                onClick = { onThemeChange(theme) },
-                modifier = Modifier.fillMaxWidth()
+            Row(
+                modifier = Modifier.fillMaxWidth().clickable { onThemeChange(theme) }.padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Filled.Check,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.alpha(if (currentTheme == theme) 1f else 0.3f)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(name, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-                }
+                RadioButton(selected = currentTheme == theme, onClick = { onThemeChange(theme) })
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(name, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             }
         }
 
@@ -607,21 +601,13 @@ fun SettingsScreen(
             "en" to "Английский",
             "uk" to "Українська"
         ).forEach { (code, name) ->
-            RadioButton(
-                selected = currentLanguage == code,
-                onClick = { onLanguageChange(code) },
-                modifier = Modifier.fillMaxWidth()
+            Row(
+                modifier = Modifier.fillMaxWidth().clickable { onLanguageChange(code) }.padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Filled.Check,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.alpha(if (currentLanguage == code) 1f else 0.3f)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(name, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
-                }
+                RadioButton(selected = currentLanguage == code, onClick = { onLanguageChange(code) })
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(name, fontSize = 16.sp, color = MaterialTheme.colorScheme.onSurface)
             }
         }
 
