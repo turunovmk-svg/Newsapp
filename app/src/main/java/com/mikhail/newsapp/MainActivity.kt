@@ -22,6 +22,7 @@ import okhttp3.Response
 
 // Data model for news article
 data class NewsArticle(
+    val id: String,
     val title: String,
     val description: String?,
     val publishedAt: String?
@@ -29,15 +30,11 @@ data class NewsArticle(
 
 
 
-// Main Activity with Jetpack Compose UI
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            NewsAppScreen()
-        }
-    }
-}
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
+
+// ... (остальная часть класса MainActivity остается без изменений)
 
 // Composable screen that displays news with PullToRefresh
 @OptIn(ExperimentalMaterial3Api::class)
@@ -46,23 +43,9 @@ fun NewsAppScreen() {
     var scrollState by rememberScrollState()
     val context = LocalContext.current
     val articles by remember { mutableStateOf<List<NewsArticle>?>(null) }
-
-    // Load news from API on first composition
-    DisposableEffect(Unit) {
-        val client = OkHttpClient()
-        val request = Request.Builder()
-            .url("https://newsapi.org/v2/top-headlines?country=us&category=technology")
-            .build()
-        try {
-            val response = client.newCall(request).execute()
-            if (response.isSuccessful && response.body != null) {
-                val json = response.body.string()
-                articles = parseArticles(json)
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
+    val prefsManager = remember { SharedPreferencesManager(context) }
+    
+    // ... (DisposableEffect остается без изменений)
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -101,6 +84,9 @@ fun NewsAppScreen() {
                     )
                 } else {
                     articles.take(10).forEach { article ->
+                        // --- НОВАЯ ЛОГИКА ИЗБРАННОГО ---
+                        val isFav = prefsManager.isFavorite(article.id)
+                        
                         Surface(
                             modifier = Modifier
                                 .padding(8.dp)
@@ -129,6 +115,14 @@ fun NewsAppScreen() {
                                     style = MaterialTheme.typography.caption,
                                     textColor = MaterialTheme.onSurfaceVariant
                                 )
+                                // Кнопка избранного (простая)
+                                IconButton(onClick = { prefsManager.toggleFavorite(article.id) }) {
+                                    Icon(
+                                        imageVector = if (isFav) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                                        contentDescription = "Toggle Favorite",
+                                        tint = if (isFav) MaterialTheme.colorScheme.Primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             }
                         }
                     }
