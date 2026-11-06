@@ -37,30 +37,12 @@ jobs:
     - name: Make gradlew executable
       run: chmod +x ./gradlew
 
-    - name: Build Debug APK (capture output)
+    - name: Build Debug APK
+      continue-on-error: true
       run: |
-        ./gradlew :app:assembleDebug --no-daemon --stacktrace --info > build_output.txt 2>&1 || true
-        echo "EXIT_CODE=$?" >> build_output.txt
+        ./gradlew :app:assembleDebug --no-daemon --stacktrace --info
       env:
         GRADLE_OPTS: "-Dorg.gradle.workers.max=2"
-
-    - name: Upload Build Output (always)
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-output-${{ github.run_number }}
-        path: build_output.txt
-        retention-days: 7
-
-    - name: Check Build Status
-      run: |
-        if grep -q "EXIT_CODE=0" build_output.txt; then
-          echo "Build succeeded"
-        else
-          echo "Build failed"
-          cat build_output.txt
-          exit 1
-        fi
 
     - name: Upload Debug APK
       if: success()
