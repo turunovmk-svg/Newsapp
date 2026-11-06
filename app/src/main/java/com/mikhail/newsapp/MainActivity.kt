@@ -328,7 +328,7 @@ fun PostCard(post: UnifiedPost, viewModel: MainViewModel, navController: android
                 IconButton(onClick = { viewModel.toggleFavorite(post.id) }, modifier = Modifier.size(44.dp).clip(CircleShape).background(if (isFavorite) Color(0xFFFF4757).copy(0.1f) else MaterialTheme.colorScheme.surfaceVariant.copy(0.5f))) {
                     Icon(
                         imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                        contentDescription = "Favorite",
+                        contentDescription = stringResource(if (isFavorite) R.string.favorite_remove else R.string.favorite_add),
                         tint = if (isFavorite) Color(0xFFFF4757) else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(22.dp)
                     )
@@ -347,18 +347,18 @@ fun ArticleReaderScreen(post: UnifiedPost, onBack: () -> Unit) {
     val bgColor = if (isDark) 0xFF0F172A else 0xFFFAFAFA
     val textColor = if (isDark) 0xFFF8FAFC else 0xFF0F172A
 
-    val safeTitle = post.title.takeIf { it.isNotBlank() } ?: "Без названия"
+    val safeTitle = post.title.takeIf { it.isNotBlank() } ?: stringResource(R.string.no_title)
     val safeDesc = post.description.takeIf { it.isNotBlank() } ?: ""
     val safeEmoji = post.source.emoji.takeIf { it.isNotBlank() } ?: "📰"
-    val safeDisplayName = post.source.displayName.takeIf { it.isNotBlank() } ?: "Источник"
+    val safeDisplayName = post.source.displayName.takeIf { it.isNotBlank() } ?: stringResource(R.string.unknown_source)
 
     Column(modifier = Modifier.fillMaxSize().background(Color(bgColor))) {
         Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) {
-                Icon(Icons.Filled.ArrowBack, "Назад", tint = Color(textColor))
+                Icon(Icons.Filled.ArrowBack, stringResource(R.string.back), tint = Color(textColor))
             }
             Spacer(modifier = Modifier.width(16.dp))
-            Text("Чтение", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(textColor), modifier = Modifier.weight(1f))
+            Text(stringResource(R.string.article_reader_title), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(textColor), modifier = Modifier.weight(1f))
             IconButton(onClick = {
                 isSpeaking = !isSpeaking
                 try {
@@ -374,7 +374,7 @@ fun ArticleReaderScreen(post: UnifiedPost, onBack: () -> Unit) {
             }) {
                 Icon(
                     imageVector = if (isSpeaking) Icons.Filled.VolumeOff else Icons.Filled.VolumeUp,
-                    contentDescription = "TTS",
+                    contentDescription = stringResource(R.string.tts),
                     tint = Color(textColor)
                 )
             }
@@ -399,7 +399,7 @@ fun ArticleReaderScreen(post: UnifiedPost, onBack: () -> Unit) {
             modifier = Modifier.fillMaxWidth().padding(20.dp).height(56.dp),
             shape = RoundedCornerShape(16.dp)
         ) {
-            Text("Открыть оригинальный источник", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.open_original), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         }
         Spacer(modifier = Modifier.height(20.dp))
     }
@@ -442,13 +442,14 @@ fun FavoritesScreen(viewModel: MainViewModel, navController: androidx.navigation
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddSourceScreen(viewModel: MainViewModel) {
+    val context = LocalContext.current
     var sourceUrl by remember { mutableStateOf("") }
     var sourceType by remember { mutableStateOf(SourceType.RSS) }
     val sources by viewModel.sources.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text("➕ Добавить источник", fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 24.dp))
-        Text("Тип источника:", fontSize = 16.sp, fontWeight = FontWeight.Medium)
+        Text(stringResource(R.string.add_source_title), fontSize = 26.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 24.dp))
+        Text(stringResource(R.string.source_type), fontSize = 16.sp, fontWeight = FontWeight.Medium)
         Spacer(modifier = Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             SourceType.values().forEach { type ->
@@ -464,7 +465,7 @@ fun AddSourceScreen(viewModel: MainViewModel) {
             }
         }
         Spacer(modifier = Modifier.height(16.dp))
-        Text("URL источника:", fontSize = 16.sp, fontWeight = FontWeight.Medium)
+        Text(stringResource(R.string.source_url), fontSize = 16.sp, fontWeight = FontWeight.Medium)
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = sourceUrl,
@@ -486,7 +487,7 @@ fun AddSourceScreen(viewModel: MainViewModel) {
             onClick = {
                 if (sourceUrl.isNotBlank()) {
                     if (!sourceUrl.startsWith("http://") && !sourceUrl.startsWith("https://")) {
-                        Toast.makeText(LocalContext.current, stringResource(R.string.url_validation_error), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, stringResource(R.string.url_validation_error), Toast.LENGTH_SHORT).show()
                         return@Button
                     }
                     viewModel.addSource(sourceType, sourceUrl)
@@ -534,7 +535,7 @@ fun AddSourceScreen(viewModel: MainViewModel) {
         Text(stringResource(R.string.my_sources), fontSize = 18.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(12.dp))
         if (sources.isEmpty()) {
-            Text("Нет добавленных источников", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.no_sources_added), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
         } else {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(sources, key = { it.id }) { source ->
@@ -554,7 +555,7 @@ fun AddSourceScreen(viewModel: MainViewModel) {
                                 Text(source.url, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
                             }
                             IconButton(onClick = { viewModel.removeSource(source.id) }) {
-                                Icon(Icons.Filled.Delete, "Удалить", tint = MaterialTheme.colorScheme.error)
+                                Icon(Icons.Filled.Delete, stringResource(R.string.delete), tint = MaterialTheme.colorScheme.error)
                             }
                         }
                     }
@@ -837,53 +838,76 @@ fun SettingsScreen(
     onClearReadHistory: () -> Unit,
     readHistoryCount: Int
 ) {
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text("Настройки", fontSize = 28.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 24.dp))
+    val context = LocalContext.current
+    var showDeleteConfirm by remember { mutableStateOf(false) }
 
-        Text("Источники", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
-        Text("Количество источников: $sourcesCount", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(modifier = Modifier.height(16.dp))
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState())
+    ) {
+        Text(stringResource(R.string.settings_title), fontSize = 28.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 24.dp))
+
+        // Sources section
+        Text(stringResource(R.string.settings_sources), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
+        Text(stringResource(R.string.sources_count_fmt, sourcesCount), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 16.dp))
 
         Button(
             onClick = onExportSources,
             modifier = Modifier.fillMaxWidth().height(56.dp),
             shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-        ) {
-            Text("Экспортировать источники (OPML)", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-        }
+        ) { Text(stringResource(R.string.export_sources), fontSize = 16.sp, fontWeight = FontWeight.SemiBold) }
         Spacer(modifier = Modifier.height(12.dp))
-
         Button(
             onClick = onImportSources,
             modifier = Modifier.fillMaxWidth().height(56.dp),
             shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
-        ) {
-            Text("Импортировать источники (OPML)", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-        }
+        ) { Text(stringResource(R.string.import_sources), fontSize = 16.sp, fontWeight = FontWeight.SemiBold) }
         Spacer(modifier = Modifier.height(12.dp))
-
         Button(
-            onClick = onClearAllSources,
+            onClick = { showDeleteConfirm = true },
             modifier = Modifier.fillMaxWidth().height(56.dp),
             shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer)
-        ) {
-            Text("Удалить все источники", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+        ) { Text(stringResource(R.string.clear_all_sources), fontSize = 16.sp, fontWeight = FontWeight.SemiBold) }
+
+        // Delete confirmation dialog
+        if (showDeleteConfirm) {
+            AlertDialog(
+                onDismissRequest = { showDeleteConfirm = false },
+                confirmButton = {
+                    TextButton(onClick = { onClearAllSources(); showDeleteConfirm = false; Toast.makeText(context, stringResource(R.string.sources_deleted), Toast.LENGTH_SHORT).show() }) {
+                        Text(stringResource(R.string.dialog_ok))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteConfirm = false }) {
+                        Text(stringResource(R.string.dialog_cancel))
+                    }
+                },
+                title = { Text(stringResource(R.string.clear_all_sources)) },
+                text = { Text(stringResource(R.string.confirm_delete_all)) }
+            )
         }
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        Text("Тема оформления", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
+        // Theme section
+        Text(stringResource(R.string.theme_title), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
         listOf(
-            MainViewModel.AppTheme.SYSTEM to "Системная",
-            MainViewModel.AppTheme.LIGHT to "Светлая",
-            MainViewModel.AppTheme.DARK to "Тёмная",
-            MainViewModel.AppTheme.AMOLED to "AMOLED"
+            MainViewModel.AppTheme.SYSTEM to stringResource(R.string.theme_system),
+            MainViewModel.AppTheme.LIGHT to stringResource(R.string.theme_light),
+            MainViewModel.AppTheme.DARK to stringResource(R.string.theme_dark),
+            MainViewModel.AppTheme.AMOLED to stringResource(R.string.theme_amoled)
         ).forEach { (theme, name) ->
             Row(
-                modifier = Modifier.fillMaxWidth().clickable { onThemeChange(theme) }.padding(vertical = 4.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onThemeChange(theme) }
+                    .padding(vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 RadioButton(selected = currentTheme == theme, onClick = { onThemeChange(theme) })
@@ -894,12 +918,13 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text("Язык", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
+        // Language section
+        Text(stringResource(R.string.language_title), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
         listOf(
-            "system" to "Системный",
-            "ru" to "Русский",
-            "en" to "Английский",
-            "uk" to "Українська"
+            "system" to stringResource(R.string.language_system),
+            "ru" to stringResource(R.string.language_ru),
+            "en" to stringResource(R.string.language_en),
+            "uk" to stringResource(R.string.language_uk)
         ).forEach { (code, name) ->
             Row(
                 modifier = Modifier.fillMaxWidth().clickable { onLanguageChange(code) }.padding(vertical = 4.dp),
@@ -913,29 +938,27 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text("Данные", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
+        // Data section
+        Text(stringResource(R.string.data_title), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
         Button(
-            onClick = onClearCache,
+            onClick = { onClearCache(); Toast.makeText(context, stringResource(R.string.cache_cleared), Toast.LENGTH_SHORT).show() },
             modifier = Modifier.fillMaxWidth().height(48.dp),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-        ) {
-            Text("Очистить кэш", fontSize = 14.sp, fontWeight = FontWeight.Medium)
-        }
+        ) { Text(stringResource(R.string.clear_cache), fontSize = 14.sp, fontWeight = FontWeight.Medium) }
         Spacer(modifier = Modifier.height(8.dp))
         Button(
-            onClick = onClearReadHistory,
+            onClick = { onClearReadHistory(); Toast.makeText(context, stringResource(R.string.read_history_cleared), Toast.LENGTH_SHORT).show() },
             modifier = Modifier.fillMaxWidth().height(48.dp),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-        ) {
-            Text("Очистить историю прочтения ($readHistoryCount)", fontSize = 14.sp, fontWeight = FontWeight.Medium)
-        }
+        ) { Text("${stringResource(R.string.clear_read_history)} ($readHistoryCount)", fontSize = 14.sp, fontWeight = FontWeight.Medium) }
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        Text("О приложении", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
-        Text("NewsApp v1.0", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text("GitHub: turunovmk-svg/Newsapp", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        // About
+        Text(stringResource(R.string.about_title), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
+        Text(stringResource(R.string.app_version), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(stringResource(R.string.app_github), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
