@@ -31,6 +31,9 @@ jobs:
     - name: Build with Gradle
       run: gradle assembleDebug --stacktrace 2>&1 | tail -200
 
+    - name: List APK files
+      run: find app/build/outputs/apk/debug/ -type f -name "*.apk" 2>/dev/null || echo "No APK files found"
+
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
