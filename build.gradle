@@ -1,15 +1,3 @@
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        google()
-        mavenCentral()
-    }
-}
-plugins {
-    id 'com.android.application' apply false
-    id 'org.jetbrains.kotlin.android' apply false
-}
-
 task clean(type: Delete) {
     delete rootProject.buildDir / 'super'
 }
