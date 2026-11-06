@@ -34,4 +34,6 @@ dependencies {
     implementation "androidx.activity:activity-compose:2.8.0"
     // PullToRefresh for Compose (Material 3 experimental API)
     implementation "androidx.compose.material3:material3-pulltorefresh:1.2.1"
+    // OkHttp for network requests
+    implementation "com.squareup.okhttp3:okhttp:4.12.0"
 }
