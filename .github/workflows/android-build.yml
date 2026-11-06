@@ -12,8 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ANDROID_HOME: /opt/android-sdk
-      # Set sufficient JVM memory for Android Gradle builds
-      ORG_GRADLE_PROJECT_jvmArgs: "-Xmx4g"
 
     steps:
       - name: Checkout repository
@@ -33,10 +31,13 @@ jobs:
         run: |
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" > /dev/null 2>&1
 
-      - name: Increase Gradle memory limits
+      - name: Set Gradle JVM memory
         run: |
           echo "org.gradle.jvmargs=-Xmx4g" > gradle.properties
           echo "kotlin.compiler.jvm.opts=-Xmx4g" >> gradle.properties
+
+      - name: Grant execute permission to gradlew
+        run: chmod +x gradlew 2>/dev/null || echo "No gradlew, using gradle"
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug -x test --no-daemon 2>&1 | tail -50
