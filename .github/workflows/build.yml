@@ -31,11 +31,29 @@ jobs:
         unzip -d /opt/gradle gradle-8.2-bin.zip
         echo "/opt/gradle/gradle-8.2/bin" >> $GITHUB_PATH
 
-    - name: Build with Gradle
+    - name: Build Debug APK
       run: gradle assembleDebug --no-daemon
 
-    - name: Upload APK
+    - name: Upload Debug APK
       uses: actions/upload-artifact@v4
       with:
         name: app-debug
         path: app/build/outputs/apk/debug/app-debug.apk
+
+    - name: Build Release AAB
+      run: |
+        if [ ! -f app/kеystore.properties ] && [ -z "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+          echo "No keystore provided, building unsigned release AAB"
+          gradle bundleRelease --no-daemon || echo "Release build skipped (unsigned)"
+        else
+          gradle bundleRelease --no-daemon
+        fi
+      continue-on-error: true
+
+    - name: Upload Release AAB
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: app-release-aab
+        path: app/build/outputs/bundle/release/app-release.aab
+        if-no-files-found: ignore
