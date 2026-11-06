@@ -31,7 +31,7 @@ jobs:
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
       with:
-        gradle-version: 8.4
+        gradle-version: 8.7
         cache-read-only: false
 
     - name: Make gradlew executable
@@ -44,7 +44,8 @@ jobs:
       env:
         GRADLE_OPTS: "-Dorg.gradle.workers.max=2"
 
-    - name: Upload Build Output
+    - name: Upload Build Output (always)
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: build-output-${{ github.run_number }}
@@ -57,6 +58,7 @@ jobs:
           echo "Build succeeded"
         else
           echo "Build failed"
+          cat build_output.txt
           exit 1
         fi
 
