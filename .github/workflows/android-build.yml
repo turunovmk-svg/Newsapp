@@ -1,0 +1,53 @@
+name: NewsApp CI/CD
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    env:
+      ANDROID_HOME: /opt/android-sdk
+      ORG_GRADLE_PROJECT_javaArgs: "-Xmx4g"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Accept Android licenses
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1
+
+      - name: Install Android SDK components
+        run: |
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" > /dev/null 2>&1
+          chmod -R 777 $ANDROID_HOME/cmdline-tools latest/bin/sdkmanager
+          chmod -R 777 $ANDROID_HOME/platform-tools
+
+      - name: Build Debug APK
+        run: |
+          cd /var/minis/workspace/NewsApp
+          # Disable test execution to save time and memory
+          echo "Building Debug APK..."
+          # Set Gradle JVM args for sufficient memory
+          export GRADLE_OPTS="-Xmx4g -Dorg.gradle.jvmargs=-Xmx4g"
+          # Build only the debug APK, skip tests
+          ./gradlew assembleDebug -x test --no-daemon 2>&1 | tail -50
+
+      - name: Upload APK artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newsapp-debug-apk
+          path: /var/minis/workspace/NewsApp/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7
