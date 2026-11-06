@@ -18,7 +18,7 @@
     <string name="no_sources_subtitle">Перейдіть на вкладку "Додати" та вкажіть RSS, YouTube або Telegram</string>
     <string name="refresh">Оновити</string>
     <string name="no_news">Немає новин</string>
-    <string name="check_connection">Перевірте з'єднання або додайте джерела</string>
+    <string name="check_connection">Перевірте з\'єднання або додайте джерела</string>
 
     <!-- Favorites screen -->
     <string name="favorites_title">Обране</string>
