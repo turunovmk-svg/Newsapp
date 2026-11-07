@@ -121,26 +121,35 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Тип источника:",
+                        text = stringResource(id = R.string.source_type_label),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    SegmentedButton(
-                        selectedValue = sourceType,
-                        onValueChange = { sourceType = it },
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        SegmentedButtonItem(
-                            value = "RSS",
-                            label = { Text("RSS") },
-                        )
-                        SegmentedButtonItem(
-                            value = "REDDIT",
-                            label = { Text("Reddit") },
-                        )
-                        SegmentedButtonItem(
-                            value = "YOUTUBE",
-                            label = { Text("YouTube") },
-                        )
+                        Button(
+                            onClick = { sourceType = "RSS" },
+                            modifier = Modifier.width(60.dp),
+                            enabled = sourceType != "RSS",
+                        ) {
+                            Text("RSS", style = MaterialTheme.typography.labelSmall)
+                        }
+                        Button(
+                            onClick = { sourceType = "REDDIT" },
+                            modifier = Modifier.width(60.dp),
+                            enabled = sourceType != "REDDIT",
+                        ) {
+                            Text("Reddit", style = MaterialTheme.typography.labelSmall)
+                        }
+                        Button(
+                            onClick = { sourceType = "YOUTUBE" },
+                            modifier = Modifier.width(60.dp),
+                            enabled = sourceType != "YOUTUBE",
+                        ) {
+                            Text("YouTube", style = MaterialTheme.typography.labelSmall)
+                        }
                     }
                 }
                 Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
