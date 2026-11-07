@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import com.mikhail.newsapp.theme.CyberTheme
@@ -32,9 +33,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -77,7 +75,7 @@ class MainActivity : ComponentActivity() {
 fun NewsAppNavigator() {
     val viewModel: MainViewModel = viewModel<MainViewModel>()
     val navController = rememberNavController()
-    val selectedPost by remember { mutableStateOf<Post?>(null) }
+    var selectedPost by remember { mutableStateOf<Post?>(null) }
 
     Scaffold(
         bottomBar = {
@@ -235,6 +233,7 @@ fun NewsBottomNavBar(navController: NavHostController) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     viewModel: MainViewModel,
@@ -245,7 +244,7 @@ fun HomeScreen(
     val posts by viewModel.posts.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
-    val refreshState = rememberPullToRefreshState(refreshed = { viewModel.loadPosts() })
+    val refreshState = rememberPullToRefreshState { viewModel.loadPosts() }
 
     if (posts.isEmpty() && error == null && !isLoading) {
         // Нет источников — показываем экран с предложением добавить источник
@@ -280,6 +279,7 @@ fun HomeScreen(
     PullToRefreshBox(
         state = refreshState,
         refreshing = isLoading,
+        onRefresh = { viewModel.loadPosts() },
         modifier = modifier.fillMaxSize(),
     ) {
         LazyColumn(
@@ -293,7 +293,6 @@ fun HomeScreen(
                     post = post,
                     isFavorite = viewModel.isFavorite(post),
                     onFavoriteClick = { viewModel.toggleFavorite(post) },
-                    onShareClick = { /* TODO: реализовать поделиться */ },
                     onClick = { onArticleClick(post) },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -303,16 +302,27 @@ fun HomeScreen(
         }
     }
 
-    // Состояние ошибки — показываем поверх ленты, не заменяя её
+    // Состояние ошибки — показываем поверх ленты
     if (error != null) {
-        androidx.compose.material3.SnackbarHost(
-            hostState = remember { SnackbarHostState() }
-        ) { data ->
-            Snackbar(
-                snackbarData = data,
-                action = { Text(stringResource(id = R.string.retry_button)) },
-                onActionClick = { viewModel.loadPosts(); viewModel.clearError() }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(UiSizes.ScreenPadding),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = stringResource(id = R.string.error_loading_news, error ?: ""),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.error
             )
+            Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
+            Button(
+                onClick = { viewModel.loadPosts(); viewModel.clearError() },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(stringResource(id = R.string.retry_button))
+            }
         }
     }
 }
