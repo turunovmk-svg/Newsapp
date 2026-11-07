@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -77,8 +78,8 @@ fun NewsAppNavigator() {
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
                 Icon(
-                    imageVector = AppIcons.Add,
-                    contentDescription = "Add source",
+                    painter = painterResource(id = R.drawable.ic_add),
+                    contentDescription = "Добавить источник",
                     tint = MaterialTheme.colorScheme.onPrimary
                 )
             }
@@ -128,7 +129,12 @@ fun NewsBottomNavBar(navController: NavHostController) {
                 selectedScreen = "home"
                 navController.navigate("home") { launchSingleTop = true }
             },
-            icon = { Icon(imageVector = AppIcons.Home, contentDescription = "Главная") },
+            icon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_home),
+                    contentDescription = "Главная"
+                )
+            },
             label = { Text("Главная") }
         )
         NavigationBarItem(
@@ -137,7 +143,12 @@ fun NewsBottomNavBar(navController: NavHostController) {
                 selectedScreen = "favorites"
                 navController.navigate("favorites") { launchSingleTop = true }
             },
-            icon = { Icon(imageVector = AppIcons.Favorite, contentDescription = "Избранное") },
+            icon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_favorite),
+                    contentDescription = "Избранное"
+                )
+            },
             label = { Text("Избранное") }
         )
         NavigationBarItem(
@@ -146,7 +157,12 @@ fun NewsBottomNavBar(navController: NavHostController) {
                 selectedScreen = "shorts"
                 navController.navigate("shorts") { launchSingleTop = true }
             },
-            icon = { Icon(imageVector = AppIcons.Shorts, contentDescription = "Шортс") },
+            icon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_shorts),
+                    contentDescription = "Шортс"
+                )
+            },
             label = { Text("Шортс") }
         )
         NavigationBarItem(
@@ -155,7 +171,12 @@ fun NewsBottomNavBar(navController: NavHostController) {
                 selectedScreen = "add_source"
                 navController.navigate("add_source") { launchSingleTop = true }
             },
-            icon = { Icon(imageVector = AppIcons.Add, contentDescription = "Добавить") },
+            icon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_add),
+                    contentDescription = "Добавить"
+                )
+            },
             label = { Text("Добавить") }
         )
         NavigationBarItem(
@@ -164,7 +185,12 @@ fun NewsBottomNavBar(navController: NavHostController) {
                 selectedScreen = "settings"
                 navController.navigate("settings") { launchSingleTop = true }
             },
-            icon = { Icon(imageVector = AppIcons.Settings, contentDescription = "Настройки") },
+            icon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_settings),
+                    contentDescription = "Настройки"
+                )
+            },
             label = { Text("Настройки") }
         )
     }
