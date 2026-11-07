@@ -34,7 +34,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
             onValueChange = { sourceType = it.toUpperCase() },
             label = { Text("Тип (RSS / REDDIT / YOUTUBE)") },
             modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardOptions.Capitalization.Characters)
+            keyboardOptions = KeyboardOptions()
         )
 
         // Поле URL
