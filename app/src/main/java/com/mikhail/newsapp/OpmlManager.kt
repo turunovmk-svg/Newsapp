@@ -4,8 +4,12 @@ import android.content.Context
 import com.mikhail.newsapp.data.Source
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
+import org.xmlpull.v1.XmlSerializer
 import java.io.InputStream
+import java.io.InputStreamReader
 import java.io.OutputStream
+import java.io.OutputStreamWriter
+import java.nio.charset.StandardCharsets
 
 /**
  * Импорт и экспорт подписок (RSS / Reddit / YouTube) в формате OPML 2.0.
@@ -18,34 +22,33 @@ class OpmlManager(private val context: Context) {
      */
     fun exportToXml(sources: List<Source>, outputStream: OutputStream): Boolean {
         return try {
-            val factory = XmlPullParserFactory.newInstance()
-            factory.isNamespaceAware = false
-            val parser = factory.newPullParser()
+            val serializer = XmlPullParserFactory.newInstance().newSerializer()
+            val writer = OutputStreamWriter(outputStream, StandardCharsets.UTF_8)
+            serializer.setOutput(writer)
+            serializer.startDocument("UTF-8", true)
+            serializer.startTag(null, "opml")
+            serializer.attribute(null, "version", "2.0")
 
-            parser.startDocument("UTF-8", true)
-            parser.startTag(null, "opml")
-            parser.attribute(null, "version", "2.0")
+            serializer.startTag(null, "head")
+            serializer.startTag(null, "title")
+            serializer.text("NewsApp subscriptions")
+            serializer.endTag(null, "title")
+            serializer.endTag(null, "head")
 
-            parser.startTag(null, "head")
-            parser.startTag(null, "title")
-            parser.text("NewsApp subscriptions")
-            parser.endTag(null, "title")
-            parser.endTag(null, "head")
-
-            parser.startTag(null, "body")
+            serializer.startTag(null, "body")
             for (source in sources) {
-                parser.startTag(null, "outline")
-                parser.attribute(null, "text", source.url)
-                parser.attribute(null, "title", source.url)
-                parser.attribute(null, "type", "rss")
-                parser.attribute(null, "xmlUrl", source.url)
-                parser.endTag(null, "outline")
+                serializer.startTag(null, "outline")
+                serializer.attribute(null, "text", source.url)
+                serializer.attribute(null, "title", source.url)
+                serializer.attribute(null, "type", "rss")
+                serializer.attribute(null, "xmlUrl", source.url)
+                serializer.endTag(null, "outline")
             }
-            parser.endTag(null, "body")
+            serializer.endTag(null, "body")
 
-            parser.endTag(null, "opml")
-            parser.endDocument()
-            outputStream.flush()
+            serializer.endTag(null, "opml")
+            serializer.endDocument()
+            writer.flush()
             true
         } catch (e: Exception) {
             e.printStackTrace()
@@ -63,7 +66,7 @@ class OpmlManager(private val context: Context) {
             val factory = XmlPullParserFactory.newInstance()
             factory.isNamespaceAware = false
             val parser = factory.newPullParser()
-            parser.setInput(inputStream)
+            parser.input = InputStreamReader(inputStream, StandardCharsets.UTF_8)
 
             var eventType = parser.eventType
             while (eventType != XmlPullParser.END_DOCUMENT) {

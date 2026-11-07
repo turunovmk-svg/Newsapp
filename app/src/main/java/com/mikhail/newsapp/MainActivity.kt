@@ -47,6 +47,3 @@ fun NewsAppNavigator() {
 private enum class Screen {
     Shorts, AddSource, Settings
 }
-ate enum class Screen {
-    Shorts, AddSource, Settings
-}

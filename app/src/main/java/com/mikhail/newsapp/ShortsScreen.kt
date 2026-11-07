@@ -131,25 +131,3 @@ private fun ShortCard(post: Post) {
         }
     }
 }
-cheme.onSurface
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            post.description?.let { desc ->
-                Text(
-                    text = desc,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 3
-                )
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            post.publishedAt?.let { date ->
-                Text(
-                    text = date,
-                    style = MaterialTheme.typography.caption,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}

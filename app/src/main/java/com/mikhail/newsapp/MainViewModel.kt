@@ -258,11 +258,3 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         return posts
     }
 }
-           eventType = parser.next()
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        return posts
-    }
-}
