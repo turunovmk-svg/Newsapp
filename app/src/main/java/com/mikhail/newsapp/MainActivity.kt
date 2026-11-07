@@ -3,7 +3,6 @@ package com.mikhail.newsapp
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.clickable.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -558,7 +557,12 @@ fun ArticleScreen(
             }
         }
 
-        Divider(modifier = Modifier.fillMaxWidth())
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(MaterialTheme.colorScheme.outlineVariant)
+        )
 
         // Изображение статьи
         post.imageUrl?.let { imageUrl ->
