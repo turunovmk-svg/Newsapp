@@ -328,7 +328,6 @@ fun NewsCard(
 ) {
     Surface(
         modifier = modifier
-            .clickable(onClick = onClick)
             .clip(RoundedCornerShape(UiSizes.CardCornerRadius)),
         color = MaterialTheme.colorScheme.surface,
     ) {
@@ -557,11 +556,10 @@ fun ArticleScreen(
             }
         }
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(MaterialTheme.colorScheme.outlineVariant)
+        Spacer(modifier = Modifier
+            .fillMaxWidth()
+            .height(1.dp)
+            .background(MaterialTheme.colorScheme.outlineVariant)
         )
 
         // Изображение статьи
