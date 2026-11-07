@@ -34,6 +34,7 @@ fun ShortsScreen(
     viewModel: MainViewModel,
     onAddSource: () -> Unit,
     onArticleClick: (Post) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val posts by viewModel.posts.collectAsState()
     val isRefreshing by viewModel.isLoading.collectAsState()

@@ -891,12 +891,13 @@ fun SearchScreen(
     viewModel: MainViewModel,
     onNavigateBack: () -> Unit,
     onArticleClick: (Post) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val posts by viewModel.posts.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(UiSizes.ScreenPadding),
     ) {
