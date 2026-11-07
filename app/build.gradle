@@ -51,7 +51,9 @@ dependencies {
     // Lifecycle ViewModel + Compose state
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.8.4"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.4"
-    implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4"
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4") {
+        exclude group: 'androidx.lifecycle', module: 'lifecycle-livedata-core'
+    }
     // Coil для AsyncImage (группа io.coil-kt, артефакт coil-compose)
     implementation "io.coil-kt:coil-compose:2.6.0"
     // OkHttp для сетевых запросов

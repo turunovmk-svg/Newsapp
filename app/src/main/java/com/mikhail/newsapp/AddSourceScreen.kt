@@ -31,7 +31,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
         // Поле типа источника
         OutlinedTextField(
             value = sourceType,
-            onValueChange = { sourceType = it.toUpperCase() },
+            onValueChange = { sourceType = it.uppercase() },
             label = { Text("Тип (RSS / REDDIT / YOUTUBE)") },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions()
