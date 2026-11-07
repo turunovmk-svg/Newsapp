@@ -26,6 +26,7 @@ import com.mikhail.newsapp.UiSizes
 @Composable
 fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
     var sourceUrl by remember { mutableStateOf("") }
+    var sourceType by remember { mutableStateOf("RSS") }
     var urlError by remember { mutableStateOf<String?>(null) }
     var isAdding by remember { mutableStateOf(false) }
     var addedSource by remember { mutableStateOf<Boolean?>(null) } // null = не пытались, true = успех, false = ошибка
@@ -113,6 +114,37 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
                 )
                 Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
 
+                // Выбор типа источника
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Тип источника:",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    SegmentedButton(
+                        selectedValue = sourceType,
+                        onValueChange = { sourceType = it },
+                    ) {
+                        SegmentedButtonItem(
+                            value = "RSS",
+                            label = { Text("RSS") },
+                        )
+                        SegmentedButtonItem(
+                            value = "REDDIT",
+                            label = { Text("Reddit") },
+                        )
+                        SegmentedButtonItem(
+                            value = "YOUTUBE",
+                            label = { Text("YouTube") },
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
+
                 // Ошибка валидации
                 if (urlError != null) {
                     Text(
@@ -149,7 +181,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
                             } else {
                                 urlError = null
                                 isAdding = true
-                                viewModel.addSource("RSS", sourceUrl)
+                                viewModel.addSource(sourceType, sourceUrl)
                                 addedSource = true
                                 sourceUrl = ""
                                 isAdding = false
