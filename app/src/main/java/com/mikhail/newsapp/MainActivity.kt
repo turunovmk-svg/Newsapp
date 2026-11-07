@@ -361,10 +361,20 @@ fun HomeScreen(
                 items = filteredPosts,
                 key = { it.id }
             ) { post ->
+                val ctx = LocalContext.current
                 NewsCard(
                     post = post,
                     isFavorite = viewModel.isFavorite(post),
                     onFavoriteClick = { viewModel.toggleFavorite(post) },
+                    onShareClick = {
+                        post.sourceUrl?.let { url ->
+                            val intent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_TEXT, "$url")
+                            }
+                            ctx.startActivity(Intent.createChooser(intent, "Поделиться"))
+                        }
+                    },
                     onClick = { onArticleClick(post) },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -593,10 +603,20 @@ fun FavoritesScreen(viewModel: MainViewModel, onArticleClick: (Post) -> Unit) {
                     items = favorites,
                     key = { it.id }
                 ) { post ->
+                    val ctx = LocalContext.current
                     NewsCard(
                         post = post,
                         isFavorite = true,
                         onFavoriteClick = { viewModel.toggleFavorite(post) },
+                        onShareClick = {
+                            post.sourceUrl?.let { url ->
+                                val intent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, "$url")
+                                }
+                                ctx.startActivity(Intent.createChooser(intent, "Поделиться"))
+                            }
+                        },
                         onClick = { onArticleClick(post) },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -823,10 +843,20 @@ fun SearchScreen(
                     items = filteredPosts,
                     key = { it.id }
                 ) { post ->
+                    val ctx = LocalContext.current
                     NewsCard(
                         post = post,
                         isFavorite = viewModel.isFavorite(post),
                         onFavoriteClick = { viewModel.toggleFavorite(post) },
+                        onShareClick = {
+                            post.sourceUrl?.let { url ->
+                                val intent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, "$url")
+                                }
+                                ctx.startActivity(Intent.createChooser(intent, "Поделиться"))
+                            }
+                        },
                         onClick = { onArticleClick(post) },
                         modifier = Modifier
                             .fillMaxWidth()
