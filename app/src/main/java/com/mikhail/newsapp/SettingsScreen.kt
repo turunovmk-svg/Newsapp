@@ -2,7 +2,6 @@ package com.mikhail.newsapp
 
 import android.content.Intent
 import android.net.Uri
-import android.os.Bundle
 import androidx.activity.compose.LocalActivityResultRegistry
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -23,35 +22,33 @@ fun SettingsScreen(
     val activityResultRegistry = LocalActivityResultRegistry.current
 
     val importLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument(),
-        onResult = { uri ->
-            uri?.let { selectedUri ->
-                context.contentResolver.openInputStream(selectedUri)?.use { inputStream ->
-                    val sources = OpmlManager(context).importFromXml(inputStream)
-                    if (sources.isNotEmpty()) {
-                        val current = viewModel.sources.value
-                        val combined = (current + sources).distinctBy { it.url }
-                        viewModel.saveSources(combined)
-                        viewModel.loadPosts()
-                    }
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri?.let { selectedUri ->
+            context.contentResolver.openInputStream(selectedUri)?.use { inputStream ->
+                val sources = OpmlManager(context).importFromXml(inputStream)
+                if (sources.isNotEmpty()) {
+                    val current = viewModel.sources.value
+                    val combined = (current + sources).distinctBy { it.url }
+                    viewModel.saveSources(combined)
+                    viewModel.loadPosts()
                 }
             }
         }
     }
 
     val exportLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument(),
-        onResult = { uri ->
-            uri?.let { selectedUri ->
-                context.contentResolver.openOutputStream(selectedUri)?.use { outputStream ->
-                    val sources = viewModel.sources.value
-                    if (sources.isNotEmpty()) {
-                        OpmlManager(context).exportToXml(sources, outputStream)
-                    }
+        contract = ActivityResultContracts.CreateDocument()
+    ) { uri ->
+        uri?.let { selectedUri ->
+            context.contentResolver.openOutputStream(selectedUri)?.use { outputStream ->
+                val sources = viewModel.sources.value
+                if (sources.isNotEmpty()) {
+                    OpmlManager(context).exportToXml(sources, outputStream)
                 }
             }
         }
-    )
+    }
 
     Column(
         modifier = Modifier
