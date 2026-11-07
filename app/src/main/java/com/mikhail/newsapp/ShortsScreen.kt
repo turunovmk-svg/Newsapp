@@ -8,7 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,7 +39,6 @@ fun ShortsScreen(
     val shortPosts = posts.take(10)
 
     val refreshState = rememberPullToRefreshState()
-    var currentIndex by remember { mutableStateOf(0) }
 
     if (shortPosts.isEmpty() && error == null && !isRefreshing) {
         EmptyShortsState(onAddSource = onAddSource)
@@ -55,7 +54,7 @@ fun ShortsScreen(
         return
     }
 
-    val currentPost = shortPosts[currentIndex]
+    val currentPost = shortPosts.firstOrNull() ?: return
 
     PullToRefreshBox(
         state = refreshState,
@@ -77,27 +76,6 @@ fun ShortsScreen(
                 onClick = { onArticleClick(currentPost) },
                 modifier = Modifier.fillMaxSize(),
             )
-
-            // Индикатор страниц (точки)
-            Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                shortPosts.forEachIndexed { index, _ ->
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(
-                                if (index == currentIndex) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
-                            )
-                            .padding(4.dp)
-                    )
-                }
-            }
 
             Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
 
