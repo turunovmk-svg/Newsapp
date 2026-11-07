@@ -108,7 +108,18 @@ fun NewsAppNavigator() {
                         selectedPost = post
                         navController.navigate("article") { launchSingleTop = true }
                     },
+                    onSearchClick = { navController.navigate("search") },
                     modifier = Modifier.padding(paddingValues)
+                )
+            }
+            composable("search") {
+                SearchScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onArticleClick = { post ->
+                        selectedPost = post
+                        navController.navigate("article") { launchSingleTop = true }
+                    },
                 )
             }
             composable("shorts") {
@@ -246,6 +257,7 @@ fun HomeScreen(
     viewModel: MainViewModel,
     onAddSource: () -> Unit,
     onArticleClick: (Post) -> Unit,
+    onSearchClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val posts by viewModel.posts.collectAsState()
@@ -283,17 +295,44 @@ fun HomeScreen(
         return
     }
 
+    // Поисковое поле
+    var searchQuery by remember { mutableStateOf("") }
+    OutlinedTextField(
+        value = searchQuery,
+        onValueChange = { searchQuery = it },
+        label = { Text("Поиск новостей") },
+        leadingIcon = {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_add),
+                contentDescription = "Поиск"
+            )
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = UiSizes.ScreenPadding, vertical = UiSizes.SpacerSmall),
+        singleLine = true,
+    )
+    Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
+
     PullToRefreshBox(
         state = refreshState,
         isRefreshing = isLoading,
         onRefresh = { viewModel.loadPosts() },
         modifier = modifier.fillMaxSize(),
     ) {
+        val filteredPosts = if (searchQuery.isNotBlank()) {
+            posts.filter { post ->
+                post.title.contains(searchQuery, ignoreCase = true)
+                    || (post.description ?: "").contains(searchQuery, ignoreCase = true)
+            }
+        } else {
+            posts
+        }
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
         ) {
             items(
-                items = posts,
+                items = filteredPosts,
                 key = { it.id }
             ) { post ->
                 NewsCard(
@@ -625,6 +664,94 @@ fun ArticleScreen(
             Text(stringResource(id = R.string.open_original))
         }
         Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
+    }
+}
+@Composable
+fun SearchScreen(
+    viewModel: MainViewModel,
+    onNavigateBack: () -> Unit,
+    onArticleClick: (Post) -> Unit,
+) {
+    val posts by viewModel.posts.collectAsState()
+    var searchQuery by remember { mutableStateOf("") }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(UiSizes.ScreenPadding),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = onNavigateBack,
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_add),
+                    contentDescription = "Назад",
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            Spacer(modifier = Modifier.width(UiSizes.SpacerMedium))
+            Text(
+                text = "Поиск",
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+        Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
+
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            label = { Text("Поиск по заголовкам и описаниям") },
+            leadingIcon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_add),
+                    contentDescription = "Поиск"
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+        )
+        Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
+
+        val filteredPosts = if (searchQuery.isNotBlank()) {
+            posts.filter { post ->
+                post.title.contains(searchQuery, ignoreCase = true)
+                    || (post.description ?: "").contains(searchQuery, ignoreCase = true)
+            }
+        } else {
+            emptyList()
+        }
+
+        if (searchQuery.isNotBlank() && filteredPosts.isEmpty()) {
+            Text(
+                text = "Ничего не найдено",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                items(
+                    items = filteredPosts,
+                    key = { it.id }
+                ) { post ->
+                    NewsCard(
+                        post = post,
+                        isFavorite = viewModel.isFavorite(post),
+                        onFavoriteClick = { viewModel.toggleFavorite(post) },
+                        onClick = { onArticleClick(post) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 0.dp, vertical = UiSizes.SpacerXSmall)
+                    )
+                }
+            }
+        }
     }
 }
 // Rebuild fix
