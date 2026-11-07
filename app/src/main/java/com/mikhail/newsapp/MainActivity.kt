@@ -108,7 +108,7 @@ fun NewsAppNavigator() {
                     viewModel = viewModel,
                     onAddSource = { navController.navigate("add_source") },
                     onArticleClick = { post ->
-                        selectedPost.value = post
+                        selectedPost = post
                         navController.navigate("article") { launchSingleTop = true }
                     },
                     modifier = Modifier.padding(paddingValues)
@@ -130,13 +130,13 @@ fun NewsAppNavigator() {
                 FavoritesScreen(
                     viewModel = viewModel,
                     onArticleClick = { post ->
-                        selectedPost.value = post
+                        selectedPost = post
                         navController.navigate("article") { launchSingleTop = true }
                     }
                 )
             }
             composable("article") {
-                val post = selectedPost.value
+                val post = selectedPost
                 if (post != null) {
                     ArticleScreen(
                         post = post,
