@@ -278,7 +278,7 @@ fun HomeScreen(
 
     PullToRefreshBox(
         state = refreshState,
-        refreshing = isLoading,
+        isRefreshing = isLoading,
         onRefresh = { viewModel.loadPosts() },
         modifier = modifier.fillMaxSize(),
     ) {
