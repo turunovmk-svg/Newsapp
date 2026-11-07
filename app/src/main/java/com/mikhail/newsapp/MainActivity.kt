@@ -20,6 +20,7 @@ import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.Button
 import androidx.compose.runtime.Composable
@@ -75,7 +76,11 @@ fun NewsAppNavigator() {
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
-                Text(text = "+", style = MaterialTheme.typography.titleLarge)
+                Icon(
+                    imageVector = AppIcons.Add,
+                    contentDescription = "Add source",
+                    tint = MaterialTheme.colorScheme.onPrimary
+                )
             }
         },
         floatingActionButtonPosition = FabPosition.End
@@ -123,7 +128,7 @@ fun NewsBottomNavBar(navController: NavHostController) {
                 selectedScreen = "home"
                 navController.navigate("home") { launchSingleTop = true }
             },
-            icon = { Text(text = "🏠", style = MaterialTheme.typography.bodyLarge) },
+            icon = { Icon(imageVector = AppIcons.Home, contentDescription = "Главная") },
             label = { Text("Главная") }
         )
         NavigationBarItem(
@@ -132,7 +137,7 @@ fun NewsBottomNavBar(navController: NavHostController) {
                 selectedScreen = "favorites"
                 navController.navigate("favorites") { launchSingleTop = true }
             },
-            icon = { Text(text = "❤️", style = MaterialTheme.typography.bodyLarge) },
+            icon = { Icon(imageVector = AppIcons.Favorite, contentDescription = "Избранное") },
             label = { Text("Избранное") }
         )
         NavigationBarItem(
@@ -141,7 +146,7 @@ fun NewsBottomNavBar(navController: NavHostController) {
                 selectedScreen = "shorts"
                 navController.navigate("shorts") { launchSingleTop = true }
             },
-            icon = { Text(text = "📰", style = MaterialTheme.typography.bodyLarge) },
+            icon = { Icon(imageVector = AppIcons.Shorts, contentDescription = "Шортс") },
             label = { Text("Шортс") }
         )
         NavigationBarItem(
@@ -150,7 +155,7 @@ fun NewsBottomNavBar(navController: NavHostController) {
                 selectedScreen = "add_source"
                 navController.navigate("add_source") { launchSingleTop = true }
             },
-            icon = { Text(text = "➕", style = MaterialTheme.typography.bodyLarge) },
+            icon = { Icon(imageVector = AppIcons.Add, contentDescription = "Добавить") },
             label = { Text("Добавить") }
         )
         NavigationBarItem(
@@ -159,7 +164,7 @@ fun NewsBottomNavBar(navController: NavHostController) {
                 selectedScreen = "settings"
                 navController.navigate("settings") { launchSingleTop = true }
             },
-            icon = { Text(text = "⚙️", style = MaterialTheme.typography.bodyLarge) },
+            icon = { Icon(imageVector = AppIcons.Settings, contentDescription = "Настройки") },
             label = { Text("Настройки") }
         )
     }
