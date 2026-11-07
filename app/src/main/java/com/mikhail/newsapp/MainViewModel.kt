@@ -33,6 +33,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _favorites = MutableStateFlow<List<Post>>(emptyList())
+    val favorites: StateFlow<List<Post>> = _favorites.asStateFlow()
+
     init {
         loadSources()
         loadPosts()
