@@ -620,8 +620,7 @@ fun ArticleScreen(
             .fillMaxSize()
             .pointerInput(Unit) {
                 detectDragGestures(
-                    onDragStart = { },
-                    onDragEnd = { _, dragAmount ->
+                    onDrag = { _, dragAmount ->
                         if (dragAmount.x < -80 && onNext != null) {
                             onNext()
                         } else if (dragAmount.x > 80 && onPrevious != null) {

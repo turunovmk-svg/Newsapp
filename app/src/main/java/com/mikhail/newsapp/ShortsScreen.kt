@@ -82,8 +82,7 @@ fun ShortsScreen(
                 .background(MaterialTheme.colorScheme.background)
                 .pointerInput(Unit) {
                     detectDragGestures(
-                        onDrag = { change, dragAmount ->
-                            change.consumePositionChange()
+                        onDrag = { _, dragAmount ->
                             if (dragAmount.y < -80) {
                                 onSwipeUp()
                             } else if (dragAmount.y > 80) {
