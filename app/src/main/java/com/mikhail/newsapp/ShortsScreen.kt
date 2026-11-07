@@ -123,8 +123,8 @@ fun ShortsScreen(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
                     .padding(end = UiSizes.SpacerSmall),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 shortPosts.forEachIndexed { index, _ ->
                     Box(
