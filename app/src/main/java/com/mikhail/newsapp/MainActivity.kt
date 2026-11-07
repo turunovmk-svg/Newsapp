@@ -33,7 +33,7 @@ fun NewsAppNavigator() {
 
     Column(modifier = Modifier.fillMaxSize()) {
         when (screen) {
-            Screen.Shorts -> ShortsScreen(viewModel = viewModel)
+            Screen.Shorts -> ShortsScreen(viewModel = viewModel, onAddSource = { screen = Screen.AddSource })
             Screen.AddSource -> AddSourceScreen(viewModel = viewModel, onNavigateBack = { screen = Screen.Shorts })
             Screen.Settings -> SettingsScreen(
                 onNavigateBack = { screen = Screen.Shorts },

@@ -24,14 +24,14 @@ import com.mikhail.newsapp.data.Post
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ShortsScreen(viewModel: MainViewModel) {
+fun ShortsScreen(viewModel: MainViewModel, onAddSource: () -> Unit) {
     val posts by viewModel.posts.collectAsState()
     val isRefreshing by viewModel.isLoading.collectAsState()
     val shortPosts = posts.take(10)
 
     Column(modifier = Modifier.fillMaxSize()) {
         if (shortPosts.isEmpty()) {
-            EmptyShortsState()
+            EmptyShortsState(onAddSource = onAddSource)
         } else {
             PullToRefreshBox(
                 isRefreshing = isRefreshing,
@@ -53,7 +53,7 @@ fun ShortsScreen(viewModel: MainViewModel) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun EmptyShortsState() {
+private fun EmptyShortsState(onAddSource: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -74,6 +74,13 @@ private fun EmptyShortsState() {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
+        Spacer(modifier = Modifier.height(UiSizes.ShortSpacerBig))
+        Button(
+            onClick = onAddSource,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(stringResource(id = R.string.add_source_button))
+        }
     }
 }
 
