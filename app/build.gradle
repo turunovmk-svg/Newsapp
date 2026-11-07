@@ -62,4 +62,9 @@ dependencies {
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:1.7.0"
     debugImplementation "androidx.compose.ui:ui-tooling:1.7.0"
     debugImplementation "androidx.compose.ui:ui-test-manifest:1.7.0"
+
+configurations.all {
+    exclude group: 'androidx.lifecycle', module: 'lifecycle-livedata-core'
+    exclude group: 'androidx.lifecycle', module: 'lifecycle-livedata-core-ktx'
+}
 }
