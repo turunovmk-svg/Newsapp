@@ -7,25 +7,16 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.LinearGradient
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import androidx.compose.ui.platform.LocalContext
 
 /**
  * Карточка в стиле "matte glass" — полупрозрачная поверхность с неоновой границей.
@@ -73,10 +64,9 @@ fun NeonButton(
     secondaryColor: Color = CyberColors.AccentBlueBright,
     enabled: Boolean = true
 ) {
-    val isPressed by remember { mutableStateOf(false) }
-
     Column(
         modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
             .clickable(
                 enabled = enabled,
                 onClick = onClick
@@ -155,86 +145,5 @@ fun NeonDivider(
     )
 }
 
-/**
- * Карточка новости в стиле cyberpunk с неоновым акцентом слева.
- */
-@Composable
-fun NewsCard(
-    post: com.mikhail.newsapp.data.Post,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    GlassCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 4.dp)
-            .clickable(onClick = onClick),
-        glowColor = CyberColors.AccentBlue
-    ) {
-        Column(
-            modifier = Modifier.padding(12.dp)
-        ) {
-            // Неоновый акцент слева (маленькая вертикальная полоска)
-            Box(
-                modifier = Modifier
-                    .width(3.dp)
-                    .height(40.dp)
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(CyberColors.AccentBlue, CyberColors.AccentBlueBright)
-                        )
-                    )
-                    .padding(bottom = 12.dp)
-            )
-
-            post.imageUrl?.let { imageUrl ->
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(imageUrl)
-                        .build(),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color(0xFF22223A))
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-
-            Text(
-                text = post.title,
-                style = MaterialTheme.typography.titleLarge,
-                color = CyberColors.TextPrimary,
-                maxLines = 2
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            post.description?.let { desc ->
-                Text(
-                    text = desc,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = CyberColors.TextMuted,
-                    maxLines = 3
-                )
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            post.publishedAt?.let { date ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = date,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = CyberColors.TextMuted
-                    )
-                    Text(
-                        text = "•",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = CyberColors.AccentBlue
-                    )
-                }
-            }
-        }
-    }
-}
+// Примечание: NewsCard определён в MainActivity.kt (com.mikhail.newsapp),
+// чтобы избежать дублирования и конфликта имён.

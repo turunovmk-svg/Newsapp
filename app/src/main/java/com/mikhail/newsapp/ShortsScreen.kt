@@ -9,10 +9,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,12 +42,6 @@ fun ShortsScreen(
 
     val refreshState = rememberPullToRefreshState()
     val currentShortsIndex by viewModel.currentShortsIndex.collectAsState()
-    val currentIndexState = remember { mutableStateOf(currentShortsIndex) }
-
-    // Сохраняем индекс при входе на экран (первый раз)
-    LaunchedEffect(Unit) {
-        currentIndexState.value = currentShortsIndex
-    }
 
     if (shortPosts.isEmpty() && error == null && !isRefreshing) {
         EmptyShortsState(onAddSource = onAddSource)
@@ -68,18 +58,16 @@ fun ShortsScreen(
     }
 
     // Ограничиваем индекс размером текущего списка
-    val safeIndex = currentIndexState.value.coerceIn(0, shortPosts.size - 1)
+    val safeIndex = currentShortsIndex.coerceIn(0, shortPosts.size - 1)
     val currentPost = shortPosts[safeIndex]
 
     val onSwipeUp = {
         if (safeIndex < shortPosts.size - 1) {
-            currentIndexState.value = safeIndex + 1
             viewModel.setCurrentShortsIndex(safeIndex + 1)
         }
     }
     val onSwipeDown = {
         if (safeIndex > 0) {
-            currentIndexState.value = safeIndex - 1
             viewModel.setCurrentShortsIndex(safeIndex - 1)
         }
     }
@@ -95,13 +83,17 @@ fun ShortsScreen(
                 .fillMaxSize()
                 .background(CyberColors.BackgroundDeep)
                 .pointerInput(Unit) {
+                    var accumulatedY = 0f
                     detectDragGestures(
-                        onDrag = { _, dragAmount ->
-                            if (dragAmount.y < -80) {
+                        onDragStart = { accumulatedY = 0f },
+                        onDrag = { _, dragAmount -> accumulatedY += dragAmount.y },
+                        onDragEnd = {
+                            if (accumulatedY < -80) {
                                 onSwipeUp()
-                            } else if (dragAmount.y > 80) {
+                            } else if (accumulatedY > 80) {
                                 onSwipeDown()
                             }
+                            accumulatedY = 0f
                         },
                     )
                 },
@@ -111,7 +103,16 @@ fun ShortsScreen(
                 post = currentPost,
                 isFavorite = viewModel.isFavorite(currentPost),
                 onFavoriteClick = { viewModel.toggleFavorite(currentPost) },
-                onShareClick = { /* TODO: реализовать поделиться */ },
+                onShareClick = {
+                    currentPost.sourceUrl?.let { url ->
+                        val ctx = androidx.compose.ui.platform.LocalContext.current
+                        val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(android.content.Intent.EXTRA_TEXT, url)
+                        }
+                        ctx.startActivity(android.content.Intent.createChooser(intent, "Поделиться"))
+                    }
+                },
                 onClick = { onArticleClick(currentPost) },
                 modifier = Modifier.fillMaxSize(),
             )
@@ -129,10 +130,9 @@ fun ShortsScreen(
                             .size(8.dp)
                             .clip(RoundedCornerShape(4.dp))
                             .background(
-                                if (index == currentIndexState.value) CyberColors.AccentBlue
+                                if (index == safeIndex) CyberColors.AccentBlue
                                 else CyberColors.TextSecondary.copy(alpha = 0.3f)
                             )
-                            .padding(4.dp)
                     )
                 }
             }
@@ -156,10 +156,19 @@ fun ShortsScreen(
                     )
                 }
                 IconButton(
-                    onClick = { /* TODO: поделиться */ },
+                    onClick = {
+                        currentPost.sourceUrl?.let { url ->
+                            val ctx = androidx.compose.ui.platform.LocalContext.current
+                            val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(android.content.Intent.EXTRA_TEXT, url)
+                            }
+                            ctx.startActivity(android.content.Intent.createChooser(intent, "Поделиться"))
+                        }
+                    },
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_add),
+                        painter = painterResource(id = R.drawable.ic_share),
                         contentDescription = "Поделиться",
                         tint = CyberColors.TextSecondary
                     )
@@ -168,7 +177,7 @@ fun ShortsScreen(
                     onClick = { onArticleClick(currentPost) },
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_add),
+                        painter = painterResource(id = R.drawable.ic_open_external),
                         contentDescription = "Открыть статью",
                         tint = CyberColors.AccentBlue
                     )

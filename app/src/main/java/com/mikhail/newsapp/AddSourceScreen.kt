@@ -4,8 +4,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -51,8 +57,11 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(CyberColors.BackgroundDeep)
+            .verticalScroll(rememberScrollState())
             .padding(UiSizes.ScreenPadding)
-            .background(CyberColors.BackgroundDeep),
+            .padding(WindowInsets.ime.asPaddingValues())
+            .padding(WindowInsets.navigationBars.asPaddingValues()),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -65,7 +74,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
                 onClick = onNavigateBack,
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_add),
+                    painter = painterResource(id = R.drawable.ic_back),
                     contentDescription = "Назад",
                     tint = CyberColors.TextSecondary
                 )
@@ -103,7 +112,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
                     label = { Text(stringResource(id = R.string.source_url_label)) },
                     leadingIcon = {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_add),
+                            painter = painterResource(id = R.drawable.ic_link),
                             contentDescription = "URL",
                             tint = CyberColors.TextSecondary
                         )
@@ -134,22 +143,34 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
                             onClick = { sourceType = "RSS" },
                             modifier = Modifier.width(60.dp),
                             enabled = sourceType != "RSS",
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (sourceType == "RSS") CyberColors.AccentBlue else CyberColors.SurfaceElevated,
+                                contentColor = if (sourceType == "RSS") CyberColors.TextInverse else CyberColors.TextPrimary
+                            )
                         ) {
-                            Text("RSS", style = MaterialTheme.typography.labelSmall)
+                            Text("RSS", style = CyberTypography.BodySmall)
                         }
                         Button(
                             onClick = { sourceType = "REDDIT" },
                             modifier = Modifier.width(60.dp),
                             enabled = sourceType != "REDDIT",
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (sourceType == "REDDIT") CyberColors.AccentBlue else CyberColors.SurfaceElevated,
+                                contentColor = if (sourceType == "REDDIT") CyberColors.TextInverse else CyberColors.TextPrimary
+                            )
                         ) {
-                            Text("Reddit", style = MaterialTheme.typography.labelSmall)
+                            Text("Reddit", style = CyberTypography.BodySmall)
                         }
                         Button(
                             onClick = { sourceType = "YOUTUBE" },
                             modifier = Modifier.width(60.dp),
                             enabled = sourceType != "YOUTUBE",
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (sourceType == "YOUTUBE") CyberColors.AccentBlue else CyberColors.SurfaceElevated,
+                                contentColor = if (sourceType == "YOUTUBE") CyberColors.TextInverse else CyberColors.TextPrimary
+                            )
                         ) {
-                            Text("YouTube", style = MaterialTheme.typography.labelSmall)
+                            Text("YouTube", style = CyberTypography.BodySmall)
                         }
                     }
                 }
@@ -280,7 +301,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                painter = painterResource(id = R.drawable.ic_add),
+                                painter = painterResource(id = R.drawable.ic_link),
                                 contentDescription = source.name,
                                 tint = CyberColors.AccentBlue,
                                 modifier = Modifier.size(20.dp)
@@ -318,7 +339,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
                                 },
                             ) {
                                 Icon(
-                                    painter = painterResource(id = R.drawable.ic_add),
+                                    painter = painterResource(id = R.drawable.ic_delete),
                                     contentDescription = "Удалить источник",
                                     tint = CyberColors.Error,
                                 )

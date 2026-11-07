@@ -8,6 +8,7 @@
     <string name="back">Назад</string>
     <string name="back_to_feed">К ленте новостей</string>
     <string name="empty_shorts">Добавьте источники</string>
+    <string name="empty_home">Добавьте источники новостей</string>
     <string name="add_sources_hint">Нажмите «Добавить источник», чтобы загрузить новости</string>
     <string name="no_image">Изображение недоступно</string>
     <string name="open_original">Открыть оригинал</string>

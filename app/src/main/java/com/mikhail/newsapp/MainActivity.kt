@@ -29,7 +29,6 @@ import com.mikhail.newsapp.theme.CyberColors
 import com.mikhail.newsapp.theme.GlassCard
 import com.mikhail.newsapp.theme.CyberTypography
 import com.mikhail.newsapp.theme.NeonButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.FabPosition
@@ -39,9 +38,10 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -51,6 +51,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -60,6 +61,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.mikhail.newsapp.data.Post
 import coil.compose.AsyncImage
@@ -86,25 +88,67 @@ fun NewsAppNavigator() {
     val viewModel: MainViewModel = viewModel<MainViewModel>()
     val navController = rememberNavController()
     var selectedPost by remember { mutableStateOf<Post?>(null) }
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    val screenTitle = when (currentRoute) {
+        "home" -> "Главная"
+        "favorites" -> "Избранное"
+        "shorts" -> "Шортс"
+        "add_source" -> "Добавить источник"
+        "settings" -> "Настройки"
+        "search" -> "Поиск"
+        "article" -> "Статья"
+        else -> "NewsApp"
+    }
 
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = screenTitle,
+                        style = CyberTypography.TitleLarge,
+                        color = CyberColors.TextPrimary
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = CyberColors.SurfaceGlassStrong,
+                    titleContentColor = CyberColors.TextPrimary
+                ),
+                navigationIcon = {
+                    if (currentRoute == "article" || currentRoute == "search") {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_back),
+                                contentDescription = "Назад",
+                                tint = CyberColors.TextPrimary
+                            )
+                        }
+                    }
+                }
+            )
+        },
         bottomBar = {
-            NewsBottomNavBar(navController = navController)
+            NewsBottomNavBar(navController = navController, currentRoute = currentRoute)
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { navController.navigate("add_source") },
-                containerColor = CyberColors.AccentBlue,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_add),
-                    contentDescription = "Добавить источник",
-                    tint = MaterialTheme.colorScheme.onPrimary
-                )
+            if (currentRoute == "home") {
+                FloatingActionButton(
+                    onClick = { navController.navigate("add_source") },
+                    containerColor = CyberColors.AccentBlue,
+                    contentColor = CyberColors.TextInverse
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_add),
+                        contentDescription = "Добавить источник",
+                        tint = CyberColors.TextInverse
+                    )
+                }
             }
         },
-        floatingActionButtonPosition = FabPosition.End
+        floatingActionButtonPosition = FabPosition.End,
+        containerColor = CyberColors.BackgroundDeep
     ) { paddingValues ->
         NavHost(
             navController = navController,
@@ -200,80 +244,120 @@ fun NewsAppNavigator() {
 }
 
 @Composable
-fun NewsBottomNavBar(navController: NavHostController) {
-    val selectedScreenState = remember { mutableStateOf("home") }
-    var selectedScreen by selectedScreenState
-
-    NavigationBar {
+fun NewsBottomNavBar(navController: NavHostController, currentRoute: String?) {
+    NavigationBar(
+        containerColor = CyberColors.SurfaceGlassStrong,
+        contentColor = CyberColors.TextPrimary
+    ) {
         NavigationBarItem(
-            selected = selectedScreen == "home",
+            selected = currentRoute == "home",
             onClick = {
-                selectedScreen = "home"
-                navController.navigate("home") { launchSingleTop = true }
+                navController.navigate("home") {
+                    launchSingleTop = true
+                    popUpTo("home") { inclusive = false }
+                }
             },
             icon = {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_home),
-                    contentDescription = "Главная"
+                    contentDescription = "Главная",
+                    tint = if (currentRoute == "home") CyberColors.AccentBlueBright else CyberColors.TextSecondary
                 )
             },
-            label = { Text("Главная") }
+            label = {
+                Text(
+                    "Главная",
+                    color = if (currentRoute == "home") CyberColors.AccentBlueBright else CyberColors.TextSecondary
+                )
+            }
         )
         NavigationBarItem(
-            selected = selectedScreen == "favorites",
+            selected = currentRoute == "favorites",
             onClick = {
-                selectedScreen = "favorites"
-                navController.navigate("favorites") { launchSingleTop = true }
+                navController.navigate("favorites") {
+                    launchSingleTop = true
+                    popUpTo("home") { inclusive = false }
+                }
             },
             icon = {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_favorite),
-                    contentDescription = "Избранное"
+                    contentDescription = "Избранное",
+                    tint = if (currentRoute == "favorites") CyberColors.AccentBlueBright else CyberColors.TextSecondary
                 )
             },
-            label = { Text("Избранное") }
+            label = {
+                Text(
+                    "Избранное",
+                    color = if (currentRoute == "favorites") CyberColors.AccentBlueBright else CyberColors.TextSecondary
+                )
+            }
         )
         NavigationBarItem(
-            selected = selectedScreen == "shorts",
+            selected = currentRoute == "shorts",
             onClick = {
-                selectedScreen = "shorts"
-                navController.navigate("shorts") { launchSingleTop = true }
+                navController.navigate("shorts") {
+                    launchSingleTop = true
+                    popUpTo("home") { inclusive = false }
+                }
             },
             icon = {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_shorts),
-                    contentDescription = "Шортс"
+                    contentDescription = "Шортс",
+                    tint = if (currentRoute == "shorts") CyberColors.AccentBlueBright else CyberColors.TextSecondary
                 )
             },
-            label = { Text("Шортс") }
+            label = {
+                Text(
+                    "Шортс",
+                    color = if (currentRoute == "shorts") CyberColors.AccentBlueBright else CyberColors.TextSecondary
+                )
+            }
         )
         NavigationBarItem(
-            selected = selectedScreen == "add_source",
+            selected = currentRoute == "add_source",
             onClick = {
-                selectedScreen = "add_source"
-                navController.navigate("add_source") { launchSingleTop = true }
+                navController.navigate("add_source") {
+                    launchSingleTop = true
+                    popUpTo("home") { inclusive = false }
+                }
             },
             icon = {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_add),
-                    contentDescription = "Добавить"
+                    contentDescription = "Добавить",
+                    tint = if (currentRoute == "add_source") CyberColors.AccentBlueBright else CyberColors.TextSecondary
                 )
             },
-            label = { Text("Добавить") }
+            label = {
+                Text(
+                    "Добавить",
+                    color = if (currentRoute == "add_source") CyberColors.AccentBlueBright else CyberColors.TextSecondary
+                )
+            }
         )
         NavigationBarItem(
-            selected = selectedScreen == "settings",
+            selected = currentRoute == "settings",
             onClick = {
-                selectedScreen = "settings"
-                navController.navigate("settings") { launchSingleTop = true }
+                navController.navigate("settings") {
+                    launchSingleTop = true
+                    popUpTo("home") { inclusive = false }
+                }
             },
             icon = {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_settings),
-                    contentDescription = "Настройки"
+                    contentDescription = "Настройки",
+                    tint = if (currentRoute == "settings") CyberColors.AccentBlueBright else CyberColors.TextSecondary
                 )
             },
-            label = { Text("Настройки") }
+            label = {
+                Text(
+                    "Настройки",
+                    color = if (currentRoute == "settings") CyberColors.AccentBlueBright else CyberColors.TextSecondary
+                )
+            }
         )
     }
 }
@@ -300,7 +384,7 @@ fun HomeScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = stringResource(id = R.string.empty_shorts),
+                text = stringResource(id = R.string.empty_home),
                 style = CyberTypography.HeadlineMedium,
                 color = CyberColors.TextPrimary
             )
@@ -335,8 +419,9 @@ fun HomeScreen(
             label = { Text("Поиск новостей") },
             leadingIcon = {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_add),
-                    contentDescription = "Поиск"
+                    painter = painterResource(id = R.drawable.ic_search),
+                    contentDescription = "Поиск",
+                    tint = CyberColors.TextSecondary
                 )
             },
             modifier = Modifier.fillMaxWidth(),
@@ -544,42 +629,11 @@ fun NewsCard(
                     onClick = onShareClick,
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_add),
+                        painter = painterResource(id = R.drawable.ic_share),
                         contentDescription = "Поделиться",
                         tint = CyberColors.TextSecondary
                     )
                 }
-            }
-        }
-    }
-}
-
-/** Карточка без изображения — типографическая заглушка. */
-@Composable
-fun TypographyCard(
-    post: Post,
-    modifier: Modifier = Modifier
-) {
-    GlassCard(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = UiSizes.CardPadding, vertical = UiSizes.SpacerXSmall),
-    ) {
-        Column(modifier = Modifier.padding(UiSizes.CardPadding)) {
-            Text(
-                text = post.title,
-                style = CyberTypography.HeadlineMedium,
-                color = CyberColors.TextPrimary,
-                maxLines = 3,
-            )
-            Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
-            post.description?.let { desc ->
-                Text(
-                    text = desc,
-                    style = CyberTypography.BodyLarge,
-                    color = CyberColors.TextSecondary,
-                    maxLines = 5,
-                )
             }
         }
     }
@@ -646,14 +700,18 @@ fun ArticleScreen(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .pointerInput(Unit) {
+            .pointerInput(onPrevious, onNext) {
+                var accumulatedX = 0f
                 detectDragGestures(
-                    onDrag = { _, dragAmount ->
-                        if (dragAmount.x < -80 && onNext != null) {
+                    onDragStart = { accumulatedX = 0f },
+                    onDrag = { _, dragAmount -> accumulatedX += dragAmount.x },
+                    onDragEnd = {
+                        if (accumulatedX < -80 && onNext != null) {
                             onNext()
-                        } else if (dragAmount.x > 80 && onPrevious != null) {
+                        } else if (accumulatedX > 80 && onPrevious != null) {
                             onPrevious()
                         }
+                        accumulatedX = 0f
                     },
                 )
             },
@@ -671,7 +729,7 @@ fun ArticleScreen(
                     onClick = onNavigateBack,
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_add),
+                        painter = painterResource(id = R.drawable.ic_back),
                         contentDescription = "Назад",
                         tint = CyberColors.TextPrimary
                     )
@@ -795,7 +853,7 @@ fun SearchScreen(
                 onClick = onNavigateBack,
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_add),
+                    painter = painterResource(id = R.drawable.ic_back),
                     contentDescription = "Назад",
                     tint = CyberColors.TextPrimary
                 )
@@ -815,8 +873,9 @@ fun SearchScreen(
             label = { Text("Поиск по заголовкам и описаниям") },
             leadingIcon = {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_add),
-                    contentDescription = "Поиск"
+                    painter = painterResource(id = R.drawable.ic_search),
+                    contentDescription = "Поиск",
+                    tint = CyberColors.TextSecondary
                 )
             },
             modifier = Modifier.fillMaxWidth(),
@@ -864,7 +923,7 @@ fun SearchScreen(
                         onClick = { onArticleClick(post) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 0.dp, vertical = UiSizes.SpacerXSmall)
+                            .padding(horizontal = UiSizes.CardPadding, vertical = UiSizes.SpacerXSmall)
                     )
                 }
             }

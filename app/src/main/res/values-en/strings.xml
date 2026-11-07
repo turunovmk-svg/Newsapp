@@ -7,5 +7,6 @@
     <string name="export_opml">Export OPML</string>
     <string name="back">Back</string>
     <string name="empty_shorts">Add sources</string>
+    <string name="empty_home">Add news sources</string>
     <string name="add_sources_hint">Tap "Add source" to load news</string>
 </resources>
