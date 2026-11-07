@@ -2,13 +2,14 @@ package com.mikhail.newsapp
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,6 +24,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.mikhail.newsapp.theme.CyberColors
 import com.mikhail.newsapp.UiSizes
 import com.mikhail.newsapp.data.Post
 
@@ -39,6 +41,7 @@ fun ShortsScreen(
     val shortPosts = posts.take(10)
 
     val refreshState = rememberPullToRefreshState()
+    var currentIndex by remember { mutableIntStateOf(0) }
 
     if (shortPosts.isEmpty() && error == null && !isRefreshing) {
         EmptyShortsState(onAddSource = onAddSource)
@@ -54,7 +57,18 @@ fun ShortsScreen(
         return
     }
 
-    val currentPost = shortPosts.firstOrNull() ?: return
+    val currentPost = shortPosts[currentIndex]
+
+    val onSwipeUp = {
+        if (currentIndex < shortPosts.size - 1) {
+            currentIndex += 1
+        }
+    }
+    val onSwipeDown = {
+        if (currentIndex > 0) {
+            currentIndex -= 1
+        }
+    }
 
     PullToRefreshBox(
         state = refreshState,
@@ -65,7 +79,19 @@ fun ShortsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
+                .background(MaterialTheme.colorScheme.background)
+                .pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragStart = { },
+                        onDragEnd = { _, dragAmount ->
+                            if (dragAmount.y < -80) {
+                                onSwipeUp()
+                            } else if (dragAmount.y > 80) {
+                                onSwipeDown()
+                            }
+                        },
+                    )
+                },
         ) {
             // Полноэкранная карточка новости
             ShortsNewsCard(
@@ -76,6 +102,27 @@ fun ShortsScreen(
                 onClick = { onArticleClick(currentPost) },
                 modifier = Modifier.fillMaxSize(),
             )
+
+            // Индикатор страниц (точки)
+            Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                shortPosts.forEachIndexed { index, _ ->
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(
+                                if (index == currentIndex) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                            )
+                            .padding(4.dp)
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
 
@@ -156,9 +203,9 @@ fun ShortsNewsCard(
                     .height(UiSizes.ShortsImageHeight)
                     .background(MaterialTheme.colorScheme.surfaceVariant)
                     .clip(RoundedCornerShape(UiSizes.ShortsCornerRadius))
-                    .padding(horizontal = UiSizes.ShortsPadding),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                    .padding(horizontal = UiSizes.ShortsPadding)
+                    .horizontalAlignment = Alignment.CenterHorizontally
+                    .verticalArrangement = Arrangement.Center
             ) {
                 Text(
                     text = "📰",

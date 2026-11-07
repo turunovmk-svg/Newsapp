@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.width
@@ -158,11 +159,28 @@ fun NewsAppNavigator() {
                 )
             }
             composable("article") {
+                val viewModel: MainViewModel = viewModel<MainViewModel>()
+                val posts by viewModel.posts.collectAsState()
                 val post = selectedPost
                 if (post != null) {
+                    val currentIndex = posts.indexOfFirst { it.id == post.id }
+                    val hasPrevious = currentIndex > 0
+                    val hasNext = currentIndex < posts.size - 1
                     ArticleScreen(
                         post = post,
                         onNavigateBack = { navController.popBackStack() },
+                        onPrevious = if (hasPrevious) {
+                            {
+                                val prevIndex = currentIndex - 1
+                                selectedPost = posts[prevIndex]
+                            }
+                        } else null,
+                        onNext = if (hasNext) {
+                            {
+                                val nextIndex = currentIndex + 1
+                                selectedPost = posts[nextIndex]
+                            }
+                        } else null,
                     )
                 } else {
                     Text(
@@ -591,11 +609,26 @@ fun FavoritesScreen(viewModel: MainViewModel, onArticleClick: (Post) -> Unit) {
 fun ArticleScreen(
     post: Post,
     onNavigateBack: () -> Unit,
+    onPrevious: (() -> Unit)? = null,
+    onNext: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     Column(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                detectDragGestures(
+                    onDragStart = { },
+                    onDragEnd = { _, dragAmount ->
+                        if (dragAmount.x < -80 && onNext != null) {
+                            onNext()
+                        } else if (dragAmount.x > 80 && onPrevious != null) {
+                            onPrevious()
+                        }
+                    },
+                )
+            },
     ) {
         // Верхняя панель с кнопкой назад
         Row(
