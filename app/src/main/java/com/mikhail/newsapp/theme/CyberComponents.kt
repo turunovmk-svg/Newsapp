@@ -44,8 +44,8 @@ fun GlassCard(
                         CyberColors.SurfaceGlass.copy(alpha = 0.85f),
                         CyberColors.SurfaceGlassHigh.copy(alpha = 0.75f)
                     ),
-                    start = Alignment.TopLeft,
-                    end = Alignment.BottomRight
+                    start = Offset(x = 0f, y = 0f),
+                    end = Offset(x = 1f, y = 1f)
                 )
             )
             .border(
