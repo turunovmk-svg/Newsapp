@@ -8,12 +8,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.filled.Add as AddIcon
-import androidx.compose.material.icons.filled.Favorite as FavoriteIcon
-import androidx.compose.material.icons.filled.Home as HomeIcon
-import androidx.compose.material.icons.filled.Settings as SettingsIcon
-import androidx.compose.material.icons.filled.Shorts as ShortsIcon
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -67,7 +66,7 @@ fun NewsAppNavigator() {
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
                 Icon(
-                    imageVector = AddIcon,
+                    imageVector = Icons.Default.Add,
                     contentDescription = "Add source",
                     tint = MaterialTheme.colorScheme.onPrimary
                 )
@@ -108,7 +107,7 @@ fun NewsAppNavigator() {
 
 @Composable
 fun NewsBottomNavBar(navController: NavHostController) {
-    var selectedScreen by remember { mutableStateOf<String>("home") }
+    var selectedScreen by remember { mutableStateOf("home") }
 
     NavigationBar {
         NavigationBarItem(
@@ -117,7 +116,7 @@ fun NewsBottomNavBar(navController: NavHostController) {
                 selectedScreen = "home"
                 navController.navigate("home") { launchSingleTop = true }
             },
-            icon = { Icon(imageVector = HomeIcon, contentDescription = "Главная") },
+            icon = { Icon(imageVector = Icons.Default.Home, contentDescription = "Главная") },
             label = { Text("Главная") }
         )
         NavigationBarItem(
@@ -126,7 +125,7 @@ fun NewsBottomNavBar(navController: NavHostController) {
                 selectedScreen = "favorites"
                 navController.navigate("favorites") { launchSingleTop = true }
             },
-            icon = { Icon(imageVector = FavoriteIcon, contentDescription = "Избранное") },
+            icon = { Icon(imageVector = Icons.Default.Favorite, contentDescription = "Избранное") },
             label = { Text("Избранное") }
         )
         NavigationBarItem(
@@ -135,7 +134,7 @@ fun NewsBottomNavBar(navController: NavHostController) {
                 selectedScreen = "shorts"
                 navController.navigate("shorts") { launchSingleTop = true }
             },
-            icon = { Icon(imageVector = ShortsIcon, contentDescription = "Шортс") },
+            icon = { Icon(imageVector = Icons.Default.Shorts, contentDescription = "Шортс") },
             label = { Text("Шортс") }
         )
         NavigationBarItem(
@@ -144,7 +143,7 @@ fun NewsBottomNavBar(navController: NavHostController) {
                 selectedScreen = "add_source"
                 navController.navigate("add_source") { launchSingleTop = true }
             },
-            icon = { Icon(imageVector = AddIcon, contentDescription = "Добавить") },
+            icon = { Icon(imageVector = Icons.Default.Add, contentDescription = "Добавить") },
             label = { Text("Добавить") }
         )
         NavigationBarItem(
@@ -153,7 +152,7 @@ fun NewsBottomNavBar(navController: NavHostController) {
                 selectedScreen = "settings"
                 navController.navigate("settings") { launchSingleTop = true }
             },
-            icon = { Icon(imageVector = SettingsIcon, contentDescription = "Настройки") },
+            icon = { Icon(imageVector = Icons.Default.Settings, contentDescription = "Настройки") },
             label = { Text("Настройки") }
         )
     }
@@ -254,7 +253,7 @@ fun FavoritesScreen(viewModel: MainViewModel) {
     Column(modifier = Modifier.fillMaxSize().padding(UiSizes.ScreenPadding)) {
         if (favorites.isEmpty()) {
             Text(
-                text = "Избранное пусто",
+                text = stringResource(id = R.string.favorites_empty),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

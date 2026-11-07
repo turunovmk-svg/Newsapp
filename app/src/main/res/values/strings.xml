@@ -21,4 +21,7 @@
     <string name="source_pravda">Украинская правда</string>
     <string name="source_reddit_world">Reddit World News</string>
     <string name="source_youtube_tech">YouTube Tech</string>
+
+    <!-- FavoritesScreen -->
+    <string name="favorites_empty">Избранное пусто</string>
 </resources>
