@@ -20,6 +20,8 @@ import androidx.compose.ui.graphics.LinearGradient
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -53,6 +55,13 @@ fun GlassCard(
                 color = borderColor,
                 shape = RoundedCornerShape(12.dp)
             )
+            .graphicsLayer {
+                shadow(
+                    color = glowColor.copy(alpha = 0.35f),
+                    elevation = 6.dp,
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
     ) {
         content()
     }
@@ -71,6 +80,8 @@ fun NeonButton(
     secondaryColor: Color = CyberColors.NeonPurple,
     enabled: Boolean = true
 ) {
+    val isPressed by remember { mutableStateOf(false) }
+
     Column(
         modifier = modifier
             .clickable(
@@ -90,6 +101,23 @@ fun NeonButton(
                 ),
                 shape = RoundedCornerShape(12.dp)
             )
+            .graphicsLayer {
+                if (enabled && isPressed) {
+                    scaleX = 0.96f
+                    scaleY = 0.96f
+                    alpha = 0.85f
+                } else if (enabled) {
+                    scaleX = 1f
+                    scaleY = 1f
+                    alpha = 1f
+                    elevation = 8.dp
+                    shadow(
+                        color = primaryColor.copy(alpha = 0.35f),
+                        elevation = 6.dp,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                }
+            }
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -104,7 +132,7 @@ fun NeonButton(
                 text = text,
                 style = MaterialTheme.typography.labelLarge,
                 color = if (enabled) Color(0xFFFFFFFF) else Color(0xFF888888),
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                fontWeight = FontWeight.Bold
             )
         }
     }
@@ -116,15 +144,23 @@ fun NeonButton(
 @Composable
 fun CyberText(
     text: String,
-    style: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.bodyMedium,
+    style: TextStyle = MaterialTheme.typography.bodyMedium,
     color: Color = CyberColors.TextOnSurface,
+    glowColor: Color = CyberColors.NeonCyan,
     modifier: Modifier = Modifier
 ) {
     Text(
         text = text,
         style = style,
         color = color,
-        modifier = modifier,
+        modifier = modifier
+            .graphicsLayer {
+                shadow(
+                    color = glowColor.copy(alpha = 0.35f),
+                    elevation = 4.dp,
+                    shape = RoundedCornerShape(8.dp)
+                )
+            },
     )
 }
 
