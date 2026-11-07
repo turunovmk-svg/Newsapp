@@ -82,8 +82,8 @@ fun ShortsScreen(
                 .background(MaterialTheme.colorScheme.background)
                 .pointerInput(Unit) {
                     detectDragGestures(
-                        onDragStart = { },
-                        onDragEnd = { _, dragAmount ->
+                        onDrag = { change, dragAmount ->
+                            change.consumePositionChange()
                             if (dragAmount.y < -80) {
                                 onSwipeUp()
                             } else if (dragAmount.y > 80) {
@@ -203,9 +203,9 @@ fun ShortsNewsCard(
                     .height(UiSizes.ShortsImageHeight)
                     .background(MaterialTheme.colorScheme.surfaceVariant)
                     .clip(RoundedCornerShape(UiSizes.ShortsCornerRadius))
-                    .padding(horizontal = UiSizes.ShortsPadding)
-                    .horizontalAlignment = Alignment.CenterHorizontally
-                    .verticalArrangement = Arrangement.Center
+                    .padding(horizontal = UiSizes.ShortsPadding),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
                 Text(
                     text = "📰",
