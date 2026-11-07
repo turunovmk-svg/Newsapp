@@ -28,8 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButton
-import androidx.compose.material.icons.filled.Favorite as FilledFavorite
-import androidx.compose.material.icons.outlined.Favorite as OutlinedFavorite
+import androidx.compose.material3.Icons
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -321,7 +320,7 @@ fun ShortCard(
                     modifier = Modifier.align(Alignment.CenterVertically)
                 ) {
                     Icon(
-                        imageVector = if (isFavorite) FilledFavorite else OutlinedFavorite,
+                        imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.Favorite,
                         contentDescription = null,
                         tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                     )
