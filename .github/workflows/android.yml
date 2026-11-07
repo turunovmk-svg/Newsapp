@@ -21,11 +21,9 @@ jobs:
 
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v3
-      with:
-        gradle-version: '7.6'
 
     - name: Build with Gradle
-      run: gradle assembleDebug --stacktrace
+      run: ./gradlew assembleDebug --stacktrace
 
     - name: List APK files
       run: find app/build/outputs/apk/debug/ -type f -name "*.apk" 2>/dev/null || echo "No APK files found"
