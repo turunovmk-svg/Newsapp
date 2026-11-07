@@ -244,7 +244,7 @@ fun HomeScreen(
     val posts by viewModel.posts.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
-    val refreshState = rememberPullToRefreshState { viewModel.loadPosts() }
+    val refreshState = rememberPullToRefreshState()
 
     if (posts.isEmpty() && error == null && !isLoading) {
         // Нет источников — показываем экран с предложением добавить источник
