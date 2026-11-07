@@ -13,11 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.filled.Add as FilledAdd
-import androidx.compose.material.icons.filled.Favorite as FilledFavorite
-import androidx.compose.material.icons.filled.Home as FilledHome
-import androidx.compose.material.icons.filled.Settings as FilledSettings
-import androidx.compose.material.icons.filled.Shorts as FilledShorts
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -72,7 +67,7 @@ fun NewsAppNavigator() {
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
                 Icon(
-                    imageVector = FilledAdd,
+                    imageVector = Icons.Default.Add,
                     contentDescription = "Add source",
                     tint = MaterialTheme.colorScheme.onPrimary
                 )
@@ -113,7 +108,9 @@ fun NewsAppNavigator() {
 
 @Composable
 fun NewsBottomNavBar(navController: NavHostController) {
-    var selectedScreen: String by remember { mutableStateOf("home") }
+    var selectedScreen by remember {
+        mutableStateOf("home")
+    }
 
     NavigationBar {
         NavigationBarItem(
@@ -122,7 +119,7 @@ fun NewsBottomNavBar(navController: NavHostController) {
                 selectedScreen = "home"
                 navController.navigate("home") { launchSingleTop = true }
             },
-            icon = { Icon(imageVector = FilledHome, contentDescription = "Главная") },
+            icon = { Icon(imageVector = Icons.Default.Home, contentDescription = "Главная") },
             label = { Text("Главная") }
         )
         NavigationBarItem(
@@ -131,7 +128,7 @@ fun NewsBottomNavBar(navController: NavHostController) {
                 selectedScreen = "favorites"
                 navController.navigate("favorites") { launchSingleTop = true }
             },
-            icon = { Icon(imageVector = FilledFavorite, contentDescription = "Избранное") },
+            icon = { Icon(imageVector = Icons.Default.Favorite, contentDescription = "Избранное") },
             label = { Text("Избранное") }
         )
         NavigationBarItem(
@@ -140,7 +137,7 @@ fun NewsBottomNavBar(navController: NavHostController) {
                 selectedScreen = "shorts"
                 navController.navigate("shorts") { launchSingleTop = true }
             },
-            icon = { Icon(imageVector = FilledShorts, contentDescription = "Шортс") },
+            icon = { Icon(imageVector = Icons.Default.VideoCall, contentDescription = "Шортс") },
             label = { Text("Шортс") }
         )
         NavigationBarItem(
@@ -149,7 +146,7 @@ fun NewsBottomNavBar(navController: NavHostController) {
                 selectedScreen = "add_source"
                 navController.navigate("add_source") { launchSingleTop = true }
             },
-            icon = { Icon(imageVector = FilledAdd, contentDescription = "Добавить") },
+            icon = { Icon(imageVector = Icons.Default.Add, contentDescription = "Добавить") },
             label = { Text("Добавить") }
         )
         NavigationBarItem(
@@ -158,7 +155,7 @@ fun NewsBottomNavBar(navController: NavHostController) {
                 selectedScreen = "settings"
                 navController.navigate("settings") { launchSingleTop = true }
             },
-            icon = { Icon(imageVector = FilledSettings, contentDescription = "Настройки") },
+            icon = { Icon(imageVector = Icons.Default.Settings, contentDescription = "Настройки") },
             label = { Text("Настройки") }
         )
     }
