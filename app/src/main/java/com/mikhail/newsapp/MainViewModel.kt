@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -97,10 +98,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         return withContext(Dispatchers.IO) {
             val request = Request.Builder().url(url).build()
             httpClient.newCall(request).execute().use { response ->
-                if (!response.isSuccessful || response.body == null) {
+                val body = response.body
+                if (!response.isSuccessful || body == null) {
                     throw Exception("HTTP ${response.code}")
                 }
-                response.body.string()
+                body.string()
             }
         }
     }

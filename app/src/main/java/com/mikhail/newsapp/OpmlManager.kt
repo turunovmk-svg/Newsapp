@@ -66,7 +66,7 @@ class OpmlManager(private val context: Context) {
             val factory = XmlPullParserFactory.newInstance()
             factory.isNamespaceAware = false
             val parser = factory.newPullParser()
-            parser.input = InputStreamReader(inputStream, StandardCharsets.UTF_8)
+            parser.setInput(InputStreamReader(inputStream, StandardCharsets.UTF_8))
 
             var eventType = parser.eventType
             while (eventType != XmlPullParser.END_DOCUMENT) {
