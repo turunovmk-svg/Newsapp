@@ -10,9 +10,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import com.mikhail.newsapp.theme.CyberTheme
+import com.mikhail.newsapp.theme.CyberColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Scaffold
@@ -24,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.filled.Favorite as FilledFavorite
 import androidx.compose.material.icons.outlined.Favorite as OutlinedFavorite
 import androidx.compose.runtime.Composable
@@ -44,7 +48,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.mikhail.newsapp.UiSizes
 import com.mikhail.newsapp.data.Post
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
