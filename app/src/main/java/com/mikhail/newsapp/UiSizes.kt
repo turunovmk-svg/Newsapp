@@ -46,8 +46,6 @@ object UiSizes {
     val ShortSpacerSmall = 4.dp
 
     val SourceFieldSpacing = 12.dp
-    val SourceSectionSpacing = 16.dp
-    val SourceButtonSpacing = 8.dp
     val SourceBottomSpacing = 24.dp
 
     // ---------- Элементы управления ----------
