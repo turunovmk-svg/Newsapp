@@ -27,6 +27,7 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.mikhail.newsapp.theme.CyberColors
+import com.mikhail.newsapp.theme.CyberTypography
 import com.mikhail.newsapp.theme.GlassCard
 import com.mikhail.newsapp.UiSizes
 import com.mikhail.newsapp.data.Post
@@ -92,7 +93,7 @@ fun ShortsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
+                .background(CyberColors.BackgroundDeep)
                 .pointerInput(Unit) {
                     detectDragGestures(
                         onDrag = { _, dragAmount ->
@@ -128,8 +129,8 @@ fun ShortsScreen(
                             .size(8.dp)
                             .clip(RoundedCornerShape(4.dp))
                             .background(
-                                if (index == currentIndexState.value) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                                if (index == currentIndexState.value) CyberColors.AccentBlue
+                                else CyberColors.TextPrimaryVariant.copy(alpha = 0.3f)
                             )
                             .padding(4.dp)
                     )
@@ -151,7 +152,7 @@ fun ShortsScreen(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_favorite),
                         contentDescription = if (viewModel.isFavorite(currentPost)) "Убрать из избранного" else "Добавить в избранное",
-                        tint = if (viewModel.isFavorite(currentPost)) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = if (viewModel.isFavorite(currentPost)) CyberColors.AccentBlue else CyberColors.TextPrimaryVariant
                     )
                 }
                 IconButton(
@@ -160,7 +161,7 @@ fun ShortsScreen(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_add),
                         contentDescription = "Поделиться",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = CyberColors.TextPrimaryVariant
                     )
                 }
                 IconButton(
@@ -169,7 +170,7 @@ fun ShortsScreen(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_add),
                         contentDescription = "Открыть статью",
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = CyberColors.AccentBlue
                     )
                 }
             }
@@ -203,7 +204,7 @@ fun ShortsNewsCard(
                     .fillMaxWidth()
                     .height(UiSizes.ShortsImageHeight)
                     .clip(RoundedCornerShape(UiSizes.ShortsCornerRadius))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .background(CyberColors.SurfaceElevated)
                     .padding(horizontal = UiSizes.ShortsPadding)
             )
             Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
@@ -213,7 +214,7 @@ fun ShortsNewsCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(UiSizes.ShortsImageHeight)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .background(CyberColors.SurfaceElevated)
                     .clip(RoundedCornerShape(UiSizes.ShortsCornerRadius))
                     .padding(horizontal = UiSizes.ShortsPadding),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -221,13 +222,13 @@ fun ShortsNewsCard(
             ) {
                 Text(
                     text = "📰",
-                    style = MaterialTheme.typography.headlineLarge,
+                    style = CyberTypography.HeadlineLarge,
                 )
                 Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
                 Text(
                     text = stringResource(id = R.string.no_image),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = CyberTypography.BodySmall,
+                    color = CyberColors.TextPrimaryVariant,
                 )
             }
             Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
@@ -243,16 +244,16 @@ fun ShortsNewsCard(
             post.sourceUrl?.let { url ->
                 Text(
                     text = url.replace("https://", "").replace("http://", "").take(40),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
+                    style = CyberTypography.LabelLarge,
+                    color = CyberColors.AccentBlue,
                 )
             }
             Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
             post.publishedAt?.let { date ->
                 Text(
                     text = date,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = CyberTypography.BodySmall,
+                    color = CyberColors.TextPrimaryVariant,
                 )
             }
         }
@@ -261,8 +262,8 @@ fun ShortsNewsCard(
         // Заголовок (крупный и читаемый)
         Text(
             text = post.title,
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onSurface,
+            style = CyberTypography.HeadlineMedium,
+            color = CyberColors.TextPrimary,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = UiSizes.ShortsPadding),
@@ -276,8 +277,8 @@ fun ShortsNewsCard(
             if (cleanDesc?.isNotEmpty() == true) {
                 Text(
                     text = cleanDesc,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = CyberTypography.BodyLarge,
+                    color = CyberColors.TextPrimaryVariant,
                     modifier = Modifier.fillMaxWidth(),
                     maxLines = 6,
                 )
@@ -301,14 +302,14 @@ private fun EmptyShortsState(onAddSource: () -> Unit) {
         Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
         Text(
             text = stringResource(id = R.string.empty_shorts),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface
+            style = CyberTypography.TitleMedium,
+            color = CyberColors.TextPrimary
         )
         Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
         Text(
             text = stringResource(id = R.string.add_sources_hint),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = CyberTypography.BodyMedium,
+            color = CyberColors.TextPrimaryVariant,
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
@@ -336,8 +337,8 @@ private fun ErrorShortsState(
     ) {
         Text(
             text = stringResource(id = R.string.error_loading_news, error),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.error
+            style = CyberTypography.TitleMedium,
+            color = CyberColors.Error
         )
         Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
         Button(

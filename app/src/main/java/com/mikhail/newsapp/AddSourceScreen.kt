@@ -19,6 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.mikhail.newsapp.theme.CyberColors
+import com.mikhail.newsapp.theme.CyberTypography
 import com.mikhail.newsapp.theme.GlassCard
 import com.mikhail.newsapp.theme.NeonButton
 import com.mikhail.newsapp.UiSizes
@@ -51,7 +52,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .padding(UiSizes.ScreenPadding)
-            .background(MaterialTheme.colorScheme.background),
+            .background(CyberColors.BackgroundDeep),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -66,14 +67,14 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_add),
                     contentDescription = "Назад",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = CyberColors.TextPrimaryVariant
                 )
             }
             Spacer(modifier = Modifier.width(UiSizes.SpacerMedium))
             Text(
                 text = stringResource(id = R.string.add_source_title),
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                style = CyberTypography.HeadlineMedium,
+                color = CyberColors.TextPrimary
             )
         }
         Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
@@ -81,8 +82,8 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
         // Подзаголовок
         Text(
             text = stringResource(id = R.string.add_source_subtitle),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = CyberTypography.BodyMedium,
+            color = CyberColors.TextPrimaryVariant,
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center
         )
@@ -104,7 +105,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_add),
                             contentDescription = "URL",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = CyberColors.TextPrimaryVariant
                         )
                     },
                     modifier = Modifier
@@ -122,8 +123,8 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
                 ) {
                     Text(
                         text = stringResource(id = R.string.source_type_label),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = CyberTypography.BodySmall,
+                        color = CyberColors.TextPrimaryVariant,
                     )
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -158,8 +159,8 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
                 if (urlError != null) {
                     Text(
                         text = urlError ?: "",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
+                        style = CyberTypography.BodySmall,
+                        color = CyberColors.Error,
                         modifier = Modifier.fillMaxWidth(),
                     )
                     Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
@@ -169,8 +170,8 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
                 if (sourceUrl.isNotEmpty() && !urlValid && urlError == null) {
                     Text(
                         text = stringResource(id = R.string.url_format_hint),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = CyberTypography.BodySmall,
+                        color = CyberColors.TextPrimaryVariant,
                         modifier = Modifier.fillMaxWidth(),
                     )
                     Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
@@ -207,7 +208,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
                 if (addedSource == true) {
                     Text(
                         text = sourceAddedSuccess,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = CyberTypography.BodyMedium,
                         color = CyberColors.AccentBlueBright,
                         modifier = Modifier.fillMaxWidth()
                             .padding(horizontal = UiSizes.SpacerSmall),
@@ -220,8 +221,8 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
                 if (error != null && addedSource != true) {
                     Text(
                         text = error ?: "",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
+                        style = CyberTypography.BodySmall,
+                        color = CyberColors.Error,
                         modifier = Modifier.fillMaxWidth(),
                     )
                     Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
@@ -238,8 +239,8 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
         ) {
             Text(
                 text = stringResource(id = R.string.popular_sources_title),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = CyberTypography.TitleMedium,
+                color = CyberColors.TextPrimaryVariant,
             )
             Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
 
@@ -281,20 +282,20 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_add),
                                 contentDescription = source.name,
-                                tint = MaterialTheme.colorScheme.primary,
+                                tint = CyberColors.AccentBlue,
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(UiSizes.SpacerMedium))
                             Column {
                                 Text(
                                     text = source.name,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onSurface,
+                                    style = CyberTypography.TitleMedium,
+                                    color = CyberColors.TextPrimary,
                                 )
                                 Text(
                                     text = source.url,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style = CyberTypography.BodySmall,
+                                    color = CyberColors.TextPrimaryVariant,
                                     maxLines = 1,
                                 )
                             }
@@ -319,7 +320,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
                                 Icon(
                                     painter = painterResource(id = R.drawable.ic_add),
                                     contentDescription = "Удалить источник",
-                                    tint = MaterialTheme.colorScheme.error,
+                                    tint = CyberColors.Error,
                                 )
                             }
                         }
