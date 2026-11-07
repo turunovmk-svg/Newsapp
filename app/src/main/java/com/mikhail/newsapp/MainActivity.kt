@@ -17,8 +17,16 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.VideoCall
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.FabPosition
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.material3.Button
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -142,7 +150,7 @@ fun NewsBottomNavBar(navController: NavHostController) {
                 selectedScreen = "shorts"
                 navController.navigate("shorts") { launchSingleTop = true }
             },
-            icon = { Icon(imageVector = VideoCall, contentDescription = "Шортс") },
+            icon = { Icon(imageVector = Favorite, contentDescription = "Шортс") },
             label = { Text("Шортс") }
         )
         NavigationBarItem(
