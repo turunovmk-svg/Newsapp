@@ -45,11 +45,12 @@ fun ShortsScreen(
 
     val refreshState = rememberPullToRefreshState()
     val currentShortsIndex by viewModel.currentShortsIndex.collectAsState()
-    var currentIndex by remember { mutableStateOf(currentShortsIndex) }
+    val currentIndexState = remember { mutableStateOf(currentShortsIndex) }
+    var currentIndex by currentIndexState
 
     // Сохраняем индекс при входе на экран (первый раз)
     LaunchedEffect(Unit) {
-        currentIndex = currentShortsIndex
+        currentIndexState.value = currentShortsIndex
     }
 
     if (shortPosts.isEmpty() && error == null && !isRefreshing) {
@@ -72,13 +73,13 @@ fun ShortsScreen(
 
     val onSwipeUp = {
         if (safeIndex < shortPosts.size - 1) {
-            currentIndex = safeIndex + 1
+            currentIndexState.value = safeIndex + 1
             viewModel.setCurrentShortsIndex(safeIndex + 1)
         }
     }
     val onSwipeDown = {
         if (safeIndex > 0) {
-            currentIndex = safeIndex - 1
+            currentIndexState.value = safeIndex - 1
             viewModel.setCurrentShortsIndex(safeIndex - 1)
         }
     }
@@ -273,7 +274,7 @@ fun ShortsNewsCard(
         // Описание (разумная длина)
         post.description?.let { desc ->
             val cleanDesc = Post.stripHtml(desc)
-            if (cleanDesc.isNotEmpty()) {
+            if (cleanDesc?.isNotEmpty() == true) {
                 Text(
                     text = cleanDesc,
                     style = MaterialTheme.typography.bodyLarge,

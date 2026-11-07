@@ -500,7 +500,7 @@ fun NewsCard(
             // Описание (с очисткой HTML-тегов)
             post.description?.let { desc ->
                 val cleanDesc = Post.stripHtml(desc)
-                if (cleanDesc.isNotEmpty()) {
+                if (cleanDesc?.isNotEmpty() == true) {
                     Text(
                         text = cleanDesc ?: "",
                         style = MaterialTheme.typography.bodyMedium,
@@ -700,7 +700,7 @@ fun ArticleScreen(
         ) {
             post.description?.let { desc ->
                 val cleanDesc = Post.stripHtml(desc)
-                if (cleanDesc.isNotEmpty()) {
+                if (cleanDesc?.isNotEmpty() == true) {
                     Text(
                         text = cleanDesc ?: "",
                         style = MaterialTheme.typography.bodyLarge,
