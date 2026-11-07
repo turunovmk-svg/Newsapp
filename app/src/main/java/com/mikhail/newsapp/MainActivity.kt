@@ -4,23 +4,33 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Shorts
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.popUpTo
 import com.mikhail.newsapp.UiSizes
 import com.mikhail.newsapp.data.Post
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -107,7 +117,7 @@ fun NewsBottomNavBar(navController: NavHostController) {
                     launchSingleTop = true
                 }
             },
-            icon = { Icon(Home, contentDescription = "Главная") },
+            icon = { Icon(imageVector = Home, contentDescription = "Главная") },
             label = { Text("Главная") }
         )
         NavigationBarItem(
@@ -119,7 +129,7 @@ fun NewsBottomNavBar(navController: NavHostController) {
                     launchSingleTop = true
                 }
             },
-            icon = { Icon(Favorite, contentDescription = "Избранное") },
+            icon = { Icon(imageVector = Favorite, contentDescription = "Избранное") },
             label = { Text("Избранное") }
         )
         NavigationBarItem(
@@ -131,7 +141,7 @@ fun NewsBottomNavBar(navController: NavHostController) {
                     launchSingleTop = true
                 }
             },
-            icon = { Icon(Shorts, contentDescription = "Шортс") },
+            icon = { Icon(imageVector = Shorts, contentDescription = "Шортс") },
             label = { Text("Шортс") }
         )
         NavigationBarItem(
@@ -143,7 +153,7 @@ fun NewsBottomNavBar(navController: NavHostController) {
                     launchSingleTop = true
                 }
             },
-            icon = { Icon(Add, contentDescription = "Добавить") },
+            icon = { Icon(imageVector = Add, contentDescription = "Добавить") },
             label = { Text("Добавить") }
         )
         NavigationBarItem(
@@ -155,7 +165,7 @@ fun NewsBottomNavBar(navController: NavHostController) {
                     launchSingleTop = true
                 }
             },
-            icon = { Icon(Settings, contentDescription = "Настройки") },
+            icon = { Icon(imageVector = Settings, contentDescription = "Настройки") },
             label = { Text("Настройки") }
         )
     }
@@ -176,7 +186,7 @@ fun HomeScreen(
                     .padding(UiSizes.ScreenPadding)
                     .fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
             ) {
                 Text(
                     text = stringResource(id = R.string.empty_shorts),
@@ -201,7 +211,8 @@ fun HomeScreen(
     }
 }
 
-private fun ShortCard(post: Post) {
+@Composable
+fun ShortCard(post: Post) {
     Surface(
         modifier = Modifier
             .padding(horizontal = UiSizes.ShortCardHorizontalPadding, vertical = UiSizes.ShortCardVerticalPadding)
@@ -211,16 +222,14 @@ private fun ShortCard(post: Post) {
         Column(modifier = Modifier.padding(UiSizes.ShortCardInnerPadding)) {
             post.imageUrl?.let { imageUrl ->
                 AsyncImage(
-                    model = coil.request.ImageRequest.Builder(
-                        androidx.compose.ui.platform.LocalContext.current
-                    )
+                    model = ImageRequest.Builder(LocalContext.current)
                         .data(imageUrl)
                         .build(),
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(UiSizes.ShortImageHeight)
-                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(UiSizes.ShortImageCornerRadius))
+                        .clip(RoundedCornerShape(UiSizes.ShortImageCornerRadius))
                 )
             }
             Spacer(modifier = Modifier.height(UiSizes.ShortSpacerMedium))
