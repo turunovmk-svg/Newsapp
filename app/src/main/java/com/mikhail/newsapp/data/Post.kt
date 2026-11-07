@@ -1,8 +1,10 @@
 package com.mikhail.newsapp.data
 
+import java.io.StringReader
 import org.json.JSONArray
 import org.json.JSONObject
 import org.xmlpull.v1.XmlPullParser
+import org.xmlpull.v1.XmlPullParserFactory
 
 data class Post(
     val id: String,
