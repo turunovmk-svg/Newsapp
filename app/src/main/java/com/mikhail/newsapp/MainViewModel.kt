@@ -1,42 +1,40 @@
 package com.mikhail.newsapp
 
+import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.mikhail.newsapp.data.Source
 import com.mikhail.newsapp.data.Post
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.xmlpull.v1.XmlPullParserFactory
 
-class MainViewModel(private val context: Context) : ViewModel() {
+class MainViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val prefs: SharedPreferences = context.getSharedPreferences("NewsAppPrefs", Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences =
+        getApplication<Application>().getSharedPreferences("NewsAppPrefs", Context.MODE_PRIVATE)
     private val httpClient = OkHttpClient()
 
     private val _posts = MutableStateFlow<List<Post>>(emptyList())
-    val posts: StateFlow<List<Post>> = _posts.stateIn(
-        scope = viewModelScope,
-        started = kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
-    )
+    val posts: StateFlow<List<Post>> = _posts.asStateFlow()
 
     private val _sources = MutableStateFlow<List<Source>>(emptyList())
-    val sources: StateFlow<List<Source>> = _sources.stateIn(
-        scope = viewModelScope,
-        started = kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
-    )
+    val sources: StateFlow<List<Source>> = _sources.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     init {
         loadSources()
+        loadPosts()
     }
 
     /** Загружает сохранённые источники из SharedPreferences. */
@@ -68,24 +66,30 @@ class MainViewModel(private val context: Context) : ViewModel() {
             val sources = _sources.value
             if (sources.isEmpty()) {
                 _posts.value = emptyList()
+                _isLoading.value = false
                 return@launch
             }
-            val allPosts = mutableListOf<Post>()
-            for (source in sources) {
-                try {
-                    val xml = withContext(Dispatchers.Default) {
-                        fetchXml(source.url)
+            _isLoading.value = true
+            try {
+                val allPosts = mutableListOf<Post>()
+                for (source in sources) {
+                    try {
+                        val xml = withContext(Dispatchers.Default) {
+                            fetchXml(source.url)
+                        }
+                        val parsed = withContext(Dispatchers.Default) {
+                            parseFeed(source.type, xml)
+                        }
+                        allPosts.addAll(parsed)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
                     }
-                    val parsed = withContext(Dispatchers.Default) {
-                        parseFeed(source.type, xml)
-                    }
-                    allPosts.addAll(parsed)
-                } catch (e: Exception) {
-                    e.printStackTrace()
                 }
+                allPosts.sortByDescending { it.publishedAt }
+                _posts.value = allPosts
+            } finally {
+                _isLoading.value = false
             }
-            allPosts.sortByDescending { it.publishedAt }
-            _posts.value = allPosts
         }
     }
 
@@ -247,6 +251,14 @@ class MainViewModel(private val context: Context) : ViewModel() {
                     }
                 }
                 eventType = parser.next()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return posts
+    }
+}
+           eventType = parser.next()
             }
         } catch (e: Exception) {
             e.printStackTrace()

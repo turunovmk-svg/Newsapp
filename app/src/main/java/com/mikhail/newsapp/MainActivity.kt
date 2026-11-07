@@ -8,8 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewmodel.ComposeViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -29,7 +28,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun NewsAppNavigator() {
-    val viewModel: MainViewModel = viewModel()
+    val viewModel: MainViewModel = viewModel<MainViewModel>()
     var screen by remember { mutableStateOf<Screen>(Screen.Shorts) }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -46,5 +45,8 @@ fun NewsAppNavigator() {
 }
 
 private enum class Screen {
+    Shorts, AddSource, Settings
+}
+ate enum class Screen {
     Shorts, AddSource, Settings
 }

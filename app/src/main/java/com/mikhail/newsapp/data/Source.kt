@@ -6,32 +6,32 @@ import org.json.JSONObject
 data class Source(
     val type: String,   // "RSS", "REDDIT", "YOUTUBE"
     val url: String
-)
-
-object Source {
-    fun toJsonList(sources: List<Source>): String {
-        val array = JSONArray()
-        sources.forEach { source ->
-            array.put(
-                JSONObject().put("type", source.type).put("url", source.url)
-            )
-        }
-        return array.toString()
-    }
-
-    fun fromJsonList(json: String): List<Source> {
-        val sources = mutableListOf<Source>()
-        try {
-            val array = JSONArray(json)
-            for (i in 0 until array.length()) {
-                val obj = array.getJSONObject(i)
-                sources.add(
-                    Source(obj.getString("type"), obj.getString("url"))
+) {
+    companion object {
+        fun toJsonList(sources: List<Source>): String {
+            val array = JSONArray()
+            sources.forEach { source ->
+                array.put(
+                    JSONObject().put("type", source.type).put("url", source.url)
                 )
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
+            return array.toString()
         }
-        return sources
+
+        fun fromJsonList(json: String): List<Source> {
+            val sources = mutableListOf<Source>()
+            try {
+                val array = JSONArray(json)
+                for (i in 0 until array.length()) {
+                    val obj = array.getJSONObject(i)
+                    sources.add(
+                        Source(obj.getString("type"), obj.getString("url"))
+                    )
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            return sources
+        }
     }
 }
