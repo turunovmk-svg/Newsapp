@@ -118,7 +118,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
                 if (sourceUrl.isNotEmpty() && !urlValid && urlError == null) {
                     Text(
                         text = stringResource(id = R.string.url_format_hint),
-                        style = MaterialTheme.typography.caption,
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.fillMaxWidth(),
                     )
