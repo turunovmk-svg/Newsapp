@@ -83,6 +83,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewsAppNavigator() {
     val viewModel: MainViewModel = viewModel<MainViewModel>()

@@ -208,8 +208,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                             currentLink = null
                             currentImageUrl = null
                         } else if (inItem && (tag == "enclosure" || tag == "content" || tag == "thumbnail"
-                                || tag == "media:content" || tag == "media:thumbnail")) {
+                                || tag == "media:content" || tag == "media:thumbnail" || tag == "itunes:image")) {
                             val imgUrl = parser.getAttributeValue(null, "url")
+                                ?: parser.getAttributeValue(null, "href")
                                 ?: parser.getAttributeValue(null, "image")
                             if (imgUrl != null && imgUrl.isNotEmpty()) {
                                 currentImageUrl = imgUrl
@@ -232,13 +233,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         if (tag == "item") {
                             inItem = false
                             if (currentTitle != null) {
+                                // Fallback: ищем <img src="..."> в описании, если нет явного imageUrl
+                                val finalImageUrl = currentImageUrl ?: run {
+                                    val desc = currentDesc ?: ""
+                                    val imgRegex = Regex("""<img[^>]+src=["']([^"']+)["']""", RegexOption.IGNORE_CASE)
+                                    imgRegex.find(desc)?.groupValues?.get(1)
+                                }
                                 posts.add(Post(
                                     id = currentLink ?: currentTitle.hashCode().toString(),
                                     title = currentTitle ?: "",
                                     description = currentDesc,
                                     publishedAt = currentDate,
                                     sourceUrl = currentLink,
-                                    imageUrl = currentImageUrl
+                                    imageUrl = finalImageUrl
                                 ))
                             }
                             currentTitle = null
@@ -286,6 +293,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                             currentDesc = null
                             currentDate = null
                             currentLink = null
+                            currentImageUrl = null
+                        } else if (inEntry && tag == "link") {
+                            // YouTube Atom: <link rel="alternate" href="..."/>
+                            val href = parser.getAttributeValue(null, "href")
+                            if (href != null && (parser.getAttributeValue(null, "rel") == null || parser.getAttributeValue(null, "rel") == "alternate")) {
+                                currentLink = href
+                            }
+                        } else if (inEntry && (tag == "thumbnail" || tag == "media:thumbnail")) {
+                            val thumbUrl = parser.getAttributeValue(null, "url")
+                            if (thumbUrl != null && thumbUrl.isNotEmpty()) {
+                                currentImageUrl = thumbUrl
+                            }
                         }
                     }
                     XmlPullParser.TEXT -> {
@@ -295,7 +314,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                 "title" -> currentTitle = text
                                 "summary" -> currentDesc = text
                                 "published" -> currentDate = text
-                                "link" -> { /* href в атрибуте */ }
                             }
                         }
                     }

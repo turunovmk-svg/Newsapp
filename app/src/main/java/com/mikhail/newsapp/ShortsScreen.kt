@@ -38,6 +38,7 @@ fun ShortsScreen(
     val posts by viewModel.posts.collectAsState()
     val isRefreshing by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
+    val ctx = LocalContext.current
     val shortPosts = posts.take(10)
 
     val refreshState = rememberPullToRefreshState()
@@ -105,7 +106,6 @@ fun ShortsScreen(
                 onFavoriteClick = { viewModel.toggleFavorite(currentPost) },
                 onShareClick = {
                     currentPost.sourceUrl?.let { url ->
-                        val ctx = androidx.compose.ui.platform.LocalContext.current
                         val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                             type = "text/plain"
                             putExtra(android.content.Intent.EXTRA_TEXT, url)
@@ -158,7 +158,6 @@ fun ShortsScreen(
                 IconButton(
                     onClick = {
                         currentPost.sourceUrl?.let { url ->
-                            val ctx = androidx.compose.ui.platform.LocalContext.current
                             val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                                 type = "text/plain"
                                 putExtra(android.content.Intent.EXTRA_TEXT, url)
