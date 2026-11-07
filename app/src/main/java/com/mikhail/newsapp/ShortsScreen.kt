@@ -17,6 +17,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -177,9 +178,9 @@ fun ShortsNewsCard(
                     .height(UiSizes.ShortsImageHeight)
                     .background(MaterialTheme.colorScheme.surfaceVariant)
                     .clip(RoundedCornerShape(UiSizes.ShortsCornerRadius))
-                    .padding(horizontal = UiSizes.ShortsPadding)
-                    .horizontalAlignment = Alignment.CenterHorizontally
-                    .verticalArrangement = Arrangement.Center
+                    .padding(horizontal = UiSizes.ShortsPadding),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
                 Text(
                     text = "📰",
