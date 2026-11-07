@@ -610,6 +610,8 @@ fun FavoritesScreen(viewModel: MainViewModel, onArticleClick: (Post) -> Unit) {
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
 fun ArticleScreen(
     post: Post,
     onNavigateBack: () -> Unit,
@@ -618,7 +620,7 @@ fun ArticleScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    Column(
+    LazyColumn(
         modifier = modifier
             .fillMaxSize()
             .pointerInput(Unit) {
@@ -633,103 +635,120 @@ fun ArticleScreen(
                 )
             },
     ) {
-        // Верхняя панель с кнопкой назад
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(UiSizes.ArticlePadding)
-                .height(UiSizes.ButtonHeight),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(
-                onClick = onNavigateBack,
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_add),
-                    contentDescription = "Назад",
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-            }
-            Spacer(modifier = Modifier.width(UiSizes.SpacerMedium))
-            Column {
-                post.sourceUrl?.let { url ->
-                    Text(
-                        text = url.replace("https://", "").replace("http://", "").take(40),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                }
-                Text(
-                    text = post.title,
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 2,
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier
-            .fillMaxWidth()
-            .height(1.dp)
-            .background(MaterialTheme.colorScheme.outlineVariant)
-        )
-
-        // Изображение статьи
-        post.imageUrl?.let { imageUrl ->
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(imageUrl)
-                    .build(),
-                contentDescription = null,
+        item {
+            // Верхняя панель с кнопкой назад
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(UiSizes.ArticleImageMaxHeight)
-                    .clip(RoundedCornerShape(UiSizes.ArticleCornerRadius))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .padding(horizontal = UiSizes.ArticlePadding)
-            )
-            Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
-        }
-
-        // Основной текст статьи
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = UiSizes.ArticlePadding)
-                .weight(1f)
-        ) {
-            post.description?.let { desc ->
-                val cleanDesc = Post.stripHtml(desc)
-                if (cleanDesc?.isNotEmpty() == true) {
+                    .padding(UiSizes.ArticlePadding)
+                    .height(UiSizes.ButtonHeight),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = onNavigateBack,
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_add),
+                        contentDescription = "Назад",
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                Spacer(modifier = Modifier.width(UiSizes.SpacerMedium))
+                Column {
+                    post.sourceUrl?.let { url ->
+                        Text(
+                            text = url.replace("https://", "").replace("http://", "").take(40),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
                     Text(
-                        text = cleanDesc ?: "",
-                        style = MaterialTheme.typography.bodyLarge,
+                        text = post.title,
+                        style = MaterialTheme.typography.headlineMedium,
                         color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.fillMaxWidth(),
+                        maxLines = 2,
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
-
-        // Кнопка открытия оригинала
-        Button(
-            onClick = {
-                post.sourceUrl?.let { url ->
-                    val intent = Intent(Intent.ACTION_VIEW).apply {
-                        data = Uri.parse(url)
-                    }
-                    context.startActivity(intent)
-                }
-            },
-            modifier = Modifier
+        item {
+            Spacer(modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = UiSizes.ArticlePadding)
-        ) {
-            Text(stringResource(id = R.string.open_original))
+                .height(1.dp)
+                .background(MaterialTheme.colorScheme.outlineVariant)
+            )
         }
-        Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
+
+        item {
+            // Изображение статьи
+            post.imageUrl?.let { imageUrl ->
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(imageUrl)
+                        .build(),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(UiSizes.ArticleImageMaxHeight)
+                        .clip(RoundedCornerShape(UiSizes.ArticleCornerRadius))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(horizontal = UiSizes.ArticlePadding)
+                )
+                Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
+            }
+        }
+
+        item {
+            // Основной текст статьи
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = UiSizes.ArticlePadding)
+            ) {
+                post.description?.let { desc ->
+                    val cleanDesc = Post.stripHtml(desc)
+                    if (cleanDesc?.isNotEmpty() == true) {
+                        Text(
+                            text = cleanDesc ?: "",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    } else {
+                        Text(
+                            text = stringResource(id = R.string.article_no_content),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
+        }
+
+        item {
+            // Кнопка открытия оригинала
+            Button(
+                onClick = {
+                    post.sourceUrl?.let { url ->
+                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                            data = Uri.parse(url)
+                        }
+                        context.startActivity(intent)
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = UiSizes.ArticlePadding)
+            ) {
+                Text(stringResource(id = R.string.open_original))
+            }
+            Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
+        }
     }
 }
 @Composable
