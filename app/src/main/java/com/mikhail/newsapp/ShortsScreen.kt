@@ -1,5 +1,7 @@
 package com.mikhail.newsapp
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -11,7 +13,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -37,7 +38,7 @@ fun ShortsScreen(
     val shortPosts = posts.take(10)
 
     val refreshState = rememberPullToRefreshState()
-    val currentIndex by remember { mutableIntStateOf(0) }
+    var currentIndex by remember { mutableIntStateOf(0) }
 
     if (shortPosts.isEmpty() && error == null && !isRefreshing) {
         EmptyShortsState(onAddSource = onAddSource)
@@ -64,21 +65,7 @@ fun ShortsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .pointerInput(Unit) {
-                    detectSwipeGestures(
-                        onSwipeUp = {
-                            if (currentIndex < shortPosts.size - 1) {
-                                currentIndex += 1
-                            }
-                        },
-                        onSwipeDown = {
-                            if (currentIndex > 0) {
-                                currentIndex -= 1
-                            }
-                        },
-                    )
-                },
+                .background(MaterialTheme.colorScheme.background),
         ) {
             // Полноэкранная карточка новости
             ShortsNewsCard(
@@ -193,7 +180,7 @@ fun ShortsNewsCard(
                     .padding(horizontal = UiSizes.ShortsPadding)
                     .horizontalAlignment = Alignment.CenterHorizontally
                     .verticalArrangement = Arrangement.Center
-                ) {
+            ) {
                 Text(
                     text = "📰",
                     style = MaterialTheme.typography.headlineLarge,
@@ -328,21 +315,4 @@ private fun ErrorShortsState(
             Text(stringResource(id = R.string.add_source_button))
         }
     }
-}
-
-// Вспомогательное для распознавания свайпов вверх/вниз
-private fun Modifier.detectSwipeGestures(
-    onSwipeUp: () -> Unit,
-    onSwipeDown: () -> Unit,
-): Modifier = pointerInput(Unit) {
-    detectDragGestures(
-        onDragStart = { },
-        onDragEnd = { _, dragAmount ->
-            if (dragAmount.y < -100) {
-                onSwipeUp()
-            } else if (dragAmount.y > 100) {
-                onSwipeDown()
-            }
-        },
-    )
 }
