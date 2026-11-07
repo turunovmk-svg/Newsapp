@@ -41,7 +41,8 @@ fun ShortsScreen(
     val shortPosts = posts.take(10)
 
     val refreshState = rememberPullToRefreshState()
-    var currentIndex by remember { mutableStateOf(0) }
+    val currentIndexState = remember { mutableStateOf(0) }
+    val currentIndex = currentIndexState.value
 
     if (shortPosts.isEmpty() && error == null && !isRefreshing) {
         EmptyShortsState(onAddSource = onAddSource)
@@ -61,12 +62,12 @@ fun ShortsScreen(
 
     val onSwipeUp = {
         if (currentIndex < shortPosts.size - 1) {
-            currentIndex += 1
+            currentIndexState.value = currentIndex + 1
         }
     }
     val onSwipeDown = {
         if (currentIndex > 0) {
-            currentIndex -= 1
+            currentIndexState.value = currentIndex - 1
         }
     }
 
