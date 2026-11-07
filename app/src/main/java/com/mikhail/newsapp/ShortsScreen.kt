@@ -45,7 +45,7 @@ fun ShortsScreen(
 
     val refreshState = rememberPullToRefreshState()
     val currentShortsIndex by viewModel.currentShortsIndex.collectAsState()
-    var currentIndex by remember { mutableIntStateOf(currentShortsIndex) }
+    var currentIndex by remember { mutableStateOf(currentShortsIndex) }
 
     // Сохраняем индекс при входе на экран (первый раз)
     LaunchedEffect(Unit) {
@@ -285,7 +285,6 @@ fun ShortsNewsCard(
         }
 
         Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
-        }
     }
 }
 

@@ -502,7 +502,7 @@ fun NewsCard(
                 val cleanDesc = Post.stripHtml(desc)
                 if (cleanDesc.isNotEmpty()) {
                     Text(
-                        text = cleanDesc,
+                        text = cleanDesc ?: "",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 3,
@@ -702,7 +702,7 @@ fun ArticleScreen(
                 val cleanDesc = Post.stripHtml(desc)
                 if (cleanDesc.isNotEmpty()) {
                     Text(
-                        text = cleanDesc,
+                        text = cleanDesc ?: "",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.fillMaxWidth(),
