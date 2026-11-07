@@ -21,7 +21,11 @@ fun CyberTheme(
     val colorScheme = if (darkTheme) {
         CyberDarkColorScheme()
     } else {
-        dynamicLightColorScheme()
+        ColorScheme.light(
+            primary = CyberColors.NeonCyan,
+            surface = CyberColors.SurfaceGlass,
+            background = Color(0xFFFFFFFF),
+        )
     }
 
     val shapes = Shapes(

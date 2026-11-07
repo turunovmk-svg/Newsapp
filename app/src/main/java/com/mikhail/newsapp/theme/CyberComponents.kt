@@ -55,13 +55,6 @@ fun GlassCard(
                 color = borderColor,
                 shape = RoundedCornerShape(12.dp)
             )
-            .graphicsLayer {
-                shadow(
-                    color = glowColor.copy(alpha = 0.35f),
-                    elevation = 6.dp,
-                    shape = RoundedCornerShape(12.dp)
-                )
-            }
     ) {
         content()
     }
@@ -101,23 +94,6 @@ fun NeonButton(
                 ),
                 shape = RoundedCornerShape(12.dp)
             )
-            .graphicsLayer {
-                if (enabled && isPressed) {
-                    scaleX = 0.96f
-                    scaleY = 0.96f
-                    alpha = 0.85f
-                } else if (enabled) {
-                    scaleX = 1f
-                    scaleY = 1f
-                    alpha = 1f
-                    elevation = 8.dp
-                    shadow(
-                        color = primaryColor.copy(alpha = 0.35f),
-                        elevation = 6.dp,
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                }
-            }
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -153,14 +129,7 @@ fun CyberText(
         text = text,
         style = style,
         color = color,
-        modifier = modifier
-            .graphicsLayer {
-                shadow(
-                    color = glowColor.copy(alpha = 0.35f),
-                    elevation = 4.dp,
-                    shape = RoundedCornerShape(8.dp)
-                )
-            },
+        modifier = modifier,
     )
 }
 
