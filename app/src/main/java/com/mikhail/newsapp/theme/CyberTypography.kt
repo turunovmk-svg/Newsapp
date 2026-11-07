@@ -84,4 +84,5 @@ fun CyberTypography(): Typography = Typography(
     bodyMedium = CyberTypography.BodyMedium,
     bodySmall = CyberTypography.BodySmall,
     labelLarge = CyberTypography.LabelLarge,
+    caption = CyberTypography.Caption,
 )
