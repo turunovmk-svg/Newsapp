@@ -13,9 +13,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.Add as FilledAdd
+import androidx.compose.material.icons.filled.Favorite as FilledFavorite
+import androidx.compose.material.icons.filled.Home as FilledHome
+import androidx.compose.material.icons.filled.Settings as FilledSettings
+import androidx.compose.material.icons.filled.Shorts as FilledShorts
 import androidx.compose.material3.*
-import androidx.compose.material3.Icons
-import androidx.compose.ui.draw.clip
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -23,6 +26,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -68,7 +72,7 @@ fun NewsAppNavigator() {
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
                 Icon(
-                    imageVector = Icons.Default.Add,
+                    imageVector = FilledAdd,
                     contentDescription = "Add source",
                     tint = MaterialTheme.colorScheme.onPrimary
                 )
@@ -109,7 +113,7 @@ fun NewsAppNavigator() {
 
 @Composable
 fun NewsBottomNavBar(navController: NavHostController) {
-    var selectedScreen by remember { mutableStateOf("home") }
+    var selectedScreen: String by remember { mutableStateOf("home") }
 
     NavigationBar {
         NavigationBarItem(
@@ -118,7 +122,7 @@ fun NewsBottomNavBar(navController: NavHostController) {
                 selectedScreen = "home"
                 navController.navigate("home") { launchSingleTop = true }
             },
-            icon = { Icon(imageVector = Icons.Default.Home, contentDescription = "Главная") },
+            icon = { Icon(imageVector = FilledHome, contentDescription = "Главная") },
             label = { Text("Главная") }
         )
         NavigationBarItem(
@@ -127,7 +131,7 @@ fun NewsBottomNavBar(navController: NavHostController) {
                 selectedScreen = "favorites"
                 navController.navigate("favorites") { launchSingleTop = true }
             },
-            icon = { Icon(imageVector = Icons.Default.Favorite, contentDescription = "Избранное") },
+            icon = { Icon(imageVector = FilledFavorite, contentDescription = "Избранное") },
             label = { Text("Избранное") }
         )
         NavigationBarItem(
@@ -136,7 +140,7 @@ fun NewsBottomNavBar(navController: NavHostController) {
                 selectedScreen = "shorts"
                 navController.navigate("shorts") { launchSingleTop = true }
             },
-            icon = { Icon(imageVector = Icons.Default.Shorts, contentDescription = "Шортс") },
+            icon = { Icon(imageVector = FilledShorts, contentDescription = "Шортс") },
             label = { Text("Шортс") }
         )
         NavigationBarItem(
@@ -145,7 +149,7 @@ fun NewsBottomNavBar(navController: NavHostController) {
                 selectedScreen = "add_source"
                 navController.navigate("add_source") { launchSingleTop = true }
             },
-            icon = { Icon(imageVector = Icons.Default.Add, contentDescription = "Добавить") },
+            icon = { Icon(imageVector = FilledAdd, contentDescription = "Добавить") },
             label = { Text("Добавить") }
         )
         NavigationBarItem(
@@ -154,7 +158,7 @@ fun NewsBottomNavBar(navController: NavHostController) {
                 selectedScreen = "settings"
                 navController.navigate("settings") { launchSingleTop = true }
             },
-            icon = { Icon(imageVector = Icons.Default.Settings, contentDescription = "Настройки") },
+            icon = { Icon(imageVector = FilledSettings, contentDescription = "Настройки") },
             label = { Text("Настройки") }
         )
     }
