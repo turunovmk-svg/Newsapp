@@ -6,62 +6,74 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 /**
- * Типографика в стиле cyberpunk.
- * Моноширинные акценты для заголовков, чистый sans-serif для тела.
+ * Типографика в стиле OBSIDIAN / ELECTRIC BLUE.
+ * Редакционные крупные заголовки, чёткая иерархия, комфортный основной текст.
  */
 object CyberTypography {
 
+    // ---------- Редакционные заголовки ----------
     val HeadlineLarge = TextStyle(
         fontWeight = FontWeight.Bold,
-        fontSize = 32.sp,
-        letterSpacing = 0.5.sp,
+        fontSize = 34.sp,
+        letterSpacing = -0.5.sp,
     )
 
     val HeadlineMedium = TextStyle(
         fontWeight = FontWeight.Bold,
         fontSize = 28.sp,
-        letterSpacing = 0.4.sp,
+        letterSpacing = -0.25.sp,
     )
 
     val TitleLarge = TextStyle(
-        fontWeight = FontWeight.Medium,
-        fontSize = 20.sp,
-        letterSpacing = 0.2.sp,
+        fontWeight = FontWeight.Bold,
+        fontSize = 22.sp,
+        letterSpacing = 0.sp,
     )
 
     val TitleMedium = TextStyle(
         fontWeight = FontWeight.Medium,
-        fontSize = 16.sp,
-        letterSpacing = 0.15.sp,
+        fontSize = 18.sp,
+        letterSpacing = 0.sp,
     )
 
+    // ---------- Основной текст ----------
     val BodyLarge = TextStyle(
         fontWeight = FontWeight.Normal,
         fontSize = 16.sp,
-        letterSpacing = 0.1.sp,
+        letterSpacing = 0.25.sp,
+        lineHeight = 24.sp,
     )
 
     val BodyMedium = TextStyle(
         fontWeight = FontWeight.Normal,
         fontSize = 14.sp,
-        letterSpacing = 0.1.sp,
+        letterSpacing = 0.25.sp,
+        lineHeight = 21.sp,
     )
 
     val BodySmall = TextStyle(
         fontWeight = FontWeight.Normal,
         fontSize = 12.sp,
-        letterSpacing = 0.1.sp,
+        letterSpacing = 0.4.sp,
+        lineHeight = 18.sp,
     )
 
+    // ---------- Метки и подписи ----------
     val LabelLarge = TextStyle(
-        fontWeight = FontWeight.Bold,
+        fontWeight = FontWeight.Medium,
         fontSize = 14.sp,
-        letterSpacing = 0.25.sp,
+        letterSpacing = 0.5.sp,
+    )
+
+    val Caption = TextStyle(
+        fontWeight = FontWeight.Normal,
+        fontSize = 12.sp,
+        letterSpacing = 0.4.sp,
     )
 }
 
 /**
- * Создаёт Typography в стиле cyberpunk.
+ * Создаёт Typography в стиле OBSIDIAN / ELECTRIC BLUE.
  */
 fun CyberTypography(): Typography = Typography(
     headlineLarge = CyberTypography.HeadlineLarge,

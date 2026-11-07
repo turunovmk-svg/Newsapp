@@ -33,7 +33,7 @@ import androidx.compose.ui.platform.LocalContext
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
-    glowColor: Color = CyberColors.GlowCyan,
+    glowColor: Color = CyberColors.GlowBlue,
     borderColor: Color = CyberColors.BorderGlass,
     content: @Composable () -> Unit
 ) {
@@ -44,7 +44,7 @@ fun GlassCard(
                 brush = Brush.linearGradient(
                     colors = listOf(
                         CyberColors.SurfaceGlass.copy(alpha = 0.85f),
-                        CyberColors.SurfaceGlassHigh.copy(alpha = 0.75f)
+                        CyberColors.SurfaceElevated.copy(alpha = 0.75f)
                     ),
                     start = Offset(x = 0f, y = 0f),
                     end = Offset(x = 1f, y = 1f)
@@ -69,8 +69,8 @@ fun NeonButton(
     modifier: Modifier = Modifier,
     text: String = "",
     icon: @Composable (() -> Unit)? = null,
-    primaryColor: Color = CyberColors.NeonCyan,
-    secondaryColor: Color = CyberColors.NeonPurple,
+    primaryColor: Color = CyberColors.AccentBlue,
+    secondaryColor: Color = CyberColors.AccentBlueBright,
     enabled: Boolean = true
 ) {
     val isPressed by remember { mutableStateOf(false) }
@@ -121,8 +121,8 @@ fun NeonButton(
 fun CyberText(
     text: String,
     style: TextStyle = MaterialTheme.typography.bodyMedium,
-    color: Color = CyberColors.TextOnSurface,
-    glowColor: Color = CyberColors.NeonCyan,
+    color: Color = CyberColors.TextPrimary,
+    glowColor: Color = CyberColors.AccentBlue,
     modifier: Modifier = Modifier
 ) {
     Text(
@@ -139,8 +139,8 @@ fun CyberText(
 @Composable
 fun NeonDivider(
     modifier: Modifier = Modifier,
-    color1: Color = CyberColors.NeonCyan,
-    color2: Color = CyberColors.NeonPurple,
+    color1: Color = CyberColors.AccentBlue,
+    color2: Color = CyberColors.AccentBlueBright,
     thickness: Dp = 1.dp
 ) {
     Box(
@@ -169,7 +169,7 @@ fun NewsCard(
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 4.dp)
             .clickable(onClick = onClick),
-        glowColor = CyberColors.NeonCyan
+        glowColor = CyberColors.AccentBlue
     ) {
         Column(
             modifier = Modifier.padding(12.dp)
@@ -181,7 +181,7 @@ fun NewsCard(
                     .height(40.dp)
                     .background(
                         brush = Brush.verticalGradient(
-                            colors = listOf(CyberColors.NeonCyan, CyberColors.NeonPurple)
+                            colors = listOf(CyberColors.AccentBlue, CyberColors.AccentBlueBright)
                         )
                     )
                     .padding(bottom = 12.dp)
@@ -205,7 +205,7 @@ fun NewsCard(
             Text(
                 text = post.title,
                 style = MaterialTheme.typography.titleLarge,
-                color = CyberColors.TextOnSurface,
+                color = CyberColors.TextPrimary,
                 maxLines = 2
             )
             Spacer(modifier = Modifier.height(4.dp))
@@ -226,12 +226,12 @@ fun NewsCard(
                     Text(
                         text = date,
                         style = MaterialTheme.typography.bodySmall,
-                        color = CyberColors.TextDim
+                        color = CyberColors.TextMuted
                     )
                     Text(
                         text = "•",
                         style = MaterialTheme.typography.bodySmall,
-                        color = CyberColors.NeonCyan
+                        color = CyberColors.AccentBlue
                     )
                 }
             }

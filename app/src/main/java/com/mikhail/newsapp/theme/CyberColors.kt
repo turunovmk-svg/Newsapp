@@ -4,76 +4,93 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.ui.graphics.Color
 
 /**
- * Цветовая палитра в стиле Cyberpunk / Futuristic Glass UI.
+ * Дизайн-система OBSIDIAN / ELECTRIC BLUE.
  *
- * Фон: глубокий графит (#0A0A0F)
- * Поверхность: полупрозрачное стекло (#14141E)
- * Акценты: неон синий (#00F2FF), неон фиолетовый (#BC13FE)
+ * Централизованные токены цветов. Все компоненты должны ссылаться на эти значения,
+ * а не хардкодить цвета напрямую.
+ *
+ * Цветовая палитра:
+ * - Основной фон: #090B10 — глубокий тёмный графит
+ * - Вторичная поверхность: #111722 — немного светлее для приподнятых элементов
+ * - Основной акцент: #3478F6 — электрический синий
+ * - Яркий акцент: #4B91FF — для активных и интерактивных элементов
+ * - Основной текст: #F4F7FC — почти белый для высокой читаемости
+ * - Вторичный текст: #A1ADBF — приглушённый для подписей и мета-данных
  */
 object CyberColors {
 
-    // ---------- Основные цвета ----------
-    val BackgroundDark   = Color(0xFF0A0A0F)   // глубокий графит
-    val BackgroundDark2  = Color(0xFF12121E)   // чуть светлее для слоёв
-    val SurfaceGlass     = Color(0xFF1A1A2A)   // стекло-поверхность
-    val SurfaceGlassHigh = Color(0xFF22223A)   // подсвеченное стекло
+    // ---------- Фон и поверхности ----------
+    val BackgroundDeep = Color(0xFF090B10)   // главный фон приложения
+    val SurfaceElevated = Color(0xFF111722)   // приподнятая поверхность (карточки)
+    val SurfaceGlass = Color(0xFF1A1F2B).copy(alpha = 0.92f)   // полупрозрачное стекло
+    val SurfaceGlassLight = Color(0xFF222A3A).copy(alpha = 0.85f)   // более светлое стекло
+    val SurfaceGlassStrong = Color(0xFF0E131E).copy(alpha = 0.96f)   // тёмное стекло для оверлеев
 
-    // ---------- Неоновые акценты ----------
-    val NeonCyan    = Color(0xFF00F2FF)   // неон синий
-    val NeonPurple  = Color(0xFFBC13FE)   // неон фиолетовый
-    val NeonPink    = Color(0xFFFF007F)   // неон розовый (для акцентов)
-    val NeonGreen   = Color(0xFF00FF88)   // неон зелёный (статус OK)
+    // ---------- Акцентные цвета ----------
+    val AccentBlue = Color(0xFF3478F6)   // основной фирменный акцент
+    val AccentBlueBright = Color(0xFF4B91FF)   // яркий акцент для активных элементов
+    val AccentBlueDim = Color(0xFF1E5AD9)   // приглушённый синий для неактивных состояний
 
     // ---------- Текст ----------
-    val TextOnSurface = Color(0xFFFFFFFF)
-    val TextMuted     = Color(0xFF8888AA)
-    val TextDim       = Color(0xFF444455)
+    val TextPrimary = Color(0xFFF4F7FC)   // основной текст, высокая контрастность
+    val TextSecondary = Color(0xFFA1ADBF)   // вторичный текст, подписи, даты
+    val TextMuted = Color(0xFF6E7A8C)   // приглушённый текст для auxiliary информации
+    val TextInverse = Color(0xFF090B10)   // текст на светлом фоне (акцент)
 
-    // ---------- Границы и свечения ----------
-    val BorderGlass   = Color(0x3300F2FF)   // полупрозрачная граница
-    val GlowCyan      = Color(0x1A00F2FF)   // мягкое свечение
-    val GlowPurple    = Color(0x1ABC13FE)   // мягкое свечение
+    // ---------- Границы и обводки ----------
+    val BorderGlass = Color(0xFF2A3442).copy(alpha = 0.5f)   // тонкая граница стекла
+    val BorderGlassBright = Color(0xFF3478F6).copy(alpha = 0.3f)   // акцентная граница
+    val Divider = Color(0xFF1E2632).copy(alpha = 0.6f)   // разделитель между элементами
+
+    // ---------- Состояния ----------
+    val Error = Color(0xFFFF4D4D)
+    val Success = Color(0xFF00FF88)
+    val Warning = Color(0xFFFFB800)
+
+    // ---------- Стекло и эффекты ----------
+    val GlassOverlay = Color(0xFF1A1F2B).copy(alpha = 0.75f)   //overlay для стеклянных панелей
+    val GlowBlue = Color(0xFF3478F6).copy(alpha = 0.15f)   // мягкое синее свечение
 }
 
 /**
- * Создаёт ColorScheme в стиле cyberpunk.
- * Все обязательные параметры ColorScheme заполнены.
+ * Создаёт ColorScheme в стиле OBSIDIAN / ELECTRIC BLUE.
+ * Все обязательные параметры ColorScheme заполнены централизованными токенами.
  */
 fun CyberDarkColorScheme(): ColorScheme = ColorScheme(
-    primary = CyberColors.NeonCyan,
-    onPrimary = Color(0xFF000000),
-    primaryContainer = CyberColors.NeonCyan.copy(alpha = 0.2f),
-    onPrimaryContainer = Color(0xFF000000),
-    inversePrimary = CyberColors.NeonCyan,
-    secondary = CyberColors.NeonPurple,
-    onSecondary = Color(0xFFFFFFFF),
-    secondaryContainer = CyberColors.NeonPurple.copy(alpha = 0.2f),
-    onSecondaryContainer = Color(0xFF000000),
-    tertiary = CyberColors.NeonPink,
-    onTertiary = Color(0xFFFFFFFF),
-    tertiaryContainer = CyberColors.NeonPink.copy(alpha = 0.2f),
-    onTertiaryContainer = Color(0xFF000000),
-    background = CyberColors.BackgroundDark,
-    onBackground = CyberColors.TextOnSurface,
+    primary = CyberColors.AccentBlue,
+    onPrimary = CyberColors.TextInverse,
+    primaryContainer = CyberColors.AccentBlue.copy(alpha = 0.15f),
+    onPrimaryContainer = CyberColors.TextPrimary,
+    secondary = CyberColors.AccentBlueBright,
+    onSecondary = CyberColors.TextInverse,
+    secondaryContainer = CyberColors.AccentBlueBright.copy(alpha = 0.15f),
+    onSecondaryContainer = CyberColors.TextPrimary,
+    tertiary = CyberColors.AccentBlueDim,
+    onTertiary = CyberColors.TextInverse,
+    tertiaryContainer = CyberColors.AccentBlueDim.copy(alpha = 0.15f),
+    onTertiaryContainer = CyberColors.TextPrimary,
+    background = CyberColors.BackgroundDeep,
+    onBackground = CyberColors.TextPrimary,
     surface = CyberColors.SurfaceGlass,
-    onSurface = CyberColors.TextOnSurface,
-    surfaceVariant = CyberColors.SurfaceGlassHigh,
-    onSurfaceVariant = CyberColors.TextMuted,
-    surfaceTint = CyberColors.NeonCyan,
-    inverseSurface = CyberColors.BackgroundDark,
-    inverseOnSurface = Color(0xFFFFFFFF),
-    error = Color(0xFFFF3B30),
+    onSurface = CyberColors.TextPrimary,
+    surfaceVariant = CyberColors.SurfaceElevated,
+    onSurfaceVariant = CyberColors.TextSecondary,
+    surfaceTint = CyberColors.AccentBlue,
+    inverseSurface = CyberColors.SurfaceElevated,
+    inverseOnSurface = CyberColors.TextPrimary,
+    inversePrimary = CyberColors.AccentBlueBright,
+    error = CyberColors.Error,
     onError = Color(0xFFFFFFFF),
-    errorContainer = Color(0xFFFF3B30).copy(alpha = 0.2f),
-    onErrorContainer = Color(0xFF000000),
+    errorContainer = CyberColors.Error.copy(alpha = 0.15f),
+    onErrorContainer = Color(0xFFFFFFFF),
     outline = CyberColors.BorderGlass,
-    outlineVariant = CyberColors.BorderGlass.copy(alpha = 0.5f),
-    scrim = Color(0xFF000000).copy(alpha = 0.5f),
-    surfaceBright = CyberColors.SurfaceGlassHigh,
-    surfaceDim = CyberColors.BackgroundDark,
+    outlineVariant = CyberColors.BorderGlass.copy(alpha = 0.3f),
+    scrim = Color(0xFF000000).copy(alpha = 0.6f),
+    surfaceBright = CyberColors.SurfaceElevated,
+    surfaceDim = CyberColors.BackgroundDeep,
     surfaceContainer = CyberColors.SurfaceGlass,
-    surfaceContainerHigh = CyberColors.SurfaceGlassHigh,
-    surfaceContainerHighest = Color(0xFF2A2A40),
-    surfaceContainerLow = CyberColors.BackgroundDark2,
-    surfaceContainerLowest = CyberColors.BackgroundDark,
+    surfaceContainerHigh = CyberColors.SurfaceElevated,
+    surfaceContainerHighest = Color(0xFF222A3A),
+    surfaceContainerLow = CyberColors.BackgroundDeep,
+    surfaceContainerLowest = CyberColors.BackgroundDeep,
 )
