@@ -41,7 +41,7 @@ fun ShortsScreen(
     val shortPosts = posts.take(10)
 
     val refreshState = rememberPullToRefreshState()
-    var currentIndex by remember { mutableIntStateOf(0) }
+    var currentIndex by remember { mutableStateOf(0) }
 
     if (shortPosts.isEmpty() && error == null && !isRefreshing) {
         EmptyShortsState(onAddSource = onAddSource)
