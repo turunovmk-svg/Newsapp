@@ -4,13 +4,11 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 
 /**
  * Композируемая функция темы в стиле Cyberpunk.
- * Применяет тёмную цветовую схему, кибертипографику и угловые формы.
  */
 @Composable
 fun CyberTheme(
@@ -20,7 +18,11 @@ fun CyberTheme(
     val colorScheme = if (darkTheme) {
         CyberDarkColorScheme()
     } else {
-        dynamicLightColorScheme()
+        ColorScheme.light(
+            primary = CyberColors.NeonCyan,
+            surface = CyberColors.SurfaceGlass,
+            background = Color(0xFFFFFFFF),
+        )
     }
 
     val shapes = Shapes(

@@ -26,8 +26,7 @@ import coil.request.ImageRequest
 import androidx.compose.ui.platform.LocalContext
 
 /**
- * Карточка в стиле "matte glass" — полупрозрачная поверхность с неоновой границей
- * и мягким внешним свечением.
+ * Карточка в стиле "matte glass" — полупрозрачная поверхность с неоновой границей.
  */
 @Composable
 fun GlassCard(
@@ -45,8 +44,8 @@ fun GlassCard(
                         CyberColors.SurfaceGlass.copy(alpha = 0.85f),
                         CyberColors.SurfaceGlassHigh.copy(alpha = 0.75f)
                     ),
-                    start = Offset(x = 0f, y = 0f),
-                    end = Offset(x = 1f, y = 1f)
+                    start = Alignment.TopLeft,
+                    end = Alignment.BottomRight
                 )
             )
             .border(
@@ -54,13 +53,6 @@ fun GlassCard(
                 color = borderColor,
                 shape = RoundedCornerShape(12.dp)
             )
-            .graphicsLayer {
-                shadow(
-                    color = glowColor.copy(alpha = 0.35f),
-                    elevation = 6.dp,
-                    shape = RoundedCornerShape(12.dp)
-                )
-            }
     ) {
         content()
     }
@@ -68,7 +60,6 @@ fun GlassCard(
 
 /**
  * Неоновая кнопка с градиентом и свечением.
- * При нажатии меняет интенсивность свечения.
  */
 @Composable
 fun NeonButton(
@@ -80,8 +71,6 @@ fun NeonButton(
     secondaryColor: Color = CyberColors.NeonPurple,
     enabled: Boolean = true
 ) {
-    val isPressed by remember { mutableStateOf(false) }
-
     Column(
         modifier = modifier
             .clickable(
@@ -96,28 +85,11 @@ fun NeonButton(
                     } else {
                         listOf(Color(0xFF333333), Color(0xFF222222))
                     },
-                    start = Offset(x = 0f, y = 0f),
-                    end = Offset(x = 1f, y = 0f)
+                    start = Alignment.CenterStart,
+                    end = Alignment.CenterEnd
                 ),
                 shape = RoundedCornerShape(12.dp)
             )
-            .graphicsLayer {
-                if (enabled && isPressed) {
-                    scaleX = 0.96f
-                    scaleY = 0.96f
-                    alpha = 0.85f
-                } else if (enabled) {
-                    scaleX = 1f
-                    scaleY = 1f
-                    alpha = 1f
-                    elevation = 8.dp
-                    shadow(
-                        color = primaryColor.copy(alpha = 0.35f),
-                        elevation = 6.dp,
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                }
-            }
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -146,21 +118,13 @@ fun CyberText(
     text: String,
     style: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.bodyMedium,
     color: Color = CyberColors.TextOnSurface,
-    glowColor: Color = CyberColors.NeonCyan,
     modifier: Modifier = Modifier
 ) {
     Text(
         text = text,
         style = style,
         color = color,
-        modifier = modifier
-            .graphicsLayer {
-                shadow(
-                    color = glowColor.copy(alpha = 0.35f),
-                    elevation = 4.dp,
-                    shape = RoundedCornerShape(8.dp)
-                )
-            },
+        modifier = modifier,
     )
 }
 
