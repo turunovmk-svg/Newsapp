@@ -316,7 +316,7 @@ fun HomeScreen(
                 onClick = onAddSource,
                 modifier = Modifier.fillMaxWidth(),
                 text = stringResource(id = R.string.add_source_button)
-            }
+            )
         }
         return
     }
