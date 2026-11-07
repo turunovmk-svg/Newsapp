@@ -18,11 +18,16 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.LinearGradient
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.layer.GraphicsLayerScope
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.offset
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import androidx.compose.ui.platform.LocalContext
 
 /**
  * Карточка в стиле "matte glass" — полупрозрачная поверхность с неоновой границей
@@ -131,7 +136,7 @@ fun NeonButton(
                 text = text,
                 style = MaterialTheme.typography.labelLarge,
                 color = if (enabled) Color(0xFFFFFFFF) else Color(0xFF888888),
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                fontWeight = FontWeight.Bold
             )
         }
     }
@@ -219,9 +224,7 @@ fun NewsCard(
 
             post.imageUrl?.let { imageUrl ->
                 AsyncImage(
-                    model = coil.request.ImageRequest.Builder(
-                        androidx.compose.ui.platform.LocalContext.current
-                    )
+                    model = ImageRequest.Builder(LocalContext.current)
                         .data(imageUrl)
                         .build(),
                     contentDescription = null,
