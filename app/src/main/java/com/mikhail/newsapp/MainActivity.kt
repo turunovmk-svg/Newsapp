@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,6 +24,8 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import com.mikhail.newsapp.theme.CyberTheme
 import com.mikhail.newsapp.theme.CyberColors
+import com.mikhail.newsapp.theme.GlassCard
+import com.mikhail.newsapp.theme.NeonButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Scaffold
@@ -385,12 +388,24 @@ fun NewsCard(
     onClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    Surface(
+    GlassCard(
         modifier = modifier
             .clip(RoundedCornerShape(UiSizes.CardCornerRadius)),
-        color = MaterialTheme.colorScheme.surface,
+        borderColor = if (isFavorite) CyberColors.AccentBlueBright else CyberColors.BorderGlass,
     ) {
         Column(modifier = Modifier.padding(UiSizes.CardPadding)) {
+            // Акцентная полоса слева для избранного
+            if (isFavorite) {
+                Box(
+                    modifier = Modifier
+                        .width(3.dp)
+                        .fillMaxHeight()
+                        .background(CyberColors.AccentBlueBright)
+                        .padding(bottom = UiSizes.SpacerMedium)
+                )
+                Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
+            }
+
             // Изображение или типографическая заглушка
             post.imageUrl?.let { imageUrl ->
                 AsyncImage(
@@ -402,14 +417,14 @@ fun NewsCard(
                         .fillMaxWidth()
                         .height(UiSizes.HomeCardMaxHeight)
                         .clip(RoundedCornerShape(UiSizes.CardCornerRadius))
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .background(CyberColors.SurfaceElevated.copy(alpha = 0.5f))
                 )
             } ?: run {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(UiSizes.HomeCardMinHeight)
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .background(CyberColors.SurfaceElevated.copy(alpha = 0.5f))
                         .clip(RoundedCornerShape(UiSizes.CardCornerRadius))
                         .padding(UiSizes.SpacerLarge),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -452,10 +467,10 @@ fun NewsCard(
             }
             Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
 
-            // Заголовок
+            // Заголовок — крупный редакционный
             Text(
                 text = post.title,
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 2,
                 modifier = Modifier.fillMaxWidth()
@@ -484,7 +499,7 @@ fun NewsCard(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_favorite),
                         contentDescription = if (isFavorite) "Убрать из избранного" else "Добавить в избранное",
-                        tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = if (isFavorite) CyberColors.AccentBlueBright else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 IconButton(
@@ -507,27 +522,27 @@ fun TypographyCard(
     post: Post,
     modifier: Modifier = Modifier
 ) {
-    Column(
+    GlassCard(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = UiSizes.CardPadding, vertical = UiSizes.SpacerXSmall)
-            .background(MaterialTheme.colorScheme.surface)
-            .clip(RoundedCornerShape(UiSizes.CardCornerRadius))
+            .padding(horizontal = UiSizes.CardPadding, vertical = UiSizes.SpacerXSmall),
     ) {
-        Text(
-            text = post.title,
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 3,
-        )
-        Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
-        post.description?.let { desc ->
+        Column(modifier = Modifier.padding(UiSizes.CardPadding)) {
             Text(
-                text = desc,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 5,
+                text = post.title,
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 3,
             )
+            Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
+            post.description?.let { desc ->
+                Text(
+                    text = desc,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 5,
+                )
+            }
         }
     }
 }

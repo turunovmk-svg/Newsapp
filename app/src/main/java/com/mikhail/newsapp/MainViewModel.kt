@@ -184,6 +184,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             var currentDesc: String? = null
             var currentDate: String? = null
             var currentLink: String? = null
+            var currentImageUrl: String? = null
             var inItem = false
 
             while (eventType != XmlPullParser.END_DOCUMENT) {
@@ -197,6 +198,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                             currentDesc = null
                             currentDate = null
                             currentLink = null
+                            currentImageUrl = null
+                        } else if (inItem && (tag == "enclosure" || tag == "content" || tag == "thumbnail")) {
+                            val imgUrl = parser.getAttributeValue(null, "url")
+                                ?: parser.getAttributeValue(null, "image")
+                            if (imgUrl != null && imgUrl.isNotEmpty()) {
+                                currentImageUrl = imgUrl
+                            }
                         }
                     }
                     XmlPullParser.TEXT -> {
@@ -221,7 +229,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                     description = currentDesc,
                                     publishedAt = currentDate,
                                     sourceUrl = currentLink,
-                                    imageUrl = null
+                                    imageUrl = currentImageUrl
                                 ))
                             }
                             currentTitle = null
@@ -255,6 +263,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             var currentDesc: String? = null
             var currentDate: String? = null
             var currentLink: String? = null
+            var currentImageUrl: String? = null
             var inEntry = false
 
             while (eventType != XmlPullParser.END_DOCUMENT) {
@@ -292,7 +301,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                     description = currentDesc,
                                     publishedAt = currentDate,
                                     sourceUrl = currentLink,
-                                    imageUrl = null
+                                    imageUrl = currentImageUrl
                                 ))
                             }
                             currentTitle = null
