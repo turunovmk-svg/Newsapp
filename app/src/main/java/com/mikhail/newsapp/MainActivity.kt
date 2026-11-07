@@ -826,7 +826,7 @@ fun SearchScreen(
                     || (post.description ?: "").contains(searchQuery, ignoreCase = true)
             }
         } else {
-            emptyList()
+            posts
         }
 
         if (searchQuery.isNotBlank() && filteredPosts.isEmpty()) {

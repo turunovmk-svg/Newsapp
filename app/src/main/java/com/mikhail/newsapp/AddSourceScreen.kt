@@ -305,6 +305,23 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
                                     strokeWidth = 2.dp,
                                 )
                             }
+                            Spacer(modifier = Modifier.width(UiSizes.SpacerMedium))
+                            // Кнопка удаления источника
+                            IconButton(
+                                onClick = {
+                                    val current = viewModel.sources.value
+                                    if (current.any { it.url == source.url }) {
+                                        viewModel.removeSource(source.url)
+                                        addedSource = true
+                                    }
+                                },
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_add),
+                                    contentDescription = "Удалить источник",
+                                    tint = MaterialTheme.colorScheme.error,
+                                )
+                            }
                         }
                     }
                 }
