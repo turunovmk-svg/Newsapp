@@ -67,7 +67,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_add),
                     contentDescription = "Назад",
-                    tint = CyberColors.TextPrimaryVariant
+                    tint = CyberColors.TextSecondary
                 )
             }
             Spacer(modifier = Modifier.width(UiSizes.SpacerMedium))
@@ -83,7 +83,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
         Text(
             text = stringResource(id = R.string.add_source_subtitle),
             style = CyberTypography.BodyMedium,
-            color = CyberColors.TextPrimaryVariant,
+            color = CyberColors.TextSecondary,
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center
         )
@@ -105,7 +105,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_add),
                             contentDescription = "URL",
-                            tint = CyberColors.TextPrimaryVariant
+                            tint = CyberColors.TextSecondary
                         )
                     },
                     modifier = Modifier
@@ -124,7 +124,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
                     Text(
                         text = stringResource(id = R.string.source_type_label),
                         style = CyberTypography.BodySmall,
-                        color = CyberColors.TextPrimaryVariant,
+                        color = CyberColors.TextSecondary,
                     )
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -171,7 +171,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
                     Text(
                         text = stringResource(id = R.string.url_format_hint),
                         style = CyberTypography.BodySmall,
-                        color = CyberColors.TextPrimaryVariant,
+                        color = CyberColors.TextSecondary,
                         modifier = Modifier.fillMaxWidth(),
                     )
                     Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
@@ -240,7 +240,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
             Text(
                 text = stringResource(id = R.string.popular_sources_title),
                 style = CyberTypography.TitleMedium,
-                color = CyberColors.TextPrimaryVariant,
+                color = CyberColors.TextSecondary,
             )
             Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
 
@@ -295,7 +295,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
                                 Text(
                                     text = source.url,
                                     style = CyberTypography.BodySmall,
-                                    color = CyberColors.TextPrimaryVariant,
+                                    color = CyberColors.TextSecondary,
                                     maxLines = 1,
                                 )
                             }

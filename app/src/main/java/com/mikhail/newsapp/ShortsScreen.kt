@@ -130,7 +130,7 @@ fun ShortsScreen(
                             .clip(RoundedCornerShape(4.dp))
                             .background(
                                 if (index == currentIndexState.value) CyberColors.AccentBlue
-                                else CyberColors.TextPrimaryVariant.copy(alpha = 0.3f)
+                                else CyberColors.TextSecondary.copy(alpha = 0.3f)
                             )
                             .padding(4.dp)
                     )
@@ -152,7 +152,7 @@ fun ShortsScreen(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_favorite),
                         contentDescription = if (viewModel.isFavorite(currentPost)) "Убрать из избранного" else "Добавить в избранное",
-                        tint = if (viewModel.isFavorite(currentPost)) CyberColors.AccentBlue else CyberColors.TextPrimaryVariant
+                        tint = if (viewModel.isFavorite(currentPost)) CyberColors.AccentBlue else CyberColors.TextSecondary
                     )
                 }
                 IconButton(
@@ -161,7 +161,7 @@ fun ShortsScreen(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_add),
                         contentDescription = "Поделиться",
-                        tint = CyberColors.TextPrimaryVariant
+                        tint = CyberColors.TextSecondary
                     )
                 }
                 IconButton(
@@ -228,7 +228,7 @@ fun ShortsNewsCard(
                 Text(
                     text = stringResource(id = R.string.no_image),
                     style = CyberTypography.BodySmall,
-                    color = CyberColors.TextPrimaryVariant,
+                    color = CyberColors.TextSecondary,
                 )
             }
             Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
@@ -253,7 +253,7 @@ fun ShortsNewsCard(
                 Text(
                     text = date,
                     style = CyberTypography.BodySmall,
-                    color = CyberColors.TextPrimaryVariant,
+                    color = CyberColors.TextSecondary,
                 )
             }
         }
@@ -278,7 +278,7 @@ fun ShortsNewsCard(
                 Text(
                     text = cleanDesc,
                     style = CyberTypography.BodyLarge,
-                    color = CyberColors.TextPrimaryVariant,
+                    color = CyberColors.TextSecondary,
                     modifier = Modifier.fillMaxWidth(),
                     maxLines = 6,
                 )
@@ -309,7 +309,7 @@ private fun EmptyShortsState(onAddSource: () -> Unit) {
         Text(
             text = stringResource(id = R.string.add_sources_hint),
             style = CyberTypography.BodyMedium,
-            color = CyberColors.TextPrimaryVariant,
+            color = CyberColors.TextSecondary,
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
