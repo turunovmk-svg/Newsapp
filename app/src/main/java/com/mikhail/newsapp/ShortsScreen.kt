@@ -9,6 +9,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -25,6 +27,7 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.mikhail.newsapp.theme.CyberColors
+import com.mikhail.newsapp.theme.GlassCard
 import com.mikhail.newsapp.UiSizes
 import com.mikhail.newsapp.data.Post
 
@@ -41,8 +44,13 @@ fun ShortsScreen(
     val shortPosts = posts.take(10)
 
     val refreshState = rememberPullToRefreshState()
-    val currentIndexState = remember { mutableStateOf(0) }
-    val currentIndex = currentIndexState.value
+    val currentShortsIndex by viewModel.currentShortsIndex.collectAsState()
+    var currentIndex by remember { mutableIntStateOf(currentShortsIndex) }
+
+    // Сохраняем индекс при входе на экран (первый раз)
+    LaunchedEffect(Unit) {
+        currentIndex = currentShortsIndex
+    }
 
     if (shortPosts.isEmpty() && error == null && !isRefreshing) {
         EmptyShortsState(onAddSource = onAddSource)
@@ -58,16 +66,20 @@ fun ShortsScreen(
         return
     }
 
-    val currentPost = shortPosts[currentIndex]
+    // Ограничиваем индекс размером текущего списка
+    val safeIndex = currentIndex.coerceIn(0, shortPosts.size - 1)
+    val currentPost = shortPosts[safeIndex]
 
     val onSwipeUp = {
-        if (currentIndex < shortPosts.size - 1) {
-            currentIndexState.value = currentIndex + 1
+        if (safeIndex < shortPosts.size - 1) {
+            currentIndex = safeIndex + 1
+            viewModel.setCurrentShortsIndex(safeIndex + 1)
         }
     }
     val onSwipeDown = {
-        if (currentIndex > 0) {
-            currentIndexState.value = currentIndex - 1
+        if (safeIndex > 0) {
+            currentIndex = safeIndex - 1
+            viewModel.setCurrentShortsIndex(safeIndex - 1)
         }
     }
 
@@ -174,11 +186,11 @@ fun ShortsNewsCard(
     onClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    Column(
+    GlassCard(
         modifier = modifier
             .fillMaxSize()
-            .clickable(onClick = onClick)
-            .background(MaterialTheme.colorScheme.background)
+            .clickable(onClick = onClick),
+        borderColor = if (isFavorite) CyberColors.AccentBlueBright else CyberColors.BorderGlass,
     ) {
         // Изображение новости (занимает существенную часть экрана)
         post.imageUrl?.let { imageUrl ->
@@ -260,18 +272,20 @@ fun ShortsNewsCard(
 
         // Описание (разумная длина)
         post.description?.let { desc ->
-            Text(
-                text = desc,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = UiSizes.ShortsPadding),
-                maxLines = 6,
-            )
+            val cleanDesc = Post.stripHtml(desc)
+            if (cleanDesc.isNotEmpty()) {
+                Text(
+                    text = cleanDesc,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 6,
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
+        }
     }
 }
 

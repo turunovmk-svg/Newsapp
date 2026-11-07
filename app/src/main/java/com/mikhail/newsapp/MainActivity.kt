@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.rememberScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.width
@@ -497,15 +498,18 @@ fun NewsCard(
             )
             Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
 
-            // Описание
+            // Описание (с очисткой HTML-тегов)
             post.description?.let { desc ->
-                Text(
-                    text = desc,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 3,
-                )
-                Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
+                val cleanDesc = Post.stripHtml(desc)
+                if (cleanDesc.isNotEmpty()) {
+                    Text(
+                        text = cleanDesc,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 3,
+                    )
+                    Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
+                }
             }
 
             // Действия: Избранное и Поделиться
@@ -628,7 +632,8 @@ fun ArticleScreen(
                         }
                     },
                 )
-            },
+            }
+            .verticalScroll(rememberScrollState()),
     ) {
         // Верхняя панель с кнопкой назад
         Row(
@@ -696,12 +701,15 @@ fun ArticleScreen(
                 .weight(1f)
         ) {
             post.description?.let { desc ->
-                Text(
-                    text = desc,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                val cleanDesc = Post.stripHtml(desc)
+                if (cleanDesc.isNotEmpty()) {
+                    Text(
+                        text = cleanDesc,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
             }
         }
 

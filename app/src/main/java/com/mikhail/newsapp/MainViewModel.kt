@@ -40,6 +40,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _favorites = MutableStateFlow<List<Post>>(emptyList())
     val favorites: StateFlow<List<Post>> = _favorites.asStateFlow()
 
+    private val _currentShortsIndex = MutableStateFlow(0)
+    val currentShortsIndex: StateFlow<Int> = _currentShortsIndex.asStateFlow()
+
+    fun setCurrentShortsIndex(index: Int) {
+        _currentShortsIndex.value = index
+    }
+
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
@@ -52,6 +59,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         loadSources()
+        loadFavorites()
         ensureDefaultSources()
         loadPosts()
     }
@@ -199,7 +207,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                             currentDate = null
                             currentLink = null
                             currentImageUrl = null
-                        } else if (inItem && (tag == "enclosure" || tag == "content" || tag == "thumbnail")) {
+                        } else if (inItem && (tag == "enclosure" || tag == "content" || tag == "thumbnail"
+                                || tag == "media:content" || tag == "media:thumbnail")) {
                             val imgUrl = parser.getAttributeValue(null, "url")
                                 ?: parser.getAttributeValue(null, "image")
                             if (imgUrl != null && imgUrl.isNotEmpty()) {
@@ -320,13 +329,38 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         return posts
     }
 
-    /** Добавляет или удаляет публикацию из избранного. */
+    /** Добавляет или удаляет публикацию из избранного с сохранением в SharedPreferences. */
     fun toggleFavorite(post: Post) {
         val current = _favorites.value
         if (current.any { it.id == post.id }) {
             _favorites.value = current.filter { it.id != post.id }
         } else {
             _favorites.value = current + post
+        }
+        saveFavorites()
+    }
+
+    /** Сохраняет избранное в SharedPreferences. */
+    private fun saveFavorites() {
+        val json = Post.toJsonList(_favorites.value)
+        prefs.edit().putString("favorites_json", json).apply()
+    }
+
+    /** Загружает избранное из SharedPreferences. */
+    private fun loadFavorites() {
+        val json = prefs.getString("favorites_json", null) ?: return
+        _favorites.value = Post.fromJsonList(json)
+    }
+
+    /** Удаляет источник по URL. */
+    fun removeSource(url: String) {
+        val current = _sources.value
+        val updated = current.filter { it.url != url }
+        if (updated.size != current.size) {
+            saveSources(updated)
+            // Удаляем посты этого источника
+            _posts.value = _posts.value.filter { it.sourceUrl != url }
+            clearError()
         }
     }
 
