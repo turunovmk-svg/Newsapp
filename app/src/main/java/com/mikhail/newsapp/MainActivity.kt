@@ -768,7 +768,7 @@ fun ArticleScreen(
                     .fillMaxWidth()
                     .padding(horizontal = UiSizes.ArticlePadding),
                 text = stringResource(id = R.string.open_original)
-            }
+            )
             Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
         }
     }
