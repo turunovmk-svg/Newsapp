@@ -112,7 +112,14 @@ fun NewsAppNavigator() {
                 )
             }
             composable("shorts") {
-                ShortsScreen(viewModel = viewModel, onAddSource = { navController.navigate("add_source") })
+                ShortsScreen(
+                    viewModel = viewModel,
+                    onAddSource = { navController.navigate("add_source") },
+                    onArticleClick = { post ->
+                        selectedPost = post
+                        navController.navigate("article") { launchSingleTop = true }
+                    },
+                )
             }
             composable("add_source") {
                 AddSourceScreen(viewModel = viewModel, onNavigateBack = { navController.navigate("home") })
