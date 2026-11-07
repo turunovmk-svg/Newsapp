@@ -16,6 +16,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.mikhail.newsapp.theme.CyberColors
 import com.mikhail.newsapp.theme.GlassCard
@@ -31,6 +32,15 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
 
     val error by viewModel.error.collectAsState()
     val context = LocalContext.current
+
+    // Предзагружаем строковые ресурсы для использования в onClick лямбдах
+    val urlEmptyError = stringResource(id = R.string.url_empty_error)
+    val urlFormatError = stringResource(id = R.string.url_format_error)
+    val urlDuplicateError = stringResource(id = R.string.url_duplicate_error)
+    val addingSource = stringResource(id = R.string.adding_source)
+    val addSourceButton = stringResource(id = R.string.add_source_button)
+    val sourceAddedSuccess = stringResource(id = R.string.source_added_success)
+    val backToFeed = stringResource(id = R.string.back_to_feed)
 
     val urlValid = sourceUrl.isNotBlank() &&
         (sourceUrl.startsWith("http://") || sourceUrl.startsWith("https://")) &&
@@ -73,7 +83,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.fillMaxWidth(),
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
 
@@ -129,13 +139,13 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
                 NeonButton(
                     onClick = {
                         if (sourceUrl.isBlank()) {
-                            urlError = stringResource(id = R.string.url_empty_error)
+                            urlError = urlEmptyError
                         } else if (!urlValid) {
-                            urlError = stringResource(id = R.string.url_format_error)
+                            urlError = urlFormatError
                         } else {
                             val current = viewModel.sources.value
                             if (current.any { it.url == sourceUrl }) {
-                                urlError = stringResource(id = R.string.url_duplicate_error)
+                                urlError = urlDuplicateError
                             } else {
                                 urlError = null
                                 isAdding = true
@@ -147,7 +157,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    text = if (isAdding) stringResource(id = R.string.adding_source) else stringResource(id = R.string.add_source_button),
+                    text = if (isAdding) addingSource else addSourceButton,
                     enabled = urlValid && !isAdding,
                 )
                 Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
@@ -155,12 +165,12 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
                 // Сообщение об успешном добавлении
                 if (addedSource == true) {
                     Text(
-                        text = stringResource(id = R.string.source_added_success),
+                        text = sourceAddedSuccess,
                         style = MaterialTheme.typography.bodyMedium,
                         color = CyberColors.AccentBlueBright,
                         modifier = Modifier.fillMaxWidth()
                             .padding(horizontal = UiSizes.SpacerSmall),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        textAlign = TextAlign.Center,
                     )
                     Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
                 }
@@ -266,7 +276,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
         NeonButton(
             onClick = onNavigateBack,
             modifier = Modifier.fillMaxWidth(),
-            text = stringResource(id = R.string.back_to_feed),
+            text = backToFeed,
             enabled = !isAdding,
         )
     }
