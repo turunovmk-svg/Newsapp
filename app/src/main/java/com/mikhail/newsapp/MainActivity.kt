@@ -577,6 +577,7 @@ fun ArticleScreen(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = remember { LocalContext.current }
     Column(
         modifier = modifier.fillMaxSize(),
     ) {
@@ -661,7 +662,6 @@ fun ArticleScreen(
         Button(
             onClick = {
                 post.sourceUrl?.let { url ->
-                    val context = LocalContext.current
                     val intent = Intent(Intent.ACTION_VIEW).apply {
                         data = Uri.parse(url)
                     }
