@@ -28,23 +28,61 @@ import com.mikhail.newsapp.data.Post
 fun ShortsScreen(viewModel: MainViewModel, onAddSource: () -> Unit) {
     val posts by viewModel.posts.collectAsState()
     val isRefreshing by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
     val shortPosts = posts.take(10)
 
     Column(modifier = Modifier.fillMaxSize()) {
-        if (shortPosts.isEmpty()) {
+        if (isRefreshing && shortPosts.isEmpty()) {
+            Column(
+                modifier = Modifier
+                    .padding(UiSizes.ScreenPadding)
+                    .fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                androidx.compose.material3.CircularProgressIndicator()
+            }
+        } else if (shortPosts.isEmpty()) {
             EmptyShortsState(onAddSource = onAddSource)
         } else {
-            PullToRefreshBox(
-                isRefreshing = isRefreshing,
-                onRefresh = { viewModel.loadPosts() },
-                modifier = Modifier.fillMaxSize(),
-                state = rememberPullToRefreshState()
-            ) {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize()
+            if (error != null) {
+                Column(
+                    modifier = Modifier
+                        .padding(UiSizes.ScreenPadding)
+                        .fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    items(shortPosts) { post ->
-                        ShortCard(post = post)
+                    Text(
+                        text = stringResource(id = R.string.error_loading_news, error ?: ""),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(UiSizes.ShortSpacerMedium))
+                    Button(
+                        onClick = { viewModel.loadPosts(); viewModel.clearError() },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(id = R.string.retry_button))
+                    }
+                }
+            } else {
+                PullToRefreshBox(
+                    isRefreshing = isRefreshing,
+                    onRefresh = { viewModel.loadPosts() },
+                    modifier = Modifier.fillMaxSize(),
+                    state = rememberPullToRefreshState()
+                ) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(shortPosts) { post ->
+                            ShortCard(
+                                post = post,
+                                isFavorite = viewModel.isFavorite(post),
+                                onFavoriteClick = { viewModel.toggleFavorite(post) }
+                            )
+                        }
                     }
                 }
             }
@@ -84,5 +122,3 @@ private fun EmptyShortsState(onAddSource: () -> Unit) {
         }
     }
 }
-
-

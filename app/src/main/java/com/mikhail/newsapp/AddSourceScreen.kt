@@ -17,6 +17,9 @@ import com.mikhail.newsapp.UiSizes
 fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
     var sourceType by remember { mutableStateOf("RSS") }
     var sourceUrl by remember { mutableStateOf("") }
+    var urlError by remember { mutableStateOf<String?>(null) }
+
+    val error by viewModel.error.collectAsState()
 
     Column(
         modifier = Modifier
@@ -42,16 +45,30 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
         // Поле URL
         OutlinedTextField(
             value = sourceUrl,
-            onValueChange = { sourceUrl = it },
+            onValueChange = { sourceUrl = it; urlError = null },
             label = { Text(stringResource(id = R.string.source_url_label)) },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)
         )
 
+        if (urlError != null) {
+            Text(
+                text = urlError ?: "",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
         // Кнопка добавления вручную
         Button(
             onClick = {
-                if (sourceUrl.isNotEmpty()) {
+                if (sourceUrl.isBlank()) {
+                    urlError = "Введите URL источника"
+                } else if (!sourceUrl.startsWith("http://") && !sourceUrl.startsWith("https://")) {
+                    urlError = "URL должен начинаться с http:// или https://"
+                } else {
+                    urlError = null
                     viewModel.addSource(sourceType, sourceUrl)
                     sourceUrl = ""
                 }
@@ -59,6 +76,15 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(stringResource(id = R.string.add_source_button))
+        }
+
+        if (error != null) {
+            Text(
+                text = error ?: "",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error
+            )
+            Spacer(modifier = Modifier.height(8.dp))
         }
 
         Spacer(modifier = Modifier.height(UiSizes.SourceSectionSpacing))

@@ -24,4 +24,8 @@
 
     <!-- FavoritesScreen -->
     <string name="favorites_empty">Избранное пусто</string>
+
+    <!-- Error messages -->
+    <string name="error_loading_news">Ошибка загрузки новостей: %1$s</string>
+    <string name="retry_button">Повторить</string>
 </resources>

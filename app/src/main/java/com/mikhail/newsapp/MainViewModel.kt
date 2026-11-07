@@ -22,7 +22,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val prefs: SharedPreferences =
         getApplication<Application>().getSharedPreferences("NewsAppPrefs", Context.MODE_PRIVATE)
-    private val httpClient = OkHttpClient()
+    private val httpClient = OkHttpClient.Builder()
+        .connectTimeout(10_000, java.util.concurrent.TimeUnit.MILLISECONDS)
+        .readTimeout(10_000, java.util.concurrent.TimeUnit.MILLISECONDS)
+        .writeTimeout(10_000, java.util.concurrent.TimeUnit.MILLISECONDS)
+        .build()
 
     private val _posts = MutableStateFlow<List<Post>>(emptyList())
     val posts: StateFlow<List<Post>> = _posts.asStateFlow()
@@ -36,8 +40,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _favorites = MutableStateFlow<List<Post>>(emptyList())
     val favorites: StateFlow<List<Post>> = _favorites.asStateFlow()
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
+    private val DEFAULT_SOURCES = listOf(
+        Source("RSS", "https://feeds.bbci.co.uk/ukrainian/rss.xml"),
+        Source("RSS", "https://www.pravda.com.ua/rss/"),
+        Source("REDDIT", "https://www.reddit.com/r/worldnews/.rss"),
+        Source("YOUTUBE", "https://www.youtube.com/feeds/videos.xml?channel_id=UC_x5XG1OV2P6uZZ5FSM9Ttw")
+    )
+
     init {
         loadSources()
+        ensureDefaultSources()
         loadPosts()
     }
 
@@ -45,6 +60,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun loadSources() {
         val json = prefs.getString("sources_json", null) ?: return
         _sources.value = Source.fromJsonList(json)
+    }
+
+    /** Добавляет предустановленные источники, если пользователь ещё не добавил ни одного. */
+    fun ensureDefaultSources() {
+        val current = _sources.value
+        if (current.isEmpty()) {
+            _sources.value = DEFAULT_SOURCES
+            saveSources(DEFAULT_SOURCES)
+        }
     }
 
     /** Сохраняет источники в SharedPreferences. */
@@ -56,11 +80,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     /** Добавляет источник, сохраняет в SharedPreferences и запускает загрузку постов. */
     fun addSource(type: String, url: String) {
+        val trimmedUrl = url.trim()
+        if (trimmedUrl.isEmpty()) {
+            _error.value = "Введите URL источника"
+            return
+        }
+        if (!trimmedUrl.startsWith("http://") && !trimmedUrl.startsWith("https://")) {
+            _error.value = "URL должен начинаться с http:// или https://"
+            return
+        }
         val current = _sources.value
-        if (current.any { it.url == url }) return // дубликат
-        val newSource = Source(type, url)
+        if (current.any { it.url == trimmedUrl }) {
+            _error.value = "Источник уже добавлен"
+            return
+        }
+        val newSource = Source(type, trimmedUrl)
         val updated = current + newSource
         saveSources(updated)
+        clearError()
         loadPosts()
     }
 
@@ -74,8 +111,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 return@launch
             }
             _isLoading.value = true
+            _error.value = null
             try {
                 val allPosts = mutableListOf<Post>()
+                var success = false
                 for (source in sources) {
                     try {
                         val xml = withContext(Dispatchers.Default) {
@@ -85,12 +124,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                             parseFeed(source.type, xml)
                         }
                         allPosts.addAll(parsed)
+                        success = true
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
                 }
-                allPosts.sortByDescending { it.publishedAt }
-                _posts.value = allPosts
+                if (allPosts.isEmpty() && _posts.value.isNotEmpty()) {
+                    // Сохраняем предыдущие посты, если新的 загрузка не вернула ничего
+                } else {
+                    allPosts.sortByDescending { it.publishedAt }
+                    _posts.value = allPosts
+                }
+                if (!success && _posts.value.isEmpty()) {
+                    _error.value = "Не удалось загрузить новости ни из одного источника"
+                }
             } finally {
                 _isLoading.value = false
             }
@@ -261,5 +308,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             e.printStackTrace()
         }
         return posts
+    }
+
+    /** Добавляет или удаляет публикацию из избранного. */
+    fun toggleFavorite(post: Post) {
+        val current = _favorites.value
+        if (current.any { it.id == post.id }) {
+            _favorites.value = current.filter { it.id != post.id }
+        } else {
+            _favorites.value = current + post
+        }
+    }
+
+    /** Проверяет, находится ли публикация в избранном. */
+    fun isFavorite(post: Post): Boolean {
+        return _favorites.value.any { it.id == post.id }
+    }
+
+    /** Сбрасывает сообщение об ошибке. */
+    fun clearError() {
+        _error.value = null
     }
 }

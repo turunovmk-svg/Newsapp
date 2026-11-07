@@ -25,6 +25,9 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.filled.Favorite as FilledFavorite
+import androidx.compose.material.icons.outlined.Favorite as OutlinedFavorite
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -107,9 +110,8 @@ fun NewsAppNavigator() {
             }
             composable("settings") {
                 SettingsScreen(
-                    onNavigateBack = { navController.navigate("home") },
-                    onImportOpml = { /* TODO */ },
-                    onExportOpml = { /* TODO */ }
+                    viewModel = viewModel,
+                    onNavigateBack = { navController.navigate("home") }
                 )
             }
             composable("favorites") {
@@ -205,9 +207,11 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
     val posts by viewModel.posts.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
 
     Column(modifier = modifier.fillMaxSize()) {
-        if (posts.isEmpty()) {
+        if (isLoading) {
             Column(
                 modifier = Modifier
                     .padding(UiSizes.ScreenPadding)
@@ -215,23 +219,60 @@ fun HomeScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(
-                    text = stringResource(id = R.string.empty_shorts),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(UiSizes.ShortSpacerMedium))
-                Button(
-                    onClick = onAddSource,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(stringResource(id = R.string.add_source_button))
+                CircularProgressIndicator()
+            }
+        } else if (posts.isEmpty()) {
+            Column(
+                modifier = Modifier
+                    .padding(UiSizes.ScreenPadding)
+                    .fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                if (error != null) {
+                    Column(
+                        modifier = Modifier
+                            .padding(UiSizes.ScreenPadding)
+                            .fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.error_loading_news, error ?: ""),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(UiSizes.ShortSpacerMedium))
+                        Button(
+                            onClick = { viewModel.loadPosts(); viewModel.clearError() },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(stringResource(id = R.string.retry_button))
+                        }
+                    }
+                } else {
+                    Text(
+                        text = stringResource(id = R.string.empty_shorts),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(UiSizes.ShortSpacerMedium))
+                    Button(
+                        onClick = onAddSource,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(id = R.string.add_source_button))
+                    }
                 }
             }
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(posts) { post ->
-                    ShortCard(post = post)
+                    ShortCard(
+                        post = post,
+                        isFavorite = viewModel.isFavorite(post),
+                        onFavoriteClick = { viewModel.toggleFavorite(post) }
+                    )
                 }
             }
         }
@@ -239,7 +280,11 @@ fun HomeScreen(
 }
 
 @Composable
-fun ShortCard(post: Post) {
+fun ShortCard(
+    post: Post,
+    isFavorite: Boolean = false,
+    onFavoriteClick: () -> Unit = {}
+) {
     Surface(
         modifier = Modifier
             .padding(horizontal = UiSizes.ShortCardHorizontalPadding, vertical = UiSizes.ShortCardVerticalPadding)
@@ -260,11 +305,27 @@ fun ShortCard(post: Post) {
                 )
             }
             Spacer(modifier = Modifier.height(UiSizes.ShortSpacerMedium))
-            Text(
-                text = post.title,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = post.title,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(
+                    onClick = onFavoriteClick,
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                ) {
+                    Icon(
+                        imageVector = if (isFavorite) FilledFavorite else OutlinedFavorite,
+                        contentDescription = null,
+                        tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
             Spacer(modifier = Modifier.height(UiSizes.ShortSpacerSmall))
             post.description?.let { desc ->
                 Text(
@@ -300,7 +361,11 @@ fun FavoritesScreen(viewModel: MainViewModel) {
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(favorites) { post ->
-                    ShortCard(post = post)
+                    ShortCard(
+                        post = post,
+                        isFavorite = true,
+                        onFavoriteClick = { viewModel.toggleFavorite(post) }
+                    )
                 }
             }
         }
