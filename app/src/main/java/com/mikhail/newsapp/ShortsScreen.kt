@@ -19,6 +19,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.mikhail.newsapp.ShortCard
 import com.mikhail.newsapp.UiSizes
 import com.mikhail.newsapp.data.Post
 
