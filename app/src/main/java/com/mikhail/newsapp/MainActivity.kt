@@ -388,6 +388,7 @@ fun HomeScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
     val refreshState = rememberPullToRefreshState()
+    val context = LocalContext.current
 
     if (posts.isEmpty() && error == null && !isLoading) {
         // Нет источников — показываем экран с предложением добавить источник
@@ -527,7 +528,7 @@ fun HomeScreen(
                                     type = "text/plain"
                                     putExtra(Intent.EXTRA_TEXT, "$url")
                                 }
-                                LocalContext.current.startActivity(Intent.createChooser(intent, "Поделиться"))
+                                context.startActivity(Intent.createChooser(intent, "Поделиться"))
                             }
                         },
                         onClick = { onArticleClick(first) },
@@ -629,6 +630,7 @@ fun FeaturedNewsCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     GlassCard(
         modifier = modifier
             .clip(RoundedCornerShape(UiSizes.CardCornerRadiusLarge))

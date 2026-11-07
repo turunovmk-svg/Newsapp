@@ -59,10 +59,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val unreadCount: StateFlow<Int> = _unreadCount.asStateFlow()
 
     // ---------- Настройки чтения (persisted) ----------
-    private val _fontScale = MutableStateOf(1.0f)
+    private val _fontScale = MutableStateFlow(1.0f)
     val fontScale: StateFlow<Float> = _fontScale.asStateFlow()
 
-    private val _darkTheme = MutableStateOf(true)
+    private val _darkTheme = MutableStateFlow(true)
     val darkTheme: StateFlow<Boolean> = _darkTheme.asStateFlow()
 
     init {

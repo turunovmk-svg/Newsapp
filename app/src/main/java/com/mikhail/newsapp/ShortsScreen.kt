@@ -45,6 +45,7 @@ import coil.request.ImageRequest
 import com.mikhail.newsapp.data.Post
 import com.mikhail.newsapp.theme.CyberColors
 import com.mikhail.newsapp.theme.CyberTypography
+import com.mikhail.newsapp.theme.NeonButton
 import com.mikhail.newsapp.UiSizes
 
 /**
@@ -64,6 +65,7 @@ fun ShortsScreen(
     val error by viewModel.error.collectAsState()
     val shortPosts = posts.take(20)
     val currentIndexState by viewModel.currentShortsIndex.collectAsState()
+    val ctx = LocalContext.current
 
     if (shortPosts.isEmpty() && error == null && !isRefreshing) {
         EmptyShortsState(onAddSource = onAddSource, modifier = modifier)
@@ -393,9 +395,7 @@ private fun ErrorShortsState(
 }
 
 /** Поделиться статьёй через системный Intent. */
-@Composable
-private fun sharePost(post: Post) {
-    val context = LocalContext.current
+private fun sharePost(context: android.content.Context, post: Post) {
     post.sourceUrl?.let { url ->
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
