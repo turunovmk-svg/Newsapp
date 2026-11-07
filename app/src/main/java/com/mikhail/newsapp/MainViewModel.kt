@@ -72,7 +72,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /** Сохраняет источники в SharedPreferences. */
-    private fun saveSources(sources: List<Source>) {
+    fun saveSources(sources: List<Source>) {
         val json = Source.toJsonList(sources)
         prefs.edit().putString("sources_json", json).apply()
         _sources.value = sources
