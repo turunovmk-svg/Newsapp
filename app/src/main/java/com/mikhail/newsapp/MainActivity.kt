@@ -6,6 +6,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -51,7 +52,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -175,6 +178,7 @@ fun NewsAppNavigator() {
                         selectedPost = post
                         navController.navigate("article") { launchSingleTop = true }
                     },
+                    modifier = Modifier.padding(paddingValues)
                 )
             }
             composable("shorts") {
@@ -185,15 +189,17 @@ fun NewsAppNavigator() {
                         selectedPost = post
                         navController.navigate("article") { launchSingleTop = true }
                     },
+                    modifier = Modifier.padding(paddingValues)
                 )
             }
             composable("add_source") {
-                AddSourceScreen(viewModel = viewModel, onNavigateBack = { navController.navigate("home") })
+                AddSourceScreen(viewModel = viewModel, onNavigateBack = { navController.navigate("home") }, modifier = Modifier.padding(paddingValues))
             }
             composable("settings") {
                 SettingsScreen(
                     viewModel = viewModel,
-                    onNavigateBack = { navController.navigate("home") }
+                    onNavigateBack = { navController.navigate("home") },
+                    modifier = Modifier.padding(paddingValues)
                 )
             }
             composable("favorites") {
@@ -202,7 +208,8 @@ fun NewsAppNavigator() {
                     onArticleClick = { post ->
                         selectedPost = post
                         navController.navigate("article") { launchSingleTop = true }
-                    }
+                    },
+                    modifier = Modifier.padding(paddingValues)
                 )
             }
             composable("article") {
@@ -511,41 +518,65 @@ fun NewsCard(
 ) {
     GlassCard(
         modifier = modifier
-            .clip(RoundedCornerShape(UiSizes.CardCornerRadius)),
+            .clip(RoundedCornerShape(UiSizes.CardCornerRadius))
+            .clickable(onClick = onClick),
         borderColor = if (isFavorite) CyberColors.AccentBlueBright else CyberColors.BorderGlass,
     ) {
-        Column(modifier = Modifier.padding(UiSizes.CardPadding)) {
-            // Акцентная полоса слева для избранного
-            if (isFavorite) {
-                Box(
-                    modifier = Modifier
-                        .width(3.dp)
-                        .fillMaxHeight()
-                        .background(CyberColors.AccentBlueBright)
-                        .padding(bottom = UiSizes.SpacerMedium)
+        // Тонкая акцентная линия сверху — визуальный якорь карточки
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(2.dp)
+                .background(
+                    if (isFavorite) CyberColors.AccentBlueBright
+                    else CyberColors.AccentBlue.copy(alpha = 0.5f)
                 )
-                Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
-            }
-
+        )
+        Column(modifier = Modifier.padding(UiSizes.CardPadding)) {
             // Изображение или типографическая заглушка
             post.imageUrl?.let { imageUrl ->
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(imageUrl)
-                        .build(),
-                    contentDescription = null,
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(UiSizes.HomeCardMaxHeight)
                         .clip(RoundedCornerShape(UiSizes.CardCornerRadius))
-                        .background(CyberColors.SurfaceElevated.copy(alpha = 0.5f))
-                )
+                ) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(imageUrl)
+                            .build(),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                    )
+                    // Градиентная подложка снизу изображения
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        CyberColors.BackgroundDeep.copy(alpha = 0.45f)
+                                    ),
+                                    startY = 200f
+                                )
+                            )
+                    )
+                }
             } ?: run {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(UiSizes.HomeCardMinHeight)
-                        .background(CyberColors.SurfaceElevated.copy(alpha = 0.5f))
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    CyberColors.SurfaceElevated.copy(alpha = 0.5f),
+                                    CyberColors.SurfaceGlass.copy(alpha = 0.3f)
+                                )
+                            )
+                        )
                         .clip(RoundedCornerShape(UiSizes.CardCornerRadius))
                         .padding(UiSizes.SpacerLarge),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -565,17 +596,31 @@ fun NewsCard(
             }
             Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
 
-            // Источник и время
+            // Источник (чип) и время
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 post.sourceUrl?.let { url ->
-                    Text(
-                        text = url.replace("https://", "").replace("http://", "").take(30),
-                        style = CyberTypography.LabelLarge,
-                        color = CyberColors.AccentBlue,
-                    )
+                    val sourceName = url
+                        .removePrefix("https://")
+                        .removePrefix("http://")
+                        .removePrefix("www.")
+                        .substringBefore('/')
+                        .take(30)
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(50))
+                            .background(CyberColors.AccentBlue.copy(alpha = 0.12f))
+                            .padding(horizontal = UiSizes.SpacerSmall, vertical = UiSizes.SpacerXSmall),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = sourceName,
+                            style = CyberTypography.BodySmall,
+                            color = CyberColors.AccentBlueBright,
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
                 post.publishedAt?.let { date ->
@@ -583,6 +628,7 @@ fun NewsCard(
                         text = date,
                         style = CyberTypography.BodySmall,
                         color = CyberColors.TextSecondary,
+                        maxLines = 1
                     )
                 }
             }
@@ -607,15 +653,23 @@ fun NewsCard(
                         style = CyberTypography.BodyMedium,
                         color = CyberColors.TextSecondary,
                         maxLines = 3,
+                        modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
                 }
             }
 
-            // Действия: Избранное и Поделиться
+            // Разделитель и действия
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(CyberColors.Divider)
+            )
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween
+                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(
                     onClick = onFavoriteClick,
@@ -641,10 +695,10 @@ fun NewsCard(
 }
 
 @Composable
-fun FavoritesScreen(viewModel: MainViewModel, onArticleClick: (Post) -> Unit) {
+fun FavoritesScreen(viewModel: MainViewModel, onArticleClick: (Post) -> Unit, modifier: Modifier = Modifier) {
     val favorites by viewModel.favorites.collectAsState()
 
-    Column(modifier = Modifier.fillMaxSize().padding(UiSizes.ScreenPadding)) {
+    Column(modifier = modifier.fillMaxSize().padding(UiSizes.ScreenPadding)) {
         if (favorites.isEmpty()) {
             Column(
                 modifier = Modifier.fillMaxSize(),

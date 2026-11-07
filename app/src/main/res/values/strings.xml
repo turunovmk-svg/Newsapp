@@ -10,6 +10,8 @@
     <string name="empty_shorts">Добавьте источники</string>
     <string name="empty_home">Добавьте источники новостей</string>
     <string name="add_sources_hint">Нажмите «Добавить источник», чтобы загрузить новости</string>
+    <string name="type_detected">Распознан тип: </string>
+    <string name="source_telegram">Telegram-канал</string>
     <string name="no_image">Изображение недоступно</string>
     <string name="open_original">Открыть оригинал</string>
     <string name="article_no_content">В этом источнике нет текста статьи. Откройте оригинал для чтения полной версии.</string>

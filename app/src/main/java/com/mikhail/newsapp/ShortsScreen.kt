@@ -45,7 +45,7 @@ fun ShortsScreen(
     val currentShortsIndex by viewModel.currentShortsIndex.collectAsState()
 
     if (shortPosts.isEmpty() && error == null && !isRefreshing) {
-        EmptyShortsState(onAddSource = onAddSource)
+        EmptyShortsState(onAddSource = onAddSource, modifier = modifier)
         return
     }
 
@@ -54,6 +54,7 @@ fun ShortsScreen(
             error = error ?: "",
             onRetry = { viewModel.loadPosts(); viewModel.clearError() },
             onAddSource = onAddSource,
+            modifier = modifier,
         )
         return
     }
@@ -77,7 +78,7 @@ fun ShortsScreen(
         state = refreshState,
         isRefreshing = isRefreshing,
         onRefresh = { viewModel.loadPosts() },
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
     ) {
         Column(
             modifier = Modifier
@@ -247,21 +248,24 @@ fun ShortsNewsCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = UiSizes.ShortsPadding),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(UiSizes.SpacerSmall)
         ) {
             post.sourceUrl?.let { url ->
                 Text(
-                    text = url.replace("https://", "").replace("http://", "").take(40),
-                    style = CyberTypography.LabelLarge,
-                    color = CyberColors.AccentBlue,
+                    text = url.removePrefix("https://").removePrefix("http://").removePrefix("www.").substringBefore('/').take(40),
+                    style = CyberTypography.BodySmall,
+                    color = CyberColors.AccentBlueBright,
+                    maxLines = 1,
+                    modifier = Modifier.weight(1f, fill = false)
                 )
             }
-            Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
             post.publishedAt?.let { date ->
                 Text(
                     text = date,
                     style = CyberTypography.BodySmall,
                     color = CyberColors.TextSecondary,
+                    maxLines = 1
                 )
             }
         }
@@ -299,9 +303,9 @@ fun ShortsNewsCard(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun EmptyShortsState(onAddSource: () -> Unit) {
+private fun EmptyShortsState(onAddSource: () -> Unit, modifier: Modifier = Modifier) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(UiSizes.ScreenPadding),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -335,9 +339,10 @@ private fun ErrorShortsState(
     error: String,
     onRetry: () -> Unit,
     onAddSource: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(UiSizes.ScreenPadding),
         horizontalAlignment = Alignment.CenterHorizontally,

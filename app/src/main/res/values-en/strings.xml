@@ -8,5 +8,7 @@
     <string name="back">Back</string>
     <string name="empty_shorts">Add sources</string>
     <string name="empty_home">Add news sources</string>
+    <string name="type_detected">Detected type: </string>
+    <string name="source_telegram">Telegram channel</string>
     <string name="add_sources_hint">Tap "Add source" to load news</string>
 </resources>

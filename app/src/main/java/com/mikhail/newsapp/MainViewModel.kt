@@ -86,9 +86,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _sources.value = sources
     }
 
-    /** Добавляет источник, сохраняет в SharedPreferences и запускает загрузку постов. */
+    /** Добавляет источник по вставленной ссылке: тип определяется автоматически. */
     fun addSource(type: String, url: String) {
-        val trimmedUrl = url.trim()
+        val detected = Source.detect(url, type)
+        if (detected == null) {
+            _error.value = "Не удалось распознать ссылку"
+            return
+        }
+        val trimmedUrl = detected.url.trim()
         if (trimmedUrl.isEmpty()) {
             _error.value = "Введите URL источника"
             return
@@ -102,7 +107,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _error.value = "Источник уже добавлен"
             return
         }
-        val newSource = Source(type, trimmedUrl)
+        val newSource = Source(detected.type, trimmedUrl)
         val updated = current + newSource
         saveSources(updated)
         clearError()
@@ -125,8 +130,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 var success = false
                 for (source in sources) {
                     try {
+                        val feedUrl = if (source.type == "YOUTUBE") resolveYoutubeFeedUrl(source.url) else source.url
                         val xml = withContext(Dispatchers.Default) {
-                            fetchXml(source.url)
+                            fetchXml(feedUrl)
                         }
                         val parsed = withContext(Dispatchers.Default) {
                             parseFeed(source.type, xml)
@@ -171,8 +177,43 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             when (type) {
                 "RSS" -> parseRss(xml)
                 "REDDIT" -> parseRss(xml) // Reddit .rss тоже валидный RSS
+                "TWITTER" -> parseRss(xml) // RSSHub отдаёт стандартный RSS
                 "YOUTUBE" -> parseYouTube(xml)
+                "TELEGRAM" -> parseTelegram(xml)
                 else -> emptyList()
+            }
+        }
+    }
+
+    /**
+     * YouTube: при вставке ссылки на канал/видео (@handle, youtu.be, watch)
+     * надо сначала достать channel_id из HTML страницы и превратить ссылку в Atom-фид.
+     */
+    private suspend fun resolveYoutubeFeedUrl(url: String): String {
+        if (url.contains("/feeds/videos.xml")) return url
+        if (!(url.contains("youtube.com/@") || url.contains("youtube.com/watch") || url.contains("youtu.be/"))) return url
+        return withContext(Dispatchers.IO) {
+            try {
+                val request = Request.Builder()
+                    .url(url)
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36")
+                    .header("Accept-Language", "en-US,en;q=0.9")
+                    .build()
+                httpClient.newCall(request).execute().use { response ->
+                    val html = response.body?.string() ?: return@withContext url
+                    // channel_id ищем в JSON-описании канала
+                    val channelId = Regex("\"channel_id\"\\s*:\\s*\"(UC[\\w-]+)\"").find(html)?.groupValues?.get(1)
+                        ?: Regex("channel_id=(UC[\\w-]+)").find(html)?.groupValues?.get(1)
+                        ?: Regex("\"externalId\"\\s*:\\s*\"(UC[\\w-]+)\"").find(html)?.groupValues?.get(1)
+                    if (channelId != null) {
+                        "https://www.youtube.com/feeds/videos.xml?channel_id=$channelId"
+                    } else {
+                        url
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                url
             }
         }
     }
@@ -340,6 +381,48 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 }
                 eventType = parser.next()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return posts
+    }
+
+    /**
+     * Telegram: парсим публичное превью канала t.me/s/<channel> (без API-ключа).
+     * Каждый пост — .tgme_widget_message внутри message_bubble.
+     */
+    private fun parseTelegram(html: String): List<Post> {
+        val posts = mutableListOf<Post>()
+        try {
+            val doc = org.jsoup.Jsoup.parse(html)
+            val channelTitle = doc.selectFirst("div.tgme_channel_header_title, div.tgme_header_title")?.text() ?: "Telegram"
+            val messages = doc.select("div.tgme_widget_message")
+            for (msg in messages) {
+                val permalink = msg.attr("data-post").takeIf { it.isNotEmpty() }?.let { "https://t.me/$it" }
+                    ?: msg.selectFirst("a.tgme_widget_message_date")?.attr("href")?.takeIf { it.isNotEmpty() }
+                val date = msg.selectFirst("a.tgme_widget_message_date time")?.attr("datetime")
+                    ?: msg.selectFirst("time")?.attr("datetime")
+                    ?: msg.selectFirst("a.tgme_widget_message_date time")?.text()
+                val textEl = msg.selectFirst("div.tgme_widget_message_text")
+                val text = textEl?.text()?.trim()
+                val imageUrl = msg.selectFirst("a.tgme_widget_message_photo_wrap")?.attr("style")
+                    ?.let { Regex("url\\(['\"]?([^'\")]+)['\"]?\\)").find(it)?.groupValues?.get(1) }
+                    ?: msg.selectFirst("img.tgme_widget_message_photo_image")?.attr("src")
+                    ?: msg.selectFirst("img")?.attr("src")
+                if (text.isNullOrEmpty() && permalink == null) continue
+                val title = (text ?: channelTitle).take(120).let { if ((text?.length ?: 0) > 120) "$it…" else it }
+                val id = permalink ?: text?.hashCode()?.toString() ?: channelTitle
+                posts.add(
+                    Post(
+                        id = id,
+                        title = title,
+                        description = text,
+                        publishedAt = date,
+                        sourceUrl = permalink ?: "https://t.me/s/${channelTitle}",
+                        imageUrl = imageUrl
+                    )
+                )
             }
         } catch (e: Exception) {
             e.printStackTrace()

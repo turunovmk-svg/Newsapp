@@ -23,7 +23,8 @@ import com.mikhail.newsapp.theme.NeonButton
 @Composable
 fun SettingsScreen(
     viewModel: MainViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val sources by viewModel.sources.collectAsState()
