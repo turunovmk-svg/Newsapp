@@ -27,6 +27,7 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import com.mikhail.newsapp.theme.CyberTheme
 import com.mikhail.newsapp.theme.CyberColors
 import com.mikhail.newsapp.theme.GlassCard
+import com.mikhail.newsapp.theme.CyberTypography
 import com.mikhail.newsapp.theme.NeonButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -71,7 +72,7 @@ class MainActivity : ComponentActivity() {
             CyberTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    color = CyberColors.BackgroundDeep
                 ) {
                     NewsAppNavigator()
                 }
@@ -93,7 +94,7 @@ fun NewsAppNavigator() {
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { navController.navigate("add_source") },
-                containerColor = MaterialTheme.colorScheme.primary,
+                containerColor = CyberColors.AccentBlue,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
                 Icon(
@@ -186,8 +187,8 @@ fun NewsAppNavigator() {
                 } else {
                     Text(
                         text = "Статья не найдена",
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        style = CyberTypography.HeadlineMedium,
+                        color = CyberColors.TextPrimary,
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(UiSizes.ScreenPadding)
@@ -300,22 +301,21 @@ fun HomeScreen(
         ) {
             Text(
                 text = stringResource(id = R.string.empty_shorts),
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                style = CyberTypography.HeadlineMedium,
+                color = CyberColors.TextPrimary
             )
             Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
             Text(
                 text = stringResource(id = R.string.add_sources_hint),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = CyberTypography.BodyMedium,
+                color = CyberColors.TextSecondary,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
             Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
-            Button(
+            NeonButton(
                 onClick = onAddSource,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(stringResource(id = R.string.add_source_button))
+                modifier = Modifier.fillMaxWidth(),
+                text = stringResource(id = R.string.add_source_button)
             }
         }
         return
@@ -323,21 +323,26 @@ fun HomeScreen(
 
     // Поисковое поле
     var searchQuery by remember { mutableStateOf("") }
-    OutlinedTextField(
-        value = searchQuery,
-        onValueChange = { searchQuery = it },
-        label = { Text("Поиск новостей") },
-        leadingIcon = {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_add),
-                contentDescription = "Поиск"
-            )
-        },
+    GlassCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = UiSizes.ScreenPadding, vertical = UiSizes.SpacerSmall),
-        singleLine = true,
-    )
+        borderColor = CyberColors.BorderGlassBright,
+    ) {
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            label = { Text("Поиск новостей") },
+            leadingIcon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_add),
+                    contentDescription = "Поиск"
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+        )
+    }
     Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
 
     PullToRefreshBox(
@@ -395,8 +400,8 @@ fun HomeScreen(
         ) {
             Text(
                 text = stringResource(id = R.string.error_loading_news, error ?: ""),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.error
+                style = CyberTypography.TitleMedium,
+                color = CyberColors.Error
             )
             Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
             Button(
@@ -462,13 +467,13 @@ fun NewsCard(
                 ) {
                     Text(
                         text = "📰",
-                        style = MaterialTheme.typography.headlineLarge,
+                        style = CyberTypography.HeadlineLarge,
                     )
                     Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
                     Text(
                         text = stringResource(id = R.string.no_image),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = CyberTypography.BodySmall,
+                        color = CyberColors.TextSecondary,
                     )
                 }
             }
@@ -482,16 +487,16 @@ fun NewsCard(
                 post.sourceUrl?.let { url ->
                     Text(
                         text = url.replace("https://", "").replace("http://", "").take(30),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary,
+                        style = CyberTypography.LabelLarge,
+                        color = CyberColors.AccentBlue,
                     )
                 }
                 Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
                 post.publishedAt?.let { date ->
                     Text(
                         text = date,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = CyberTypography.BodySmall,
+                        color = CyberColors.TextSecondary,
                     )
                 }
             }
@@ -500,8 +505,8 @@ fun NewsCard(
             // Заголовок — крупный редакционный
             Text(
                 text = post.title,
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+                style = CyberTypography.HeadlineMedium,
+                color = CyberColors.TextPrimary,
                 maxLines = 2,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -513,8 +518,8 @@ fun NewsCard(
                 if (cleanDesc?.isNotEmpty() == true) {
                     Text(
                         text = cleanDesc ?: "",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = CyberTypography.BodyMedium,
+                        color = CyberColors.TextSecondary,
                         maxLines = 3,
                     )
                     Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
@@ -532,7 +537,7 @@ fun NewsCard(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_favorite),
                         contentDescription = if (isFavorite) "Убрать из избранного" else "Добавить в избранное",
-                        tint = if (isFavorite) CyberColors.AccentBlueBright else MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = if (isFavorite) CyberColors.AccentBlueBright else CyberColors.TextSecondary
                     )
                 }
                 IconButton(
@@ -541,7 +546,7 @@ fun NewsCard(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_add),
                         contentDescription = "Поделиться",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = CyberColors.TextSecondary
                     )
                 }
             }
@@ -563,16 +568,16 @@ fun TypographyCard(
         Column(modifier = Modifier.padding(UiSizes.CardPadding)) {
             Text(
                 text = post.title,
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onSurface,
+                style = CyberTypography.HeadlineMedium,
+                color = CyberColors.TextPrimary,
                 maxLines = 3,
             )
             Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
             post.description?.let { desc ->
                 Text(
                     text = desc,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = CyberTypography.BodyLarge,
+                    color = CyberColors.TextSecondary,
                     maxLines = 5,
                 )
             }
@@ -593,8 +598,8 @@ fun FavoritesScreen(viewModel: MainViewModel, onArticleClick: (Post) -> Unit) {
             ) {
                 Text(
                     text = stringResource(id = R.string.favorites_empty),
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = CyberTypography.HeadlineMedium,
+                    color = CyberColors.TextSecondary
                 )
             }
         } else {
@@ -668,7 +673,7 @@ fun ArticleScreen(
                     Icon(
                         painter = painterResource(id = R.drawable.ic_add),
                         contentDescription = "Назад",
-                        tint = MaterialTheme.colorScheme.onSurface
+                        tint = CyberColors.TextPrimary
                     )
                 }
                 Spacer(modifier = Modifier.width(UiSizes.SpacerMedium))
@@ -676,14 +681,14 @@ fun ArticleScreen(
                     post.sourceUrl?.let { url ->
                         Text(
                             text = url.replace("https://", "").replace("http://", "").take(40),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.primary,
+                            style = CyberTypography.LabelLarge,
+                            color = CyberColors.AccentBlue,
                         )
                     }
                     Text(
                         text = post.title,
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        style = CyberTypography.HeadlineMedium,
+                        color = CyberColors.TextPrimary,
                         maxLines = 2,
                     )
                 }
@@ -694,7 +699,7 @@ fun ArticleScreen(
             Spacer(modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
-                .background(MaterialTheme.colorScheme.outlineVariant)
+                .background(CyberColors.BorderGlass.copy(alpha = 0.3f))
             )
         }
 
@@ -710,7 +715,7 @@ fun ArticleScreen(
                         .fillMaxWidth()
                         .height(UiSizes.ArticleImageMaxHeight)
                         .clip(RoundedCornerShape(UiSizes.ArticleCornerRadius))
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .background(CyberColors.SurfaceElevated)
                         .padding(horizontal = UiSizes.ArticlePadding)
                 )
                 Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
@@ -729,15 +734,15 @@ fun ArticleScreen(
                     if (cleanDesc?.isNotEmpty() == true) {
                         Text(
                             text = cleanDesc ?: "",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            style = CyberTypography.BodyLarge,
+                            color = CyberColors.TextPrimary,
                             modifier = Modifier.fillMaxWidth(),
                         )
                     } else {
                         Text(
                             text = stringResource(id = R.string.article_no_content),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = CyberTypography.BodyMedium,
+                            color = CyberColors.TextSecondary,
                         )
                     }
                 }
@@ -750,7 +755,7 @@ fun ArticleScreen(
 
         item {
             // Кнопка открытия оригинала
-            Button(
+            NeonButton(
                 onClick = {
                     post.sourceUrl?.let { url ->
                         val intent = Intent(Intent.ACTION_VIEW).apply {
@@ -761,9 +766,8 @@ fun ArticleScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = UiSizes.ArticlePadding)
-            ) {
-                Text(stringResource(id = R.string.open_original))
+                    .padding(horizontal = UiSizes.ArticlePadding),
+                text = stringResource(id = R.string.open_original)
             }
             Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
         }
@@ -793,14 +797,14 @@ fun SearchScreen(
                 Icon(
                     painter = painterResource(id = R.drawable.ic_add),
                     contentDescription = "Назад",
-                    tint = MaterialTheme.colorScheme.onSurface
+                    tint = CyberColors.TextPrimary
                 )
             }
             Spacer(modifier = Modifier.width(UiSizes.SpacerMedium))
             Text(
                 text = "Поиск",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                style = CyberTypography.HeadlineMedium,
+                color = CyberColors.TextPrimary
             )
         }
         Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
@@ -832,8 +836,8 @@ fun SearchScreen(
         if (searchQuery.isNotBlank() && filteredPosts.isEmpty()) {
             Text(
                 text = "Ничего не найдено",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = CyberTypography.TitleMedium,
+                color = CyberColors.TextSecondary,
             )
         } else {
             LazyColumn(
