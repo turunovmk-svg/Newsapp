@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -74,10 +75,12 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            CyberTheme {
+            val settingsViewModel: MainViewModel = viewModel()
+            val darkThemeEnabled by settingsViewModel.darkTheme.collectAsState()
+            CyberTheme(darkTheme = darkThemeEnabled) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = CyberColors.BackgroundDeep
+                    color = if (darkThemeEnabled) CyberColors.BackgroundDeep else Color(0xFFF7F8FA)
                 ) {
                     NewsAppNavigator()
                 }
@@ -222,7 +225,9 @@ fun NewsAppNavigator() {
                     val hasNext = currentIndex < posts.size - 1
                     ArticleScreen(
                         post = post,
+                        viewModel = viewModel,
                         onNavigateBack = { navController.popBackStack() },
+                        modifier = Modifier.padding(paddingValues),
                         onPrevious = if (hasPrevious) {
                             {
                                 val prevIndex = currentIndex - 1
@@ -415,6 +420,7 @@ fun HomeScreen(
 
     // Поисковое поле
     var searchQuery by remember { mutableStateOf("") }
+    var filterType by remember { mutableStateOf("Все") }
     GlassCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -436,6 +442,47 @@ fun HomeScreen(
             singleLine = true,
         )
     }
+
+    // Чипы фильтра по типу источника
+    val filterOptions = remember(posts) {
+        val types = mutableListOf("Все")
+        val has = { pred: (Post) -> Boolean -> posts.any(pred) }
+        if (has { p -> (p.sourceUrl ?: "").contains("youtube.com") || (p.sourceUrl ?: "").contains("youtu.be") }) types.add("YouTube")
+        if (has { p -> (p.sourceUrl ?: "").contains("t.me") }) types.add("Telegram")
+        if (has { p -> (p.sourceUrl ?: "").contains("reddit.com") }) types.add("Reddit")
+        types.add("Статьи")
+        types
+    }
+    if (filterOptions.size > 2) {
+        LazyRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = UiSizes.ScreenPadding, vertical = UiSizes.SpacerXSmall),
+            horizontalArrangement = Arrangement.spacedBy(UiSizes.SpacerSmall)
+        ) {
+            items(filterOptions.size) { i ->
+                val opt = filterOptions[i]
+                val selected = filterType == opt
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(
+                            if (selected) CyberColors.AccentBlue
+                            else CyberColors.SurfaceElevated.copy(alpha = 0.6f),
+                            RoundedCornerShape(50)
+                        )
+                        .clickable { filterType = opt }
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        text = opt,
+                        style = CyberTypography.BodySmall,
+                        color = if (selected) CyberColors.TextInverse else CyberColors.TextSecondary,
+                    )
+                }
+            }
+        }
+    }
     Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
 
     PullToRefreshBox(
@@ -444,7 +491,16 @@ fun HomeScreen(
         onRefresh = { viewModel.loadPosts() },
         modifier = modifier.fillMaxSize(),
     ) {
-        val filteredPosts = if (searchQuery.isNotBlank()) {
+        fun typeOf(post: Post): String {
+            val u = post.sourceUrl ?: ""
+            return when {
+                u.contains("youtube.com") || u.contains("youtu.be") -> "YouTube"
+                u.contains("t.me") -> "Telegram"
+                u.contains("reddit.com") -> "Reddit"
+                else -> "Статьи"
+            }
+        }
+        val searchedPosts = if (searchQuery.isNotBlank()) {
             posts.filter { post ->
                 post.title.contains(searchQuery, ignoreCase = true)
                     || (post.description ?: "").contains(searchQuery, ignoreCase = true)
@@ -452,17 +508,73 @@ fun HomeScreen(
         } else {
             posts
         }
+        val filteredPosts = if (filterType == "Все") searchedPosts
+        else searchedPosts.filter { typeOf(it) == filterType }
+
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
         ) {
+            if (filteredPosts.isNotEmpty()) {
+                val first = filteredPosts.first()
+                item(key = "featured") {
+                    FeaturedNewsCard(
+                        post = first,
+                        isFavorite = viewModel.isFavorite(first),
+                        onFavoriteClick = { viewModel.toggleFavorite(first) },
+                        onShareClick = {
+                            first.sourceUrl?.let { url ->
+                                val intent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, "$url")
+                                }
+                                LocalContext.current.startActivity(Intent.createChooser(intent, "Поделиться"))
+                            }
+                        },
+                        onClick = { onArticleClick(first) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = UiSizes.ScreenPadding, vertical = UiSizes.SpacerSmall)
+                    )
+                }
+            }
+            if (filteredPosts.size > 1) {
+                item(key = "section_header") {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                start = UiSizes.ScreenPadding,
+                                end = UiSizes.ScreenPadding,
+                                top = UiSizes.SpacerMedium,
+                                bottom = UiSizes.SpacerXSmall
+                            ),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .width(4.dp)
+                                .height(18.dp)
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(CyberColors.AccentBlue)
+                        )
+                        Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
+                        Text(
+                            text = stringResource(id = R.string.section_more_news, filteredPosts.size - 1),
+                            style = CyberTypography.TitleMedium,
+                            color = CyberColors.TextSecondary
+                        )
+                    }
+                }
+            }
             items(
-                items = filteredPosts,
+                items = filteredPosts.drop(1),
                 key = { it.id }
             ) { post ->
                 val ctx = LocalContext.current
                 NewsCard(
                     post = post,
                     isFavorite = viewModel.isFavorite(post),
+                    isRead = viewModel.isRead(post),
                     onFavoriteClick = { viewModel.toggleFavorite(post) },
                     onShareClick = {
                         post.sourceUrl?.let { url ->
@@ -482,8 +594,8 @@ fun HomeScreen(
         }
     }
 
-    // Состояние ошибки — показываем поверх ленты
-    if (error != null) {
+    // Состояние ошибки — показываем под лентой
+    if (error != null && posts.isEmpty()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -507,10 +619,170 @@ fun HomeScreen(
     }
 }
 
+/** Крупная featured-карточка: изображение с градиентом, заголовок поверх. */
+@Composable
+fun FeaturedNewsCard(
+    post: Post,
+    isFavorite: Boolean,
+    onFavoriteClick: () -> Unit,
+    onShareClick: () -> Unit,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    GlassCard(
+        modifier = modifier
+            .clip(RoundedCornerShape(UiSizes.CardCornerRadiusLarge))
+            .clickable(onClick = onClick),
+        borderColor = CyberColors.BorderGlassBright,
+    ) {
+        Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(UiSizes.FeaturedImageHeight)
+            ) {
+                post.imageUrl?.let { imageUrl ->
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(imageUrl)
+                            .build(),
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        CyberColors.BackgroundDeep.copy(alpha = 0.35f),
+                                        CyberColors.BackgroundDeep.copy(alpha = 0.92f)
+                                    ),
+                                    startY = 120f
+                                )
+                            )
+                    )
+                } ?: run {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        CyberColors.SurfaceElevated,
+                                        CyberColors.BackgroundDeep.copy(alpha = 0.9f)
+                                    )
+                                )
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = "📰", style = CyberTypography.HeadlineLarge)
+                    }
+                }
+
+                // Чип источника поверх изображения
+                post.sourceUrl?.let { url ->
+                    val sourceName = url
+                        .removePrefix("https://")
+                        .removePrefix("http://")
+                        .removePrefix("www.")
+                        .substringBefore('/')
+                        .take(26)
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(UiSizes.SpacerSmall)
+                            .clip(RoundedCornerShape(50))
+                            .background(CyberColors.AccentBlue)
+                            .padding(horizontal = UiSizes.SpacerSmall, vertical = UiSizes.SpacerXSmall),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = sourceName,
+                            style = CyberTypography.BodySmall,
+                            color = CyberColors.TextInverse,
+                        )
+                    }
+                }
+                if (isFavorite) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(UiSizes.SpacerSmall)
+                            .clip(RoundedCornerShape(50))
+                            .background(CyberColors.AccentBlueBright)
+                            .padding(UiSizes.SpacerSmall)
+                    ) {
+                        Text(text = "★", color = CyberColors.TextInverse, style = CyberTypography.BodySmall)
+                    }
+                }
+
+                // Заголовок поверх градиента (внизу)
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(UiSizes.CardPadding)
+                ) {
+                    Text(
+                        text = post.title,
+                        style = CyberTypography.HeadlineLarge,
+                        color = CyberColors.TextPrimary,
+                        maxLines = 3,
+                    )
+                    post.publishedAt?.let { date ->
+                        Spacer(modifier = Modifier.height(UiSizes.SpacerXSmall))
+                        Text(
+                            text = date,
+                            style = CyberTypography.BodySmall,
+                            color = CyberColors.TextSecondary,
+                            maxLines = 1,
+                        )
+                    }
+                }
+            }
+
+            // Действия featured-карточки
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = UiSizes.SpacerSmall),
+                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onFavoriteClick) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_favorite),
+                        contentDescription = if (isFavorite) "Убрать из избранного" else "Добавить в избранное",
+                        tint = if (isFavorite) CyberColors.AccentBlueBright else CyberColors.TextSecondary
+                    )
+                }
+                IconButton(onClick = onShareClick) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_share),
+                        contentDescription = "Поделиться",
+                        tint = CyberColors.TextSecondary
+                    )
+                }
+                IconButton(onClick = onClick) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_chevron_right),
+                        contentDescription = "Читать",
+                        tint = CyberColors.AccentBlue
+                    )
+                }
+            }
+        }
+    }
+}
+
+
 @Composable
 fun NewsCard(
     post: Post,
     isFavorite: Boolean = false,
+    isRead: Boolean = false,
     onFavoriteClick: () -> Unit = {},
     onShareClick: () -> Unit = {},
     onClick: () -> Unit = {},
@@ -638,7 +910,7 @@ fun NewsCard(
             Text(
                 text = post.title,
                 style = CyberTypography.HeadlineMedium,
-                color = CyberColors.TextPrimary,
+                color = if (isRead) CyberColors.TextSecondary else CyberColors.TextPrimary,
                 maxLines = 2,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -721,6 +993,7 @@ fun FavoritesScreen(viewModel: MainViewModel, onArticleClick: (Post) -> Unit, mo
                     NewsCard(
                         post = post,
                         isFavorite = true,
+                        isRead = viewModel.isRead(post),
                         onFavoriteClick = { viewModel.toggleFavorite(post) },
                         onShareClick = {
                             post.sourceUrl?.let { url ->
@@ -743,149 +1016,6 @@ fun FavoritesScreen(viewModel: MainViewModel, onArticleClick: (Post) -> Unit, mo
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ArticleScreen(
-    post: Post,
-    onNavigateBack: () -> Unit,
-    onPrevious: (() -> Unit)? = null,
-    onNext: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
-) {
-    val context = LocalContext.current
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .pointerInput(onPrevious, onNext) {
-                var accumulatedX = 0f
-                detectDragGestures(
-                    onDragStart = { accumulatedX = 0f },
-                    onDrag = { _, dragAmount -> accumulatedX += dragAmount.x },
-                    onDragEnd = {
-                        if (accumulatedX < -80 && onNext != null) {
-                            onNext()
-                        } else if (accumulatedX > 80 && onPrevious != null) {
-                            onPrevious()
-                        }
-                        accumulatedX = 0f
-                    },
-                )
-            },
-    ) {
-        item {
-            // Верхняя панель с кнопкой назад
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(UiSizes.ArticlePadding)
-                    .height(UiSizes.ButtonHeight),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(
-                    onClick = onNavigateBack,
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_back),
-                        contentDescription = "Назад",
-                        tint = CyberColors.TextPrimary
-                    )
-                }
-                Spacer(modifier = Modifier.width(UiSizes.SpacerMedium))
-                Column {
-                    post.sourceUrl?.let { url ->
-                        Text(
-                            text = url.replace("https://", "").replace("http://", "").take(40),
-                            style = CyberTypography.LabelLarge,
-                            color = CyberColors.AccentBlue,
-                        )
-                    }
-                    Text(
-                        text = post.title,
-                        style = CyberTypography.HeadlineMedium,
-                        color = CyberColors.TextPrimary,
-                        maxLines = 2,
-                    )
-                }
-            }
-        }
-
-        item {
-            Spacer(modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(CyberColors.BorderGlass.copy(alpha = 0.3f))
-            )
-        }
-
-        item {
-            // Изображение статьи
-            post.imageUrl?.let { imageUrl ->
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(imageUrl)
-                        .build(),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(UiSizes.ArticleImageMaxHeight)
-                        .clip(RoundedCornerShape(UiSizes.ArticleCornerRadius))
-                        .background(CyberColors.SurfaceElevated)
-                        .padding(horizontal = UiSizes.ArticlePadding)
-                )
-                Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
-            }
-        }
-
-        item {
-            // Основной текст статьи
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = UiSizes.ArticlePadding)
-            ) {
-                post.description?.let { desc ->
-                    val cleanDesc = Post.stripHtml(desc)
-                    if (cleanDesc?.isNotEmpty() == true) {
-                        Text(
-                            text = cleanDesc ?: "",
-                            style = CyberTypography.BodyLarge,
-                            color = CyberColors.TextPrimary,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    } else {
-                        Text(
-                            text = stringResource(id = R.string.article_no_content),
-                            style = CyberTypography.BodyMedium,
-                            color = CyberColors.TextSecondary,
-                        )
-                    }
-                }
-            }
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
-        }
-
-        item {
-            // Кнопка открытия оригинала
-            NeonButton(
-                onClick = {
-                    post.sourceUrl?.let { url ->
-                        val intent = Intent(Intent.ACTION_VIEW).apply {
-                            data = Uri.parse(url)
-                        }
-                        context.startActivity(intent)
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = UiSizes.ArticlePadding),
-                text = stringResource(id = R.string.open_original)
-            )
-            Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
-        }
-    }
-}
 @Composable
 fun SearchScreen(
     viewModel: MainViewModel,
@@ -966,6 +1096,7 @@ fun SearchScreen(
                     NewsCard(
                         post = post,
                         isFavorite = viewModel.isFavorite(post),
+                        isRead = viewModel.isRead(post),
                         onFavoriteClick = { viewModel.toggleFavorite(post) },
                         onShareClick = {
                             post.sourceUrl?.let { url ->

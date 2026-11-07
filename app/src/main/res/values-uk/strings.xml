@@ -10,5 +10,6 @@
     <string name="empty_home">Додайте джерела новин</string>
     <string name="type_detected">Розпізнаний тип: </string>
     <string name="source_telegram">Telegram-канал</string>
+    <string name="section_more_news">Інші новини (%1$d)</string>
     <string name="add_sources_hint">Натисніть «Додати джерело», щоб завантажити новини</string>
 </resources>

@@ -18,6 +18,10 @@ object UiSizes {
     val CardPadding = 16.dp
     val CardVerticalGap = 12.dp
 
+    // ---------- Featured-карточка (главный экран) ----------
+    val FeaturedImageHeight = 300.dp
+    val FeaturedTitleMaxLines = 3
+
     // ---------- Shorts ----------
     val ShortsImageHeight = 320.dp
     val ShortsCornerRadius = 12.dp

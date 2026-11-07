@@ -39,6 +39,7 @@
 
     <!-- FavoritesScreen -->
     <string name="favorites_empty">Избранное пусто</string>
+    <string name="section_more_news">Остальные новости (%1$d)</string>
 
     <!-- Error messages -->
     <string name="error_loading_news">Ошибка загрузки новостей: %1$s</string>

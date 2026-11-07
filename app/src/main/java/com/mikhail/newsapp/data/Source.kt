@@ -68,9 +68,10 @@ data class Source(
             // URL→фид
             val feed = when {
                 // ---- Reddit ----
-                host == "reddit.com" || host == "old.reddit.com" || host == "np.reddit.com" -> {
+                host == "reddit.com" || host == "old.reddit.com" || host == "np.reddit.com" || host == "new.reddit.com" -> {
                     val path = u.substringAfter(host, "").trimEnd('/')
                     if (path.isEmpty()) return null
+                    // r/xxx, user/xxx, domain/xxx,comments — все отдают .rss
                     Source(SourceType.REDDIT, "https://www.reddit.com$path.rss")
                 }
                 // ---- YouTube ----

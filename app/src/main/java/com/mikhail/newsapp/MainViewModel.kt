@@ -11,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -49,6 +50,89 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
+
+    // ---------- Прочитанные посты (persisted) ----------
+    private val _readIds = MutableStateFlow<Set<String>>(emptySet())
+    val readIds: StateFlow<Set<String>> = _readIds.asStateFlow()
+
+    private val _unreadCount = MutableStateFlow(0)
+    val unreadCount: StateFlow<Int> = _unreadCount.asStateFlow()
+
+    // ---------- Настройки чтения (persisted) ----------
+    private val _fontScale = MutableStateOf(1.0f)
+    val fontScale: StateFlow<Float> = _fontScale.asStateFlow()
+
+    private val _darkTheme = MutableStateOf(true)
+    val darkTheme: StateFlow<Boolean> = _darkTheme.asStateFlow()
+
+    init {
+        loadSources()
+        loadFavorites()
+        loadReadIds()
+        loadSettings()
+        ensureDefaultSources()
+        loadCachedPosts()
+        loadPosts()
+        // Пересчёт непрочитанных
+        viewModelScope.launch {
+            combine(_posts, _readIds) { posts, ids ->
+                posts.count { it.id !in ids }
+            }.collect { count ->
+                _unreadCount.value = count
+            }
+        }
+    }
+
+    // ---------- Кэш постов (офлайн) ----------
+    private fun loadCachedPosts() {
+        val json = prefs.getString("posts_json", null) ?: return
+        val cached = Post.fromJsonList(json)
+        if (cached.isNotEmpty()) {
+            _posts.value = cached.sortedByDescending { it.publishedAt ?: "" }
+        }
+    }
+
+    private fun saveCachedPosts(posts: List<Post>) {
+        // храним не более 200 последних постов, чтобы не раздувать prefs
+        val toSave = posts.take(200)
+        prefs.edit().putString("posts_json", Post.toJsonList(toSave)).apply()
+    }
+
+    /** Отмечает пост прочитанным (сохраняется между запусками). */
+    fun markAsRead(post: Post) {
+        if (_readIds.value.contains(post.id)) return
+        _readIds.value = _readIds.value + post.id
+        prefs.edit().putStringSet("read_ids", _readIds.value).apply()
+    }
+
+    fun isRead(post: Post): Boolean = _readIds.value.contains(post.id)
+
+    /** Отмечает все загруженные посты прочитанными. */
+    fun markAllRead() {
+        val ids = _posts.value.map { it.id }.toSet() + _readIds.value
+        _readIds.value = ids
+        prefs.edit().putStringSet("read_ids", ids).apply()
+    }
+
+    private fun loadReadIds() {
+        val ids = prefs.getStringSet("read_ids", emptySet()) ?: emptySet()
+        _readIds.value = ids
+    }
+
+    private fun loadSettings() {
+        _fontScale.value = prefs.getFloat("font_scale", 1.0f)
+        _darkTheme.value = prefs.getBoolean("dark_theme", true)
+    }
+
+    fun setFontScale(scale: Float) {
+        _fontScale.value = scale
+        prefs.edit().putFloat("font_scale", scale).apply()
+    }
+
+    fun setDarkTheme(enabled: Boolean) {
+        _darkTheme.value = enabled
+        prefs.edit().putBoolean("dark_theme", enabled).apply()
+    }
 
     private val DEFAULT_SOURCES = listOf(
         Source("RSS", "https://feeds.bbci.co.uk/ukrainian/rss.xml"),
@@ -134,8 +218,29 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         val xml = withContext(Dispatchers.Default) {
                             fetchXml(feedUrl)
                         }
-                        val parsed = withContext(Dispatchers.Default) {
+                        var parsed = withContext(Dispatchers.Default) {
                             parseFeed(source.type, xml)
+                        }
+                        // Telegram: догружаем вторую страницу превью (старые посты)
+                        if (source.type == "TELEGRAM" && parsed.size >= 10) {
+                            try {
+                                val lastBefore = parsed.last().sourceUrl
+                                    ?.substringAfterLast("/")
+                                    ?.takeIf { it.isNotBlank() }
+                                if (lastBefore != null) {
+                                    val pagedUrl = if (feedUrl.contains("?")) "$feedUrl&before=$lastBefore"
+                                    else "$feedUrl?before=$lastBefore"
+                                    val xml2 = withContext(Dispatchers.Default) { fetchXml(pagedUrl) }
+                                    val parsed2 = withContext(Dispatchers.Default) {
+                                        parseFeed(source.type, xml2)
+                                    }
+                                    // склеиваем без дублей
+                                    val seen = parsed.map { it.id }.toSet()
+                                    parsed = parsed + parsed2.filter { it.id !in seen }
+                                }
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
                         }
                         allPosts.addAll(parsed)
                         success = true
@@ -152,6 +257,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 if (!success && _posts.value.isEmpty()) {
                     _error.value = "Не удалось загрузить новости ни из одного источника"
+                }
+                // Кэшируем загруженное для офлайна
+                if (allPosts.isNotEmpty()) {
+                    saveCachedPosts(_posts.value)
                 }
             } finally {
                 _isLoading.value = false
