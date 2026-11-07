@@ -7,11 +7,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.LinearGradient
@@ -20,6 +22,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.layer.GraphicsLayerScope
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.offset
 
 /**
  * Карточка в стиле "matte glass" — полупрозрачная поверхность с неоновой границей
@@ -32,8 +35,6 @@ fun GlassCard(
     borderColor: Color = CyberColors.BorderGlass,
     content: @Composable () -> Unit
 ) {
-    val alpha = remember { mutableFloatStateOf(1f) }
-
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
@@ -43,8 +44,8 @@ fun GlassCard(
                         CyberColors.SurfaceGlass.copy(alpha = 0.85f),
                         CyberColors.SurfaceGlassHigh.copy(alpha = 0.75f)
                     ),
-                    start = Alignment.TopStart,
-                    end = Alignment.BottomEnd
+                    start = offset(x = 0f, y = 0f),
+                    end = offset(x = 1f, y = 1f)
                 )
             )
             .border(
@@ -53,10 +54,11 @@ fun GlassCard(
                 shape = RoundedCornerShape(12.dp)
             )
             .graphicsLayer {
-                // Внешнее неоновое свечение
-                this.elevation = 4.dp
-                this.shape = RoundedCornerShape(12.dp)
-                this.alpha = alpha.value
+                shadow(
+                    color = glowColor.copy(alpha = 0.35f),
+                    elevation = 6.dp,
+                    shape = RoundedCornerShape(12.dp)
+                )
             }
     ) {
         content()
@@ -84,9 +86,7 @@ fun NeonButton(
             .clickable(
                 enabled = enabled,
                 onClick = onClick
-            ) {
-                // анимация нажатия обрабатывается системой
-            }
+            )
             .padding(horizontal = 16.dp, vertical = 12.dp)
             .background(
                 brush = Brush.linearGradient(
@@ -95,22 +95,22 @@ fun NeonButton(
                     } else {
                         listOf(Color(0xFF333333), Color(0xFF222222))
                     },
-                    start = Alignment.CenterStart,
-                    end = Alignment.CenterEnd
+                    start = offset(x = 0f, y = 0f),
+                    end = offset(x = 1f, y = 0f)
                 ),
                 shape = RoundedCornerShape(12.dp)
             )
             .graphicsLayer {
                 if (enabled && isPressed) {
-                    this.scaleX = 0.96f
-                    this.scaleY = 0.96f
-                    this.alpha = 0.85f
+                    scaleX = 0.96f
+                    scaleY = 0.96f
+                    alpha = 0.85f
                 } else if (enabled) {
-                    this.scaleX = 1f
-                    this.scaleY = 1f
-                    this.alpha = 1f
-                    this.elevation = 8.dp
-                    this.addShadow(
+                    scaleX = 1f
+                    scaleY = 1f
+                    alpha = 1f
+                    elevation = 8.dp
+                    shadow(
                         color = primaryColor.copy(alpha = 0.35f),
                         elevation = 6.dp,
                         shape = RoundedCornerShape(12.dp)
@@ -154,10 +154,10 @@ fun CyberText(
         color = color,
         modifier = modifier
             .graphicsLayer {
-                this.addShadow(
+                shadow(
                     color = glowColor.copy(alpha = 0.35f),
                     elevation = 4.dp,
-                    shape = androidx.compose.foundation.shape.CircleShape
+                    shape = RoundedCornerShape(8.dp)
                 )
             },
     )
@@ -194,8 +194,6 @@ fun NewsCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val isPressed by remember { mutableStateOf(false) }
-
     GlassCard(
         modifier = modifier
             .fillMaxWidth()

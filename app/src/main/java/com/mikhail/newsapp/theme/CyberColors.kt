@@ -13,10 +13,10 @@ import androidx.compose.ui.graphics.Color
 object CyberColors {
 
     // ---------- Основные цвета ----------
-    val BackgroundDark   = Color(0xFF0A0A0F)   // głęboki grafit
-    val BackgroundDark2  = Color(0xFF12121E)   // slightly lighter for layers
+    val BackgroundDark   = Color(0xFF0A0A0F)   // глубокий графит
+    val BackgroundDark2  = Color(0xFF12121E)   // чуть светлее для слоёв
     val SurfaceGlass     = Color(0xFF1A1A2A)   // стекло-поверхность
-    val SurfaceGlassHigh = Color(0xFF22223A)   // highlighted glass
+    val SurfaceGlassHigh = Color(0xFF22223A)   // подсвеченное стекло
 
     // ---------- Неоновые акценты ----------
     val NeonCyan    = Color(0xFF00F2FF)   // неон синий
@@ -36,9 +36,9 @@ object CyberColors {
 }
 
 /**
- * Создаёт ColorScheme в стиле cyberpunk для Material3.
+ * Создаёт ColorScheme в стиле cyberpunk.
  */
-fun CyberDarkColorScheme(): ColorScheme = ColorScheme.dark(
+fun CyberDarkColorScheme(): ColorScheme = ColorScheme(
     background = CyberColors.BackgroundDark,
     surface = CyberColors.SurfaceGlass,
     surfaceVariant = CyberColors.SurfaceGlassHigh,
