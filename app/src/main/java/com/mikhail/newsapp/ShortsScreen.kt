@@ -112,7 +112,7 @@ fun ShortsScreen(
                     isFavorite = viewModel.isFavorite(post),
                     isRead = viewModel.isRead(post),
                     onFavoriteClick = { viewModel.toggleFavorite(post) },
-                    onShareClick = { sharePost(post) },
+                    onShareClick = { sharePost(ctx, post) },
                     onOpenArticle = { onArticleClick(post) },
                     modifier = Modifier.fillMaxSize()
                 )
