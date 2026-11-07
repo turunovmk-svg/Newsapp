@@ -17,9 +17,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.LinearGradient
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.Offset
 
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -85,8 +85,8 @@ fun NeonButton(
                     } else {
                         listOf(Color(0xFF333333), Color(0xFF222222))
                     },
-                    start = Alignment.CenterStart,
-                    end = Alignment.CenterEnd
+                    start = Offset(x = 0f, y = 0f),
+                    end = Offset(x = 1f, y = 0f)
                 ),
                 shape = RoundedCornerShape(12.dp)
             )
