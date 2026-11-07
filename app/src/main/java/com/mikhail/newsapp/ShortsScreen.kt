@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -116,7 +118,7 @@ fun ShortsScreen(
                     }
                 },
                 onClick = { onArticleClick(currentPost) },
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.weight(1f),
             )
 
             // Индикатор страниц (точки)
@@ -203,6 +205,12 @@ fun ShortsNewsCard(
             .clickable(onClick = onClick),
         borderColor = if (isFavorite) CyberColors.AccentBlueBright else CyberColors.BorderGlass,
     ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = UiSizes.SpacerMedium)
+        ) {
         // Изображение новости (занимает существенную часть экрана)
         post.imageUrl?.let { imageUrl ->
             AsyncImage(
@@ -299,6 +307,7 @@ fun ShortsNewsCard(
         }
 
         Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
+        }
     }
 }
 
