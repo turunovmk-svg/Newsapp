@@ -608,9 +608,7 @@ fun FavoritesScreen(viewModel: MainViewModel, onArticleClick: (Post) -> Unit) {
     }
 }
 
-@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
-@Composable
-@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ArticleScreen(
     post: Post,
