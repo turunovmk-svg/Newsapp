@@ -1,0 +1,18 @@
+<resources>
+    <!-- Экраны -->
+    <dimen name="screen_padding">16.dp</dimen>
+    <dimen name="short_card_horizontal_padding">8.dp</dimen>
+    <dimen name="short_card_vertical_padding">4.dp</dimen>
+    <dimen name="short_card_inner_padding">8.dp</dimen>
+    <dimen name="short_image_height">400.dp</dimen>
+    <dimen name="short_image_corner_radius">8.dp</dimen>
+    <dimen name="short_spacer_big">16.dp</dimen>
+    <dimen name="short_spacer_medium">8.dp</dimen>
+    <dimen name="short_spacer_small">4.dp</dimen>
+
+    <!-- AddSourceScreen -->
+    <dimen name="source_field_spacing">12.dp</dimen>
+    <dimen name="source_section_spacing">16.dp</dimen>
+    <dimen name="source_button_spacing">8.dp</dimen>
+    <dimen name="source_bottom_spacing">24.dp</dimen>
+</resources>

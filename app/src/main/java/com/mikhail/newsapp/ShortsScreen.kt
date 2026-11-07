@@ -19,6 +19,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.mikhail.newsapp.UiSizes
 import com.mikhail.newsapp.data.Post
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,17 +57,17 @@ private fun EmptyShortsState() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(UiSizes.ScreenPadding),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(UiSizes.ShortSpacerBig))
         Text(
             text = stringResource(id = R.string.empty_shorts),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(UiSizes.ShortSpacerMedium))
         Text(
             text = stringResource(id = R.string.add_sources_hint),
             style = MaterialTheme.typography.bodyMedium,
@@ -81,11 +82,11 @@ private fun EmptyShortsState() {
 private fun ShortCard(post: Post) {
     Surface(
         modifier = Modifier
-            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .padding(horizontal = UiSizes.ShortCardHorizontalPadding, vertical = UiSizes.ShortCardVerticalPadding)
             .fillMaxWidth(),
         color = MaterialTheme.colorScheme.surface
     ) {
-        Column(modifier = Modifier.padding(8.dp)) {
+        Column(modifier = Modifier.padding(UiSizes.ShortCardInnerPadding)) {
             post.imageUrl?.let { imageUrl ->
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
@@ -94,17 +95,17 @@ private fun ShortCard(post: Post) {
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(400.dp)
-                        .clip(RoundedCornerShape(8.dp))
+                        .height(UiSizes.ShortImageHeight)
+                        .clip(RoundedCornerShape(UiSizes.ShortImageCornerRadius))
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(UiSizes.ShortSpacerMedium))
             Text(
                 text = post.title,
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(UiSizes.ShortSpacerSmall))
             post.description?.let { desc ->
                 Text(
                     text = desc,
@@ -113,7 +114,7 @@ private fun ShortCard(post: Post) {
                     maxLines = 3
                 )
             }
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(UiSizes.ShortSpacerSmall))
             post.publishedAt?.let { date ->
                 Text(
                     text = date,

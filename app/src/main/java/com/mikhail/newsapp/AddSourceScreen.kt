@@ -8,8 +8,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.mikhail.newsapp.UiSizes
 
 @Composable
 fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
@@ -19,12 +21,12 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+            .padding(UiSizes.SourceSectionSpacing),
+        verticalArrangement = Arrangement.spacedBy(UiSizes.SourceFieldSpacing),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Добавить источник",
+            text = stringResource(id = R.string.add_source_title),
             style = MaterialTheme.typography.headlineSmall
         )
 
@@ -32,7 +34,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
         OutlinedTextField(
             value = sourceType,
             onValueChange = { sourceType = it.uppercase() },
-            label = { Text("Тип (RSS / REDDIT / YOUTUBE)") },
+            label = { Text(stringResource(id = R.string.source_type_label)) },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions()
         )
@@ -41,7 +43,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
         OutlinedTextField(
             value = sourceUrl,
             onValueChange = { sourceUrl = it },
-            label = { Text("URL источника") },
+            label = { Text(stringResource(id = R.string.source_url_label)) },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)
         )
@@ -56,22 +58,22 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Добавить источник")
+            Text(stringResource(id = R.string.add_source_button))
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(UiSizes.SourceSectionSpacing))
 
         // Популярные источники
         Text(
-            text = "Популярные источники:",
+            text = stringResource(id = R.string.popular_sources_title),
             style = MaterialTheme.typography.titleMedium
         )
 
         val popularSources = listOf(
-            PopularSource("BBC Украина", "RSS", "https://feeds.bbci.co.uk/ukrainian/rss.xml"),
-            PopularSource("Украинская правда", "RSS", "https://www.pravda.com.ua/rss/"),
-            PopularSource("Reddit World News", "REDDIT", "https://www.reddit.com/r/worldnews/.rss"),
-            PopularSource("YouTube Tech", "YOUTUBE", "https://www.youtube.com/feeds/videos.xml?channel_id=UC_x5XG1OV2P6uZZ5FSM9Ttw")
+            PopularSource(stringResource(id = R.string.source_bbc_ukraine), "RSS", "https://feeds.bbci.co.uk/ukrainian/rss.xml"),
+            PopularSource(stringResource(id = R.string.source_pravda), "RSS", "https://www.pravda.com.ua/rss/"),
+            PopularSource(stringResource(id = R.string.source_reddit_world), "REDDIT", "https://www.reddit.com/r/worldnews/.rss"),
+            PopularSource(stringResource(id = R.string.source_youtube_tech), "YOUTUBE", "https://www.youtube.com/feeds/videos.xml?channel_id=UC_x5XG1OV2P6uZZ5FSM9Ttw")
         )
 
         LazyColumn(
@@ -84,14 +86,14 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit) {
                 ) {
                     Text(text = source.name)
                 }
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(UiSizes.SourceButtonSpacing))
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(UiSizes.SourceBottomSpacing))
 
         Button(onClick = onNavigateBack) {
-            Text("Назад")
+            Text(stringResource(id = R.string.back))
         }
     }
 }

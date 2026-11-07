@@ -8,4 +8,17 @@
     <string name="back">Назад</string>
     <string name="empty_shorts">Добавьте источники</string>
     <string name="add_sources_hint">Нажмите «Добавить источник», чтобы загрузить новини</string>
+
+    <!-- AddSourceScreen -->
+    <string name="add_source_title">Добавить источник</string>
+    <string name="source_type_label">Тип (RSS / REDDIT / YOUTUBE)</string>
+    <string name="source_url_label">URL источника</string>
+    <string name="add_source_button">Добавить источник</string>
+    <string name="popular_sources_title">Популярные источники:</string>
+
+    <!-- Названия популярных источников -->
+    <string name="source_bbc_ukraine">BBC Украина</string>
+    <string name="source_pravda">Украинская правда</string>
+    <string name="source_reddit_world">Reddit World News</string>
+    <string name="source_youtube_tech">YouTube Tech</string>
 </resources>
