@@ -65,6 +65,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _darkTheme = MutableStateFlow(true)
     val darkTheme: StateFlow<Boolean> = _darkTheme.asStateFlow()
 
+
+    private val DEFAULT_SOURCES = listOf(
+        Source("RSS", "https://feeds.bbci.co.uk/ukrainian/rss.xml"),
+        Source("RSS", "https://www.pravda.com.ua/rss/"),
+        Source("REDDIT", "https://www.reddit.com/r/worldnews/.rss"),
+        Source("YOUTUBE", "https://www.youtube.com/feeds/videos.xml?channel_id=UC_x5XG1OV2P6uZZ5FSM9Ttw")
+    )
+
     init {
         loadSources()
         loadFavorites()
@@ -134,19 +142,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         prefs.edit().putBoolean("dark_theme", enabled).apply()
     }
 
-    private val DEFAULT_SOURCES = listOf(
-        Source("RSS", "https://feeds.bbci.co.uk/ukrainian/rss.xml"),
-        Source("RSS", "https://www.pravda.com.ua/rss/"),
-        Source("REDDIT", "https://www.reddit.com/r/worldnews/.rss"),
-        Source("YOUTUBE", "https://www.youtube.com/feeds/videos.xml?channel_id=UC_x5XG1OV2P6uZZ5FSM9Ttw")
-    )
-
-    init {
-        loadSources()
-        loadFavorites()
-        ensureDefaultSources()
-        loadPosts()
-    }
 
     /** Загружает сохранённые источники из SharedPreferences. */
     fun loadSources() {
