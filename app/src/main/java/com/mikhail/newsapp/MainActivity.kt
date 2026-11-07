@@ -1,5 +1,7 @@
 package com.mikhail.newsapp
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -657,7 +659,15 @@ fun ArticleScreen(
 
         // Кнопка открытия оригинала
         Button(
-            onClick = { /* TODO: открыть оригинал в браузере */ },
+            onClick = {
+                post.sourceUrl?.let { url ->
+                    val context = LocalContext.current
+                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                        data = Uri.parse(url)
+                    }
+                    context.startActivity(intent)
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = UiSizes.ArticlePadding)

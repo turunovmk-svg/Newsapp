@@ -130,10 +130,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 }
                 if (allPosts.isEmpty() && _posts.value.isNotEmpty()) {
-                    // Сохраняем предыдущие посты, если新的 загрузка не вернула ничего
+                    // Сохраняем предыдущие посты, если новая загрузка не вернула ничего
                 } else {
-                    allPosts.sortByDescending { it.publishedAt }
-                    _posts.value = allPosts
+                    // Дедупликация по sourceUrl (или title если URL пуст)
+                    val deduplicatedPosts = allPosts.distinctBy { it.sourceUrl ?: it.title }
+                    _posts.value = deduplicatedPosts.sortedByDescending { it.publishedAt ?: "" }
                 }
                 if (!success && _posts.value.isEmpty()) {
                     _error.value = "Не удалось загрузить новости ни из одного источника"
