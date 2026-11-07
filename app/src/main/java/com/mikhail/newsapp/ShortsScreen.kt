@@ -46,7 +46,6 @@ fun ShortsScreen(
     val refreshState = rememberPullToRefreshState()
     val currentShortsIndex by viewModel.currentShortsIndex.collectAsState()
     val currentIndexState = remember { mutableStateOf(currentShortsIndex) }
-    var currentIndex by currentIndexState
 
     // Сохраняем индекс при входе на экран (первый раз)
     LaunchedEffect(Unit) {
@@ -68,7 +67,7 @@ fun ShortsScreen(
     }
 
     // Ограничиваем индекс размером текущего списка
-    val safeIndex = currentIndex.coerceIn(0, shortPosts.size - 1)
+    val safeIndex = currentIndexState.value.coerceIn(0, shortPosts.size - 1)
     val currentPost = shortPosts[safeIndex]
 
     val onSwipeUp = {
@@ -129,7 +128,7 @@ fun ShortsScreen(
                             .size(8.dp)
                             .clip(RoundedCornerShape(4.dp))
                             .background(
-                                if (index == currentIndex) MaterialTheme.colorScheme.primary
+                                if (index == currentIndexState.value) MaterialTheme.colorScheme.primary
                                 else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
                             )
                             .padding(4.dp)
