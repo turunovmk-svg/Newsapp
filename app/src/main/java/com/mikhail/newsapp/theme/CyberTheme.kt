@@ -1,14 +1,12 @@
 package com.mikhail.newsapp.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
-import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedShape
-import androidx.compose.foundation.shape.CornerBasedShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
+import androidx.compose.material3.dynamicLightColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.dp
 
 /**
  * Композируемая функция темы в стиле Cyberpunk.
@@ -25,20 +23,17 @@ fun CyberTheme(
         dynamicLightColorScheme()
     }
 
+    val shapes = Shapes(
+        small = RoundedShape(4.dp),
+        medium = RoundedShape(8.dp),
+        large = RoundedShape(16.dp),
+        extraLarge = RoundedShape(24.dp),
+    )
+
     MaterialTheme(
         colorScheme = colorScheme,
         typography = CyberTypography(),
-        shapes = CyberShapes(),
+        shapes = shapes,
         content = content
     )
-}
-
-/**
- * Формы в стиле cyberpunk — угловатые, с небольшим скруглением.
- */
-private object CyberShapes {
-    val Small = RoundedShape(4.dp)
-    val Medium = RoundedShape(8.dp)
-    val Large = RoundedShape(16.dp)
-    val ExtraLarge = RoundedShape(24.dp)
 }

@@ -17,13 +17,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.LinearGradient
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.layer.GraphicsLayerScope
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.offset
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Offset
 
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -49,8 +45,8 @@ fun GlassCard(
                         CyberColors.SurfaceGlass.copy(alpha = 0.85f),
                         CyberColors.SurfaceGlassHigh.copy(alpha = 0.75f)
                     ),
-                    start = offset(x = 0f, y = 0f),
-                    end = offset(x = 1f, y = 1f)
+                    start = Offset(x = 0f, y = 0f),
+                    end = Offset(x = 1f, y = 1f)
                 )
             )
             .border(
@@ -100,8 +96,8 @@ fun NeonButton(
                     } else {
                         listOf(Color(0xFF333333), Color(0xFF222222))
                     },
-                    start = offset(x = 0f, y = 0f),
-                    end = offset(x = 1f, y = 0f)
+                    start = Offset(x = 0f, y = 0f),
+                    end = Offset(x = 1f, y = 0f)
                 ),
                 shape = RoundedCornerShape(12.dp)
             )
@@ -136,7 +132,7 @@ fun NeonButton(
                 text = text,
                 style = MaterialTheme.typography.labelLarge,
                 color = if (enabled) Color(0xFFFFFFFF) else Color(0xFF888888),
-                fontWeight = FontWeight.Bold
+                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
             )
         }
     }
@@ -148,7 +144,7 @@ fun NeonButton(
 @Composable
 fun CyberText(
     text: String,
-    style: TextStyle = MaterialTheme.typography.bodyMedium,
+    style: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.bodyMedium,
     color: Color = CyberColors.TextOnSurface,
     glowColor: Color = CyberColors.NeonCyan,
     modifier: Modifier = Modifier
