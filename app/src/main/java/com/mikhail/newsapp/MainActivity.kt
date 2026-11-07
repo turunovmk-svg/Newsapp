@@ -577,7 +577,7 @@ fun ArticleScreen(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = remember { LocalContext.current }
+    val context = LocalContext.current
     Column(
         modifier = modifier.fillMaxSize(),
     ) {
