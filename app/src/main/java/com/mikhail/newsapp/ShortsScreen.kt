@@ -19,7 +19,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.mikhail.newsapp.ShortCard
+import com.mikhail.newsapp.NewsCard
 import com.mikhail.newsapp.UiSizes
 import com.mikhail.newsapp.data.Post
 
@@ -58,7 +58,7 @@ fun ShortsScreen(viewModel: MainViewModel, onAddSource: () -> Unit) {
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    Spacer(modifier = Modifier.height(UiSizes.ShortSpacerMedium))
+                    Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
                     Button(
                         onClick = { viewModel.loadPosts(); viewModel.clearError() },
                         modifier = Modifier.fillMaxWidth()
@@ -77,10 +77,13 @@ fun ShortsScreen(viewModel: MainViewModel, onAddSource: () -> Unit) {
                         modifier = Modifier.fillMaxSize()
                     ) {
                         items(shortPosts) { post ->
-                            ShortCard(
+                            NewsCard(
                                 post = post,
                                 isFavorite = viewModel.isFavorite(post),
-                                onFavoriteClick = { viewModel.toggleFavorite(post) }
+                                onFavoriteClick = { viewModel.toggleFavorite(post) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = UiSizes.CardPadding, vertical = UiSizes.SpacerXSmall)
                             )
                         }
                     }
@@ -100,20 +103,20 @@ private fun EmptyShortsState(onAddSource: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Spacer(modifier = Modifier.height(UiSizes.ShortSpacerBig))
+        Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
         Text(
             text = stringResource(id = R.string.empty_shorts),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
-        Spacer(modifier = Modifier.height(UiSizes.ShortSpacerMedium))
+        Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
         Text(
             text = stringResource(id = R.string.add_sources_hint),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.height(UiSizes.ShortSpacerBig))
+        Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
         Button(
             onClick = onAddSource,
             modifier = Modifier.fillMaxWidth()

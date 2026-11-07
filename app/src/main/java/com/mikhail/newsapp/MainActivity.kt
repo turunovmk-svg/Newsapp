@@ -3,6 +3,8 @@ package com.mikhail.newsapp
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.clickable.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -75,6 +78,7 @@ class MainActivity : ComponentActivity() {
 fun NewsAppNavigator() {
     val viewModel: MainViewModel = viewModel<MainViewModel>()
     val navController = rememberNavController()
+    val selectedPost by remember { mutableStateOf<Post?>(null) }
 
     Scaffold(
         bottomBar = {
@@ -104,9 +108,8 @@ fun NewsAppNavigator() {
                     viewModel = viewModel,
                     onAddSource = { navController.navigate("add_source") },
                     onArticleClick = { post ->
-                        navController.navigate("article/${post.id}") {
-                            launchSingleTop = true
-                        }
+                        selectedPost.value = post
+                        navController.navigate("article") { launchSingleTop = true }
                     },
                     modifier = Modifier.padding(paddingValues)
                 )
@@ -127,18 +130,13 @@ fun NewsAppNavigator() {
                 FavoritesScreen(
                     viewModel = viewModel,
                     onArticleClick = { post ->
-                        navController.navigate("article/${post.id}") {
-                            launchSingleTop = true
-                        }
+                        selectedPost.value = post
+                        navController.navigate("article") { launchSingleTop = true }
                     }
                 )
             }
-            composable("article/{postId}") {
-                val viewModel: MainViewModel = viewModel<MainViewModel>()
-                val posts by viewModel.posts.collectAsState()
-                val postId = navController.currentBackStackEntryAsState().value
-                    .arguments?.getString("postId") ?: ""
-                val post = posts.find { it.id == postId }
+            composable("article") {
+                val post = selectedPost.value
                 if (post != null) {
                     ArticleScreen(
                         post = post,
@@ -390,7 +388,7 @@ fun NewsCard(
                 post.publishedAt?.let { date ->
                     Text(
                         text = date,
-                        style = MaterialTheme.typography.caption,
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
