@@ -3,13 +3,17 @@ package com.mikhail.newsapp
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Shorts
+import androidx.compose.material.icons.filled.Add as AddIcon
+import androidx.compose.material.icons.filled.Favorite as FavoriteIcon
+import androidx.compose.material.icons.filled.Home as HomeIcon
+import androidx.compose.material.icons.filled.Settings as SettingsIcon
+import androidx.compose.material.icons.filled.Shorts as ShortsIcon
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -26,7 +30,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.popUpTo
 import com.mikhail.newsapp.UiSizes
 import com.mikhail.newsapp.data.Post
 import coil.compose.AsyncImage
@@ -64,7 +67,7 @@ fun NewsAppNavigator() {
                 contentColor = MaterialTheme.colorScheme.onPrimary
             ) {
                 Icon(
-                    imageVector = Add,
+                    imageVector = AddIcon,
                     contentDescription = "Add source",
                     tint = MaterialTheme.colorScheme.onPrimary
                 )
@@ -105,67 +108,52 @@ fun NewsAppNavigator() {
 
 @Composable
 fun NewsBottomNavBar(navController: NavHostController) {
-    var selectedScreen by remember { mutableStateOf("home") }
+    var selectedScreen by remember { mutableStateOf<String>("home") }
 
     NavigationBar {
         NavigationBarItem(
             selected = selectedScreen == "home",
             onClick = {
                 selectedScreen = "home"
-                navController.navigate("home") {
-                    popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
-                    launchSingleTop = true
-                }
+                navController.navigate("home") { launchSingleTop = true }
             },
-            icon = { Icon(imageVector = Home, contentDescription = "Главная") },
+            icon = { Icon(imageVector = HomeIcon, contentDescription = "Главная") },
             label = { Text("Главная") }
         )
         NavigationBarItem(
             selected = selectedScreen == "favorites",
             onClick = {
                 selectedScreen = "favorites"
-                navController.navigate("favorites") {
-                    popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
-                    launchSingleTop = true
-                }
+                navController.navigate("favorites") { launchSingleTop = true }
             },
-            icon = { Icon(imageVector = Favorite, contentDescription = "Избранное") },
+            icon = { Icon(imageVector = FavoriteIcon, contentDescription = "Избранное") },
             label = { Text("Избранное") }
         )
         NavigationBarItem(
             selected = selectedScreen == "shorts",
             onClick = {
                 selectedScreen = "shorts"
-                navController.navigate("shorts") {
-                    popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
-                    launchSingleTop = true
-                }
+                navController.navigate("shorts") { launchSingleTop = true }
             },
-            icon = { Icon(imageVector = Shorts, contentDescription = "Шортс") },
+            icon = { Icon(imageVector = ShortsIcon, contentDescription = "Шортс") },
             label = { Text("Шортс") }
         )
         NavigationBarItem(
             selected = selectedScreen == "add_source",
             onClick = {
                 selectedScreen = "add_source"
-                navController.navigate("add_source") {
-                    popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
-                    launchSingleTop = true
-                }
+                navController.navigate("add_source") { launchSingleTop = true }
             },
-            icon = { Icon(imageVector = Add, contentDescription = "Добавить") },
+            icon = { Icon(imageVector = AddIcon, contentDescription = "Добавить") },
             label = { Text("Добавить") }
         )
         NavigationBarItem(
             selected = selectedScreen == "settings",
             onClick = {
                 selectedScreen = "settings"
-                navController.navigate("settings") {
-                    popUpTo(navController.graph.findStartDestination().id) { inclusive = true }
-                    launchSingleTop = true
-                }
+                navController.navigate("settings") { launchSingleTop = true }
             },
-            icon = { Icon(imageVector = Settings, contentDescription = "Настройки") },
+            icon = { Icon(imageVector = SettingsIcon, contentDescription = "Настройки") },
             label = { Text("Настройки") }
         )
     }
@@ -186,7 +174,7 @@ fun HomeScreen(
                     .padding(UiSizes.ScreenPadding)
                     .fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
+                verticalArrangement = Arrangement.Center
             ) {
                 Text(
                     text = stringResource(id = R.string.empty_shorts),
