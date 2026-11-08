@@ -719,9 +719,19 @@ fun HomeScreen(
                     )
                 }
             }
-            else -> LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-            ) {
+            else -> {
+                val listState = rememberLazyListState()
+                // Автоотметка прочитанным при прокрутке мимо (как в Reeder)
+                LaunchedEffect(listState.firstVisibleItemIndex, sortedPosts.size) {
+                    val passed = listState.firstVisibleItemIndex - 2 // featured + header
+                    if (passed > 0) {
+                        sortedPosts.take(passed).forEach { viewModel.markAsRead(it) }
+                    }
+                }
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize(),
+                ) {
                 if (sortedPosts.isNotEmpty()) {
                     val first = sortedPosts.first()
                     item(key = "featured") {
@@ -801,6 +811,7 @@ fun HomeScreen(
                             .padding(horizontal = UiSizes.CardPadding, vertical = UiSizes.SpacerXSmall)
                     )
                 }
+            }
             }
         }
     }
