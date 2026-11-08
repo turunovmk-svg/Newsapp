@@ -164,6 +164,7 @@ fun ShortsFullScreenCard(
             AsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(imageUrl)
+                    .crossfade(150)
                     .build(),
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),

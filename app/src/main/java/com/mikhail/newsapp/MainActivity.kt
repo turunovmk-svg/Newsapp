@@ -58,6 +58,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -70,6 +72,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.AnnotatedStringBuilder
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.pointerInput
@@ -829,11 +833,16 @@ fun HomeScreen(
     }
     Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
 
+    val feedListState = rememberLazyListState()
+    val showToTop by remember { androidx.compose.runtime.derivedStateOf { feedListState.firstVisibleItemIndex > 3 } }
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+
+    Box(modifier = modifier.fillMaxSize()) {
     PullToRefreshBox(
         state = refreshState,
         isRefreshing = isLoading,
         onRefresh = { viewModel.loadPosts() },
-        modifier = modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
     ) {
         fun typeOf(post: Post): String {
             val u = post.sourceUrl ?: ""
@@ -908,16 +917,15 @@ fun HomeScreen(
                 }
             }
             else -> {
-                val listState = rememberLazyListState()
                 // Автоотметка прочитанным при прокрутке мимо (как в Reeder)
-                LaunchedEffect(listState.firstVisibleItemIndex, sortedPosts.size) {
-                    val passed = listState.firstVisibleItemIndex - 2 // featured + header
+                LaunchedEffect(feedListState.firstVisibleItemIndex, sortedPosts.size) {
+                    val passed = feedListState.firstVisibleItemIndex - 2 // featured + header
                     if (passed > 0) {
                         sortedPosts.take(passed).forEach { viewModel.markAsRead(it) }
                     }
                 }
                 LazyColumn(
-                    state = listState,
+                    state = feedListState,
                     modifier = Modifier.fillMaxSize(),
                 ) {
                 if (sortedPosts.isNotEmpty()) {
@@ -1004,6 +1012,25 @@ fun HomeScreen(
             }
         }
     }
+
+    // Кнопка «Наверх» при прокрутке
+    if (showToTop) {
+        androidx.compose.material3.SmallFloatingActionButton(
+            onClick = { scope.launch { feedListState.animateScrollToItem(0) } },
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(end = UiSizes.ScreenPadding, top = UiSizes.SpacerSmall),
+            containerColor = CyberColors.SurfaceElevated,
+            contentColor = CyberColors.AccentBlueBright
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_arrow_up),
+                contentDescription = "Наверх",
+                modifier = Modifier.size(18.dp)
+            )
+        }
+    }
+    } // конец Box
 
     // Состояние ошибки — показываем под лентой
     if (error != null && posts.isEmpty()) {
@@ -1111,6 +1138,7 @@ fun SwipeableNewsCard(
         label = "swipeOffset"
     )
     val animatedOffsetDp = with(LocalDensity.current) { animatedOffset.toDp() }
+    val haptic = LocalHapticFeedback.current
 
     Box(
         modifier = modifier
@@ -1143,9 +1171,11 @@ fun SwipeableNewsCard(
                     onDragEnd = {
                         if (!handled) {
                             if (offsetX > 120f) {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 onFavoriteClick()
                                 handled = true
                             } else if (offsetX < -120f) {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 onReadClick()
                                 handled = true
                             }
