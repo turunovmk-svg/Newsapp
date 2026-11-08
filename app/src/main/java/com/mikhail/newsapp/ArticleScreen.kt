@@ -128,6 +128,7 @@ fun ArticleScreen(
 
     // ---------- Перевод статьи ----------
     var translatedText by remember { mutableStateOf<String?>(null) }
+    var translatedTitle by remember { mutableStateOf<String?>(null) }
     var isTranslating by remember { mutableStateOf(false) }
     var showTranslation by remember { mutableStateOf(false) }
 

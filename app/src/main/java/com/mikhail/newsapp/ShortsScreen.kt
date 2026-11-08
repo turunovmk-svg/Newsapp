@@ -175,15 +175,9 @@ fun ShortsFullScreenCard(
             )
         } else {
             post.imageUrl?.let { imageUrl ->
-                AsyncImage(
-                    model = ImageRequest.Builder(context)
-                        .data(imageUrl)
-                        .size(coil.size.Size.ORIGINAL)   // без даунскейла — резче на полном экране
-                        .crossfade(150)
-                        .build(),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
+                SmartNewsImage(
+                    imageUrl = imageUrl,
+                    modifier = Modifier.fillMaxSize()
                 )
             } ?: run {
                 SourceGradientPlaceholder(
@@ -245,11 +239,11 @@ fun ShortsFullScreenCard(
             }
         }
 
-        // Вертикальная панель действий справа (TikTok-style — низ правой части)
+        // Вертикальная панель действий справа — над текстовым блоком (низ экрана)
         Column(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
-                .padding(end = UiSizes.SpacerSmall, bottom = 140.dp),
+                .padding(end = UiSizes.SpacerSmall, bottom = 250.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(UiSizes.SpacerMedium)
         ) {

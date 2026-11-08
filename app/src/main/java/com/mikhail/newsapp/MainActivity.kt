@@ -51,6 +51,7 @@ import com.mikhail.newsapp.theme.GlassCard
 import com.mikhail.newsapp.theme.CyberTypography
 import com.mikhail.newsapp.theme.NeonButton
 import com.mikhail.newsapp.theme.SourceGradientPlaceholder
+import com.mikhail.newsapp.theme.SmartNewsImage
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.FabPosition
@@ -60,6 +61,8 @@ import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.Button
@@ -339,10 +342,10 @@ fun NewsAppNavigator() {
                             .graphicsLayer(scaleX = fabScale, scaleY = fabScale)
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_add),
+                            imageVector = Icons.Filled.Add,
                             contentDescription = "Добавить источник",
-                            tint = CyberColors.TextInverse,
-                            modifier = Modifier.size(24.dp)
+                            tint = Color.White,
+                            modifier = Modifier.size(26.dp)
                         )
                     }
                 }
@@ -1163,16 +1166,11 @@ fun GridNewsCard(
                 .fillMaxWidth()
                 .height(110.dp)
         ) {
-            post.imageUrl?.let { imageUrl ->
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(imageUrl)
-                        .build(),
-                    contentDescription = null,
+            SmartNewsImage(
+                    imageUrl = post.imageUrl,
                     modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            } ?: run {
+                    cornerRadius = 0.dp
+                ) ?: run {
                 SourceGradientPlaceholder(
                     sourceUrl = post.siteUrl ?: post.sourceUrl,
                     modifier = Modifier.fillMaxSize(),

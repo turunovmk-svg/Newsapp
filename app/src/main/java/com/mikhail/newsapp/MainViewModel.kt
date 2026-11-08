@@ -480,6 +480,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Апскейл картинок для CDN, которые отдают миниатюры по размеру в пути (BBC ichef и т.п.).
+     * 240px → 1024px: резче на полном экране.
+     */
+    private fun upgradeImageUrl(url: String): String {
+        val u = url.trim()
+        return when {
+            // BBC: https://ichef.bbci.co.uk/ace/ws/240/... → .../1024/...
+            u.contains("ichef.bbci.co.uk/ace/ws/") ->
+                Regex("/ace/ws/\d+/").replace(u, "/ace/ws/1024/")
+            u.contains("ichef-1.bbci.co.uk/ace/ws/") ->
+                Regex("/ace/ws/\d+/").replace(u, "/ace/ws/1024/")
+            else -> u
+        }
+    }
+
     private suspend fun parseFeed(type: String, xml: String): List<Post> {
         return withContext(Dispatchers.Default) {
             when (type) {
@@ -543,6 +559,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             var currentDate: String? = null
             var currentLink: String? = null
             var currentImageUrl: String? = null
+            var currentImageWidth = 0
             var currentSiteUrl: String? = null
             var currentSiteName: String? = null
             var inItem = false
@@ -559,6 +576,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                             currentDate = null
                             currentLink = null
                             currentImageUrl = null
+                            currentImageWidth = 0
                             currentSiteUrl = null
                             currentSiteName = null
                         } else if (inItem && tag == "source") {
@@ -570,7 +588,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                 ?: parser.getAttributeValue(null, "href")
                                 ?: parser.getAttributeValue(null, "image")
                             if (imgUrl != null && imgUrl.isNotEmpty()) {
-                                currentImageUrl = imgUrl
+                                val declaredWidth = parser.getAttributeValue(null, "width")?.toIntOrNull() ?: 0
+                                // берём самый большой из доступных
+                                if (declaredWidth >= currentImageWidth) {
+                                    currentImageWidth = declaredWidth
+                                    currentImageUrl = imgUrl
+                                } else if (currentImageUrl == null) {
+                                    currentImageUrl = imgUrl
+                                }
                             }
                         }
                     }
@@ -603,7 +628,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                     description = currentDesc,
                                     publishedAt = currentDate,
                                     sourceUrl = currentLink,
-                                    imageUrl = finalImageUrl,
+                                    imageUrl = finalImageUrl?.let { upgradeImageUrl(it) },
                                     siteUrl = currentSiteUrl,
                                     siteName = currentSiteName
                                 ))
