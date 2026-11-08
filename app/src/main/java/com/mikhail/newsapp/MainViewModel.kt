@@ -148,6 +148,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private fun loadSettings() {
         _fontScale.value = prefs.getFloat("font_scale", 1.0f)
         _darkTheme.value = prefs.getBoolean("dark_theme", true)
+        _viewMode.value = prefs.getString("view_mode", "cards") ?: "cards"
+        _sortMode.value = prefs.getString("sort_mode", "date") ?: "date"
     }
 
     fun setFontScale(scale: Float) {
@@ -158,6 +160,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setDarkTheme(enabled: Boolean) {
         _darkTheme.value = enabled
         prefs.edit().putBoolean("dark_theme", enabled).apply()
+    }
+
+    // ---------- Режим отображения ленты и сортировка ----------
+    private val _viewMode = MutableStateFlow("cards")   // cards / list / grid
+    val viewMode: StateFlow<String> = _viewMode.asStateFlow()
+
+    private val _sortMode = MutableStateFlow("date")    // date / source
+    val sortMode: StateFlow<String> = _sortMode.asStateFlow()
+
+    fun setViewMode(mode: String) {
+        _viewMode.value = mode
+        prefs.edit().putString("view_mode", mode).apply()
+    }
+
+    fun setSortMode(mode: String) {
+        _sortMode.value = mode
+        prefs.edit().putString("sort_mode", mode).apply()
     }
 
 

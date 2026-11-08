@@ -21,6 +21,9 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -465,6 +468,8 @@ fun HomeScreen(
     var filterType by remember { mutableStateOf("Все") }
     val folders by viewModel.folders.collectAsState()
     val selectedFolder by viewModel.selectedFolder.collectAsState()
+    val viewMode by viewModel.viewMode.collectAsState()
+    val sortMode by viewModel.sortMode.collectAsState()
 
     // Чипы папок (если есть)
     if (folders.isNotEmpty()) {
@@ -538,6 +543,62 @@ fun HomeScreen(
         )
     }
 
+    // Строка управления: режим отображения + сортировка
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = UiSizes.ScreenPadding, vertical = UiSizes.SpacerXSmall),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(UiSizes.SpacerSmall)
+    ) {
+        // Режимы отображения
+        listOf(
+            "cards" to R.drawable.ic_view_cards,
+            "list" to R.drawable.ic_view_list,
+            "grid" to R.drawable.ic_view_grid
+        ).forEach { (mode, icon) ->
+            val selected = viewMode == mode
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(
+                        if (selected) CyberColors.AccentBlue else CyberColors.SurfaceElevated.copy(alpha = 0.6f),
+                        RoundedCornerShape(8.dp)
+                    )
+                    .clickable { viewModel.setViewMode(mode) }
+                    .padding(horizontal = 10.dp, vertical = 6.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = icon),
+                    contentDescription = when (mode) {
+                        "cards" -> "Карточки"
+                        "list" -> "Список"
+                        else -> "Сетка"
+                    },
+                    tint = if (selected) CyberColors.TextInverse else CyberColors.TextSecondary,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+        Spacer(modifier = Modifier.weight(1f))
+        // Сортировка
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .background(CyberColors.SurfaceElevated.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
+                .clickable {
+                    viewModel.setSortMode(if (sortMode == "date") "source" else "date")
+                }
+                .padding(horizontal = 10.dp, vertical = 6.dp)
+        ) {
+            Text(
+                text = if (sortMode == "date") "По дате ↓" else "По источнику",
+                style = CyberTypography.BodySmall,
+                color = CyberColors.TextSecondary,
+            )
+        }
+    }
+
     // Чипы фильтра по типу источника
     val filterOptions = remember(posts) {
         val types = mutableListOf("Все")
@@ -606,87 +667,140 @@ fun HomeScreen(
         val filteredPosts = if (filterType == "Все") searchedPosts
         else searchedPosts.filter { typeOf(it) == filterType }
 
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            if (filteredPosts.isNotEmpty()) {
-                val first = filteredPosts.first()
-                item(key = "featured") {
-                    FeaturedNewsCard(
-                        post = first,
-                        isFavorite = viewModel.isFavorite(first),
-                        onFavoriteClick = { viewModel.toggleFavorite(first) },
-                        onShareClick = {
-                            first.sourceUrl?.let { url ->
+        // Сортировка
+        val sortedPosts = if (sortMode == "source") {
+            filteredPosts.sortedWith(compareBy({ it.siteName ?: it.sourceUrl ?: "" }, { it.publishedAt ?: "" }))
+        } else {
+            filteredPosts
+        }
+
+        when (viewMode) {
+            "list" -> LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    horizontal = UiSizes.ScreenPadding,
+                    vertical = UiSizes.SpacerSmall
+                ),
+                verticalArrangement = Arrangement.spacedBy(UiSizes.SpacerSmall)
+            ) {
+                items(items = sortedPosts, key = { it.id }) { post ->
+                    val ctx = LocalContext.current
+                    CompactNewsCard(
+                        post = post,
+                        isRead = viewModel.isRead(post),
+                        onClick = { onArticleClick(post) },
+                        onRemove = { viewModel.toggleReadLater(post) },
+                        onShare = {
+                            post.sourceUrl?.let { url ->
                                 val intent = Intent(Intent.ACTION_SEND).apply {
                                     type = "text/plain"
                                     putExtra(Intent.EXTRA_TEXT, "$url")
                                 }
-                                context.startActivity(Intent.createChooser(intent, "Поделиться"))
+                                ctx.startActivity(Intent.createChooser(intent, "Поделиться"))
                             }
-                        },
-                        onClick = { onArticleClick(first) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = UiSizes.ScreenPadding, vertical = UiSizes.SpacerSmall)
+                        }
                     )
                 }
             }
-            if (filteredPosts.size > 1) {
-                item(key = "section_header") {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(
-                                start = UiSizes.ScreenPadding,
-                                end = UiSizes.ScreenPadding,
-                                top = UiSizes.SpacerMedium,
-                                bottom = UiSizes.SpacerXSmall
-                            ),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
+            "grid" -> LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    horizontal = UiSizes.SpacerSmall,
+                    vertical = UiSizes.SpacerSmall
+                ),
+                horizontalArrangement = Arrangement.spacedBy(UiSizes.SpacerSmall),
+                verticalArrangement = Arrangement.spacedBy(UiSizes.SpacerSmall)
+            ) {
+                items(items = sortedPosts, key = { it.id }) { post ->
+                    GridNewsCard(
+                        post = post,
+                        onClick = { onArticleClick(post) }
+                    )
+                }
+            }
+            else -> LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                if (sortedPosts.isNotEmpty()) {
+                    val first = sortedPosts.first()
+                    item(key = "featured") {
+                        FeaturedNewsCard(
+                            post = first,
+                            isFavorite = viewModel.isFavorite(first),
+                            onFavoriteClick = { viewModel.toggleFavorite(first) },
+                            onShareClick = {
+                                first.sourceUrl?.let { url ->
+                                    val intent = Intent(Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(Intent.EXTRA_TEXT, "$url")
+                                    }
+                                    context.startActivity(Intent.createChooser(intent, "Поделиться"))
+                                }
+                            },
+                            onClick = { onArticleClick(first) },
                             modifier = Modifier
-                                .width(4.dp)
-                                .height(18.dp)
-                                .clip(RoundedCornerShape(2.dp))
-                                .background(CyberColors.AccentBlue)
-                        )
-                        Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
-                        Text(
-                            text = stringResource(id = R.string.section_more_news, filteredPosts.size - 1),
-                            style = CyberTypography.TitleMedium,
-                            color = CyberColors.TextSecondary
+                                .fillMaxWidth()
+                                .padding(horizontal = UiSizes.ScreenPadding, vertical = UiSizes.SpacerSmall)
                         )
                     }
                 }
-            }
-            items(
-                items = filteredPosts.drop(1),
-                key = { it.id }
-            ) { post ->
-                val ctx = LocalContext.current
-                NewsCard(
-                    post = post,
-                    isFavorite = viewModel.isFavorite(post),
-                    isRead = viewModel.isRead(post),
-                    isReadLater = viewModel.isReadLater(post),
-                    onReadLaterClick = { viewModel.toggleReadLater(post) },
-                    onFavoriteClick = { viewModel.toggleFavorite(post) },
-                    onShareClick = {
-                        post.sourceUrl?.let { url ->
-                            val intent = Intent(Intent.ACTION_SEND).apply {
-                                type = "text/plain"
-                                putExtra(Intent.EXTRA_TEXT, "$url")
-                            }
-                            ctx.startActivity(Intent.createChooser(intent, "Поделиться"))
+                if (sortedPosts.size > 1) {
+                    item(key = "section_header") {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(
+                                    start = UiSizes.ScreenPadding,
+                                    end = UiSizes.ScreenPadding,
+                                    top = UiSizes.SpacerMedium,
+                                    bottom = UiSizes.SpacerXSmall
+                                ),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .width(4.dp)
+                                    .height(18.dp)
+                                    .clip(RoundedCornerShape(2.dp))
+                                    .background(CyberColors.AccentBlue)
+                            )
+                            Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
+                            Text(
+                                text = stringResource(id = R.string.section_more_news, sortedPosts.size - 1),
+                                style = CyberTypography.TitleMedium,
+                                color = CyberColors.TextSecondary
+                            )
                         }
-                    },
-                    onClick = { onArticleClick(post) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = UiSizes.CardPadding, vertical = UiSizes.SpacerXSmall)
-                )
+                    }
+                }
+                items(
+                    items = sortedPosts.drop(1),
+                    key = { it.id }
+                ) { post ->
+                    val ctx = LocalContext.current
+                    NewsCard(
+                        post = post,
+                        isFavorite = viewModel.isFavorite(post),
+                        isRead = viewModel.isRead(post),
+                        isReadLater = viewModel.isReadLater(post),
+                        onReadLaterClick = { viewModel.toggleReadLater(post) },
+                        onFavoriteClick = { viewModel.toggleFavorite(post) },
+                        onShareClick = {
+                            post.sourceUrl?.let { url ->
+                                val intent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, "$url")
+                                }
+                                ctx.startActivity(Intent.createChooser(intent, "Поделиться"))
+                            }
+                        },
+                        onClick = { onArticleClick(post) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = UiSizes.CardPadding, vertical = UiSizes.SpacerXSmall)
+                    )
+                }
             }
         }
     }
@@ -711,6 +825,61 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(stringResource(id = R.string.retry_button))
+            }
+        }
+    }
+}
+
+/** Компактная карточка для сетки (2 колонки). */
+@Composable
+fun GridNewsCard(
+    post: Post,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(UiSizes.CardCornerRadius))
+            .background(CyberColors.SurfaceElevated.copy(alpha = 0.55f))
+            .clickable(onClick = onClick)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(110.dp)
+        ) {
+            post.imageUrl?.let { imageUrl ->
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(imageUrl)
+                        .build(),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } ?: run {
+                SourceGradientPlaceholder(
+                    sourceUrl = post.siteUrl ?: post.sourceUrl,
+                    modifier = Modifier.fillMaxSize(),
+                    cornerRadius = 0.dp
+                )
+            }
+        }
+        Column(modifier = Modifier.padding(UiSizes.SpacerSmall)) {
+            Text(
+                text = post.title,
+                style = CyberTypography.BodyMedium,
+                color = CyberColors.TextPrimary,
+                maxLines = 3,
+            )
+            post.publishedAt?.let {
+                Spacer(modifier = Modifier.height(UiSizes.SpacerXSmall))
+                Text(
+                    text = it,
+                    style = CyberTypography.BodySmall,
+                    color = CyberColors.TextMuted,
+                    maxLines = 1
+                )
             }
         }
     }
