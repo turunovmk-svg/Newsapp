@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -68,6 +69,30 @@ fun ArticleScreen(
     val context = LocalContext.current
     val fontScale by viewModel.fontScale.collectAsState()
     val isReadLater = viewModel.isReadLater(post)
+
+    // ---------- Позиция прокрутки (сохраняется между открытиями) ----------
+    val articlePrefs = remember {
+        context.getSharedPreferences("NewsAppScroll", android.content.Context.MODE_PRIVATE)
+    }
+    val listState = rememberLazyListState()
+    // восстанавливаем позицию для этого поста
+    LaunchedEffect(post.id) {
+        val saved = articlePrefs.getInt("pos_${post.id}", -1)
+        if (saved >= 0) {
+            val index = saved / 100000
+            val offset = saved % 100000
+            if (index > 0 || offset > 0) {
+                try { listState.scrollToItem(index, offset) } catch (e: Exception) { }
+            }
+        }
+    }
+    // сохраняем при уходе
+    DisposableEffect(post.id) {
+        onDispose {
+            val pos = (listState.firstVisibleItemIndex * 100000) + listState.firstVisibleItemScrollOffset
+            articlePrefs.edit().putInt("pos_${post.id}", pos).apply()
+        }
+    }
 
     // ---------- Озвучивание (TTS) ----------
     var isSpeaking by remember { mutableStateOf(false) }
@@ -127,6 +152,7 @@ fun ArticleScreen(
     )
 
     LazyColumn(
+        state = listState,
         modifier = modifier
             .fillMaxSize()
             .pointerInput(onPrevious, onNext) {

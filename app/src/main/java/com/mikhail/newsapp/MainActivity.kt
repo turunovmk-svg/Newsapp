@@ -1,5 +1,6 @@
 package com.mikhail.newsapp
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -563,6 +564,36 @@ fun HomeScreen(
             )
         }
         return
+    }
+
+    // ---------- Офлайн-индикатор ----------
+    var isOffline by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+            val caps = cm.activeNetwork?.let { cm.getNetworkCapabilities(it) }
+            isOffline = caps?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) != true
+            kotlinx.coroutines.delay(5000)
+        }
+    }
+
+    if (isOffline) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = UiSizes.ScreenPadding, vertical = UiSizes.SpacerXSmall)
+                .clip(RoundedCornerShape(50))
+                .background(CyberColors.Warning.copy(alpha = 0.18f))
+                .padding(horizontal = UiSizes.CardPadding, vertical = UiSizes.SpacerSmall),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "Нет сети — показаны сохранённые копии",
+                style = CyberTypography.BodySmall,
+                color = CyberColors.Warning,
+            )
+        }
     }
 
     // Поисковое поле
