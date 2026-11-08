@@ -91,23 +91,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val darkTheme: StateFlow<Boolean> = _darkTheme.asStateFlow()
 
 
-        init {
-        loadSources()
-        loadFavorites()
-        loadReadLater()
-        loadReadIds()
-        loadSettings()
-        loadCachedPosts()
-        loadPosts()
-        // Пересчёт непрочитанных
-        viewModelScope.launch {
-            combine(_posts, _readIds) { posts, ids ->
-                posts.count { it.id !in ids }
-            }.collect { count ->
-                _unreadCount.value = count
-            }
-        }
-    }
 
     // ---------- Кэш постов (офлайн) ----------
     private fun loadCachedPosts() {
@@ -200,6 +183,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _notifIntervalHours = MutableStateFlow(3)
     val notifIntervalHours: StateFlow<Int> = _notifIntervalHours.asStateFlow()
+
+        init {
+        loadSources()
+        loadFavorites()
+        loadReadLater()
+        loadReadIds()
+        loadSettings()
+        loadCachedPosts()
+        loadPosts()
+        // Пересчёт непрочитанных
+        viewModelScope.launch {
+            combine(_posts, _readIds) { posts, ids ->
+                posts.count { it.id !in ids }
+            }.collect { count ->
+                _unreadCount.value = count
+            }
+        }
+    }
+
 
     /** Включает/выключает фоновые уведомления (пересоздаёт worker). */
     fun setNotificationsEnabled(context: Context, enabled: Boolean) {
