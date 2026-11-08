@@ -10,6 +10,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -100,6 +104,7 @@ fun NewsAppNavigator() {
     val navController = rememberNavController()
     var selectedPost by remember { mutableStateOf<Post?>(null) }
     var videoPost by remember { mutableStateOf<Post?>(null) }
+    var viewerImageUrl by remember { mutableStateOf<String?>(null) }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -240,6 +245,16 @@ fun NewsAppNavigator() {
                     modifier = Modifier.padding(paddingValues)
                 )
             }
+            composable("image") {
+                val url = viewerImageUrl
+                if (url != null) {
+                    ImageViewerScreen(
+                        imageUrl = url,
+                        onNavigateBack = { navController.popBackStack() },
+                        modifier = Modifier.padding(paddingValues)
+                    )
+                }
+            }
             composable("video") {
                 val post = videoPost
                 if (post != null) {
@@ -271,6 +286,10 @@ fun NewsAppNavigator() {
                         post = post,
                         viewModel = viewModel,
                         onNavigateBack = { navController.popBackStack() },
+                        onImageClick = { url ->
+                            viewerImageUrl = url
+                            navController.navigate("image") { launchSingleTop = true }
+                        },
                         modifier = Modifier.padding(paddingValues),
                         onPrevious = if (hasPrevious) {
                             {
@@ -789,13 +808,14 @@ fun HomeScreen(
                     key = { it.id }
                 ) { post ->
                     val ctx = LocalContext.current
-                    NewsCard(
+                    SwipeableNewsCard(
                         post = post,
                         isFavorite = viewModel.isFavorite(post),
                         isRead = viewModel.isRead(post),
                         isReadLater = viewModel.isReadLater(post),
-                        onReadLaterClick = { viewModel.toggleReadLater(post) },
                         onFavoriteClick = { viewModel.toggleFavorite(post) },
+                        onReadClick = { viewModel.markAsRead(post) },
+                        onReadLaterClick = { viewModel.toggleReadLater(post) },
                         onShareClick = {
                             post.sourceUrl?.let { url ->
                                 val intent = Intent(Intent.ACTION_SEND).apply {
@@ -893,6 +913,91 @@ fun GridNewsCard(
                 )
             }
         }
+    }
+}
+
+/**
+ * Карточка новости с горизонтальными свайпами:
+ * вправо — в избранное, влево — прочитано (в стиле Reeder).
+ */
+@Composable
+fun SwipeableNewsCard(
+    post: Post,
+    isFavorite: Boolean,
+    isRead: Boolean,
+    isReadLater: Boolean,
+    onFavoriteClick: () -> Unit,
+    onReadClick: () -> Unit,
+    onReadLaterClick: () -> Unit,
+    onShareClick: () -> Unit,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var offsetX by remember { mutableStateOf(0f) }
+    var handled by remember { mutableStateOf(false) }
+    val animSpec = androidx.compose.animation.core.tween<Float>(200)
+    val animatedOffset by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = offsetX,
+        animationSpec = animSpec,
+        label = "swipeOffset"
+    )
+    val animatedOffsetDp = with(LocalDensity.current) { animatedOffset.toDp() }
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(UiSizes.CardCornerRadius))
+            .background(
+                brush = Brush.horizontalGradient(
+                    colors = when {
+                        animatedOffset > 0f -> listOf(
+                            CyberColors.AccentBlue.copy(alpha = 0.25f),
+                            CyberColors.SurfaceElevated.copy(alpha = 0f)
+                        )
+                        animatedOffset < 0f -> listOf(
+                            CyberColors.SurfaceElevated.copy(alpha = 0f),
+                            CyberColors.Success.copy(alpha = 0.2f)
+                        )
+                        else -> listOf(Color.Transparent, Color.Transparent)
+                    }
+                )
+            )
+            .pointerInput(post.id) {
+                detectDragGestures(
+                    onDragStart = {
+                        offsetX = 0f
+                        handled = false
+                    },
+                    onDrag = { _, dragAmount ->
+                        offsetX += dragAmount.x
+                    },
+                    onDragEnd = {
+                        if (!handled) {
+                            if (offsetX > 120f) {
+                                onFavoriteClick()
+                                handled = true
+                            } else if (offsetX < -120f) {
+                                onReadClick()
+                                handled = true
+                            }
+                        }
+                        offsetX = 0f
+                    }
+                )
+            }
+    ) {
+        NewsCard(
+            post = post,
+            isFavorite = isFavorite,
+            isRead = isRead,
+            isReadLater = isReadLater,
+            onFavoriteClick = onFavoriteClick,
+            onReadLaterClick = onReadLaterClick,
+            onShareClick = onShareClick,
+            onClick = onClick,
+            modifier = Modifier
+                .offset(x = animatedOffsetDp)
+        )
     }
 }
 

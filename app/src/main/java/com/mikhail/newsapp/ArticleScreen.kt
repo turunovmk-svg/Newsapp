@@ -3,6 +3,7 @@ package com.mikhail.newsapp
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -201,6 +202,7 @@ fun ArticleScreen(
                         .padding(horizontal = UiSizes.ArticlePadding)
                         .height(UiSizes.ArticleImageMaxHeight)
                         .clip(RoundedCornerShape(UiSizes.ArticleCornerRadius))
+                        .clickable { onImageClick(imageUrl) }
                 ) {
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
