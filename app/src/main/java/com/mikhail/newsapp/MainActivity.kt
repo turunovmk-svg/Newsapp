@@ -217,6 +217,7 @@ fun NewsAppNavigator() {
     var selectedPost by remember { mutableStateOf<Post?>(null) }
     var videoPost by remember { mutableStateOf<Post?>(null) }
     var viewerImageUrl by remember { mutableStateOf<String?>(null) }
+    var homeScrollTrigger by remember { mutableStateOf(0) }
 
     // Splash — брендированный старт
     var showSplash by remember { mutableStateOf(true) }
@@ -282,7 +283,18 @@ fun NewsAppNavigator() {
             }
         },
         bottomBar = {
-            NewsBottomNavBar(navController = navController, currentRoute = currentRoute)
+            NewsBottomNavBar(
+                navController = navController,
+                currentRoute = currentRoute,
+                onTabRepeat = { route ->
+                    when (route) {
+                        "shorts" -> viewModel.setCurrentShortsIndex(0)
+                        "home" -> homeScrollTrigger = homeScrollTrigger + 1
+                        "favorites" -> {}
+                        else -> {}
+                    }
+                }
+            )
         },
         floatingActionButton = {
             if (currentRoute == "home") {
@@ -329,6 +341,7 @@ fun NewsAppNavigator() {
             composable("home") {
                 HomeScreen(
                     viewModel = viewModel,
+                    scrollToTopTrigger = homeScrollTrigger,
                     onAddSource = { navController.navigate("add_source") },
                     onArticleClick = { post ->
                         if (isYouTubePost(post)) {
@@ -484,7 +497,11 @@ fun NewsAppNavigator() {
 }
 
 @Composable
-fun NewsBottomNavBar(navController: NavHostController, currentRoute: String?) {
+fun NewsBottomNavBar(
+    navController: NavHostController,
+    currentRoute: String?,
+    onTabRepeat: (String) -> Unit
+) {
     Surface(
         color = CyberColors.SurfaceGlassStrong,
         shadowElevation = 16.dp,
@@ -525,6 +542,10 @@ fun NewsBottomNavBar(navController: NavHostController, currentRoute: String?) {
                     NavigationBarItem(
                         selected = selected,
                         onClick = {
+                            // Тап по уже активному табу — возврат в начало (как в топ-лентах)
+                            if (selected) {
+                                onTabRepeat(route)
+                            }
                             navController.navigate(route) {
                                 launchSingleTop = true
                                 popUpTo("home") { inclusive = false }
@@ -578,6 +599,7 @@ fun NewsBottomNavBar(navController: NavHostController, currentRoute: String?) {
 @Composable
 fun HomeScreen(
     viewModel: MainViewModel,
+    scrollToTopTrigger: Int = 0,
     onAddSource: () -> Unit,
     onArticleClick: (Post) -> Unit,
     onSearchClick: () -> Unit,
@@ -870,6 +892,12 @@ fun HomeScreen(
     Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
 
     val feedListState = rememberLazyListState()
+    // Прокрутка в начало по табу «Главная»
+    LaunchedEffect(scrollToTopTrigger) {
+        if (scrollToTopTrigger > 0) {
+            try { feedListState.animateScrollToItem(0) } catch (e: Exception) { }
+        }
+    }
     val showToTop by remember { androidx.compose.runtime.derivedStateOf { feedListState.firstVisibleItemIndex > 3 } }
     val scope = androidx.compose.runtime.rememberCoroutineScope()
 
@@ -1049,20 +1077,20 @@ fun HomeScreen(
         }
     }
 
-    // Кнопка «Наверх» при прокрутке
+    // Кнопка «Наверх» при прокрутке — левый нижний угол, чтобы не мешать FAB «+»
     if (showToTop) {
         androidx.compose.material3.SmallFloatingActionButton(
             onClick = { scope.launch { feedListState.animateScrollToItem(0) } },
             modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(end = UiSizes.ScreenPadding, top = UiSizes.SpacerSmall),
+                .align(Alignment.BottomStart)
+                .padding(start = UiSizes.ScreenPadding, bottom = UiSizes.SpacerLarge),
             containerColor = CyberColors.SurfaceElevated,
             contentColor = CyberColors.AccentBlueBright
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_arrow_up),
                 contentDescription = "Наверх",
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(20.dp)
             )
         }
     }

@@ -105,9 +105,15 @@ fun ShortsScreen(
     val safeStart = currentIndexState.coerceIn(0, shortPosts.size - 1)
     val pagerState = rememberPagerState(initialPage = safeStart) { shortPosts.size }
 
-    // Сохраняем позицию в ViewModel при смене страницы
+    // Синхронизация: пейджер → ViewModel (обычный свайп)
     LaunchedEffect(pagerState.currentPage) {
         viewModel.setCurrentShortsIndex(pagerState.currentPage)
+    }
+    // ViewModel → пейджер (сброс по табу «Шортс»)
+    LaunchedEffect(currentIndexState) {
+        if (currentIndexState != pagerState.currentPage && currentIndexState < shortPosts.size) {
+            pagerState.animateScrollToPage(currentIndexState)
+        }
     }
 
     PullToRefreshBox(
