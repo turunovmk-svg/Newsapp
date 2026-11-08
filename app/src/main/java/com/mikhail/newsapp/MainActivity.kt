@@ -1194,10 +1194,15 @@ fun SwipeableNewsCard(
                     var totalY = 0f
                     var armed = false
                     var finished = false
+                    var lastX = down.position.x
+                    var lastY = down.position.y
                     drag(down.id) { change ->
-                        val delta = change.positionChange()
-                        totalX += delta.x
-                        totalY += delta.y
+                        val px = change.position.x
+                        val py = change.position.y
+                        totalX += px - lastX
+                        totalY += py - lastY
+                        lastX = px
+                        lastY = py
                         if (!armed && !finished &&
                             abs(totalX) > 40f && abs(totalX) > abs(totalY)
                         ) {
@@ -1214,8 +1219,10 @@ fun SwipeableNewsCard(
                         val actionX = offsetX
                         offsetX = 0f
                         if (actionX > 120f) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             onFavoriteClick()
                         } else if (actionX < -120f) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             onReadClick()
                         }
                     } else if (!armed) {
