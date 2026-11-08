@@ -58,6 +58,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
 
     val error by viewModel.error.collectAsState()
     val sources by viewModel.sources.collectAsState()
+    val sourceErrors by viewModel.sourceErrors.collectAsState()
     val context = LocalContext.current
 
     // Предзагружаем строковые ресурсы для использования в onClick лямбдах
@@ -78,14 +79,6 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
         if (sourceUrl.isBlank()) null
         else Source.detect(sourceUrl)?.type
     }
-
-    val popularSources = listOf(
-        PopularSource(stringResource(id = R.string.source_bbc_ukraine), SourceType.RSS, "https://feeds.bbci.co.uk/ukrainian/rss.xml"),
-        PopularSource(stringResource(id = R.string.source_pravda), SourceType.RSS, "https://www.pravda.com.ua/rss/"),
-        PopularSource(stringResource(id = R.string.source_reddit_world), SourceType.REDDIT, "https://reddit.com/r/worldnews"),
-        PopularSource(stringResource(id = R.string.source_telegram), SourceType.TELEGRAM, "https://t.me/s/ukraina_novosti"),
-        PopularSource(stringResource(id = R.string.source_youtube_tech), SourceType.YOUTUBE, "https://www.youtube.com/@Google")
-    )
 
     fun addSource(type: String, url: String) {
         isAdding = true
@@ -286,72 +279,81 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
             }
         }
 
-        item {
-            Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
-
-            // Популярные источники — заголовок секции
-            Text(
-                text = stringResource(id = R.string.popular_sources_title),
-                style = CyberTypography.TitleMedium,
-                color = CyberColors.TextSecondary,
-            )
-            Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
+        // ---------- Ошибки загрузки источников ----------
+        if (sourceErrors.isNotEmpty()) {
+            item {
+                Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
+                GlassCard(borderColor = CyberColors.Error.copy(alpha = 0.4f)) {
+                    Column(modifier = Modifier.padding(UiSizes.CardPadding)) {
+                        Text(
+                            text = "Проблемы с источниками:",
+                            style = CyberTypography.BodyMedium,
+                            color = CyberColors.Error,
+                        )
+                        sourceErrors.forEach { (url, msg) ->
+                            Spacer(modifier = Modifier.height(UiSizes.SpacerXSmall))
+                            Text(
+                                text = "• ${url.removePrefix("https://").removePrefix("http://").take(36)}: $msg",
+                                style = CyberTypography.BodySmall,
+                                color = CyberColors.TextSecondary,
+                            )
+                        }
+                    }
+                }
+            }
         }
 
-        // Популярные источники — отдельные элементы
-        items(popularSources) { source ->
-            val isAdded = sources.any { it.url == source.url }
-            GlassCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = UiSizes.SpacerXSmall),
-                borderColor = if (isAdded) CyberColors.AccentBlueBright else CyberColors.BorderGlass,
-            ) {
-                Row(
+        // ---------- Мои источники ----------
+        if (sources.isNotEmpty()) {
+            item {
+                Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
+                Text(
+                    text = "Мои источники (${sources.size})",
+                    style = CyberTypography.TitleMedium,
+                    color = CyberColors.TextSecondary,
+                )
+                Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
+            }
+            items(sources.size) { i ->
+                val src = sources[i]
+                val isAdded = true
+                GlassCard(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable(
-                            enabled = !isAdded && !isAdding,
-                            onClick = { addSource(source.type, source.url) }
-                        )
-                        .padding(horizontal = UiSizes.CardPadding, vertical = UiSizes.SpacerSmall),
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(vertical = UiSizes.SpacerXSmall),
+                    borderColor = CyberColors.AccentBlue.copy(alpha = 0.3f),
                 ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_link),
-                        contentDescription = source.name,
-                        tint = if (isAdded) CyberColors.AccentBlueBright else CyberColors.AccentBlue,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(UiSizes.SpacerMedium))
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = source.name,
-                            style = CyberTypography.TitleMedium,
-                            color = CyberColors.TextPrimary,
-                        )
-                        Text(
-                            text = source.url,
-                            style = CyberTypography.BodySmall,
-                            color = CyberColors.TextSecondary,
-                            maxLines = 1,
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(UiSizes.SpacerMedium))
-                    if (isAdding) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp,
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = UiSizes.CardPadding, vertical = UiSizes.SpacerSmall),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_check),
+                            contentDescription = null,
+                            tint = CyberColors.AccentBlueBright,
+                            modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(UiSizes.SpacerMedium))
-                    }
-                    if (isAdded) {
-                        // Кнопка удаления источника
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = src.url
+                                    .removePrefix("https://")
+                                    .removePrefix("http://")
+                                    .take(48),
+                                style = CyberTypography.BodyMedium,
+                                color = CyberColors.TextPrimary,
+                                maxLines = 1,
+                            )
+                            Text(
+                                text = typeLabel(src.type),
+                                style = CyberTypography.BodySmall,
+                                color = CyberColors.TextSecondary,
+                            )
+                        }
                         IconButton(
-                            onClick = {
-                                viewModel.removeSource(source.url)
-                                addedSource = false
-                            },
+                            onClick = { viewModel.removeSource(src.url); addedSource = false },
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_delete),
@@ -377,12 +379,6 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
         }
     }
 }
-
-private data class PopularSource(
-    val name: String,
-    val type: String,
-    val url: String
-)
 
 /** Круглый чип выбора типа источника. */
 @Composable

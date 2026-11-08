@@ -59,6 +59,8 @@ implementation "androidx.navigation:navigation-compose:2.8.3"
     implementation "com.squareup.okhttp3:okhttp:4.12.0"
     // Jsoup для HTML-парсинга (Telegram t.me/s превью и др.)
     implementation "org.jsoup:jsoup:1.17.2"
+    // YouTube-плеер для просмотра роликов внутри приложения
+    implementation "com.pierfrancescosoffritti.androidyoutubeplayer:core:12.1.0"
     testImplementation "junit:junit:4.13.2"
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:1.7.0"
     debugImplementation "androidx.compose.ui:ui-tooling:1.7.0"

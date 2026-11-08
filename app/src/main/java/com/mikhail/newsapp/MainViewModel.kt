@@ -48,6 +48,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _currentShortsIndex.value = index
     }
 
+    // ---------- Ошибки конкретных источников (url → текст) ----------
+    private val _sourceErrors = MutableStateFlow<Map<String, String>>(emptyMap())
+    val sourceErrors: StateFlow<Map<String, String>> = _sourceErrors.asStateFlow()
+
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
@@ -66,19 +70,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val darkTheme: StateFlow<Boolean> = _darkTheme.asStateFlow()
 
 
-    private val DEFAULT_SOURCES = listOf(
-        Source("RSS", "https://feeds.bbci.co.uk/ukrainian/rss.xml"),
-        Source("RSS", "https://www.pravda.com.ua/rss/"),
-        Source("REDDIT", "https://www.reddit.com/r/worldnews/.rss"),
-        Source("YOUTUBE", "https://www.youtube.com/feeds/videos.xml?channel_id=UC_x5XG1OV2P6uZZ5FSM9Ttw")
-    )
-
-    init {
+        init {
         loadSources()
         loadFavorites()
         loadReadIds()
         loadSettings()
-        ensureDefaultSources()
         loadCachedPosts()
         loadPosts()
         // Пересчёт непрочитанных
@@ -149,15 +145,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _sources.value = Source.fromJsonList(json)
     }
 
-    /** Добавляет предустановленные источники, если пользователь ещё не добавил ни одного. */
-    fun ensureDefaultSources() {
-        val current = _sources.value
-        if (current.isEmpty()) {
-            _sources.value = DEFAULT_SOURCES
-            saveSources(DEFAULT_SOURCES)
-        }
-    }
-
     /** Сохраняет источники в SharedPreferences. */
     fun saveSources(sources: List<Source>) {
         val json = Source.toJsonList(sources)
@@ -224,8 +211,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                     ?.takeIf { it.isNotBlank() }
                                 if (lastBefore != null) {
                                     val pagedUrl = if (feedUrl.contains("?")) "$feedUrl&before=$lastBefore"
-                                    else "$feedUrl?before=$lastBefore"
-                                    val xml2 = withContext(Dispatchers.Default) { fetchXml(pagedUrl) }
+                                    else "$feedUe, xml2)
+                                                  val xml2 = withContext(Dispatchers.Default) { fetchXml(pagedUrl) }
                                     val parsed2 = withContext(Dispatchers.Default) {
                                         parseFeed(source.type, xml2)
                                     }
@@ -565,6 +552,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             saveSources(updated)
             // Удаляем посты этого источника
             _posts.value = _posts.value.filter { it.sourceUrl != url }
+            clearError()
+        }
+    }
+
+    /** Проверяет, находится ли публикация в избранном. */
+    fun isFavorite(post: Post): Boolean {
+        return _favorites.value.any { it.id == post.id }
+    }
+
+    /** Сбрасывает сообщение об ошибке. */
+    fun clearError() {
+        _error.value = null
+    }
+}
+{ it.sourceUrl != url }
             clearError()
         }
     }

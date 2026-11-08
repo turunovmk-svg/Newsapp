@@ -31,6 +31,7 @@ import com.mikhail.newsapp.theme.CyberColors
 import com.mikhail.newsapp.theme.GlassCard
 import com.mikhail.newsapp.theme.CyberTypography
 import com.mikhail.newsapp.theme.NeonButton
+import com.mikhail.newsapp.theme.SourceGradientPlaceholder
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.FabPosition
@@ -95,6 +96,7 @@ fun NewsAppNavigator() {
     val viewModel: MainViewModel = viewModel<MainViewModel>()
     val navController = rememberNavController()
     var selectedPost by remember { mutableStateOf<Post?>(null) }
+    var videoPost by remember { mutableStateOf<Post?>(null) }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -166,8 +168,13 @@ fun NewsAppNavigator() {
                     viewModel = viewModel,
                     onAddSource = { navController.navigate("add_source") },
                     onArticleClick = { post ->
-                        selectedPost = post
-                        navController.navigate("article") { launchSingleTop = true }
+                        if (isYouTubePost(post)) {
+                            videoPost = post
+                            navController.navigate("video") { launchSingleTop = true }
+                        } else {
+                            selectedPost = post
+                            navController.navigate("article") { launchSingleTop = true }
+                        }
                     },
                     onSearchClick = { navController.navigate("search") },
                     modifier = Modifier.padding(paddingValues)
@@ -178,8 +185,13 @@ fun NewsAppNavigator() {
                     viewModel = viewModel,
                     onNavigateBack = { navController.popBackStack() },
                     onArticleClick = { post ->
-                        selectedPost = post
-                        navController.navigate("article") { launchSingleTop = true }
+                        if (isYouTubePost(post)) {
+                            videoPost = post
+                            navController.navigate("video") { launchSingleTop = true }
+                        } else {
+                            selectedPost = post
+                            navController.navigate("article") { launchSingleTop = true }
+                        }
                     },
                     modifier = Modifier.padding(paddingValues)
                 )
@@ -189,8 +201,13 @@ fun NewsAppNavigator() {
                     viewModel = viewModel,
                     onAddSource = { navController.navigate("add_source") },
                     onArticleClick = { post ->
-                        selectedPost = post
-                        navController.navigate("article") { launchSingleTop = true }
+                        if (isYouTubePost(post)) {
+                            videoPost = post
+                            navController.navigate("video") { launchSingleTop = true }
+                        } else {
+                            selectedPost = post
+                            navController.navigate("article") { launchSingleTop = true }
+                        }
                     },
                     modifier = Modifier.padding(paddingValues)
                 )
@@ -209,11 +226,35 @@ fun NewsAppNavigator() {
                 FavoritesScreen(
                     viewModel = viewModel,
                     onArticleClick = { post ->
-                        selectedPost = post
-                        navController.navigate("article") { launchSingleTop = true }
+                        if (isYouTubePost(post)) {
+                            videoPost = post
+                            navController.navigate("video") { launchSingleTop = true }
+                        } else {
+                            selectedPost = post
+                            navController.navigate("article") { launchSingleTop = true }
+                        }
                     },
                     modifier = Modifier.padding(paddingValues)
                 )
+            }
+            composable("video") {
+                val post = videoPost
+                if (post != null) {
+                    YouTubePlayerScreen(
+                        post = post,
+                        onNavigateBack = { navController.popBackStack() },
+                        modifier = Modifier.padding(paddingValues)
+                    )
+                } else {
+                    Text(
+                        text = "Видео не найдено",
+                        style = CyberTypography.HeadlineMedium,
+                        color = CyberColors.TextPrimary,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(UiSizes.ScreenPadding)
+                    )
+                }
             }
             composable("article") {
                 val viewModel: MainViewModel = viewModel<MainViewModel>()
@@ -667,21 +708,11 @@ fun FeaturedNewsCard(
                             )
                     )
                 } ?: run {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                brush = Brush.verticalGradient(
-                                    colors = listOf(
-                                        CyberColors.SurfaceElevated,
-                                        CyberColors.BackgroundDeep.copy(alpha = 0.9f)
-                                    )
-                                )
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = "📰", style = CyberTypography.HeadlineLarge)
-                    }
+                    SourceGradientPlaceholder(
+                        sourceUrl = post.sourceUrl,
+                        modifier = Modifier.fillMaxSize(),
+                        cornerRadius = 0.dp,
+                    )
                 }
 
                 // Чип источника поверх изображения
@@ -839,34 +870,14 @@ fun NewsCard(
                     )
                 }
             } ?: run {
-                Column(
+                // Градиентный плейсхолдер в цветах источника
+                SourceGradientPlaceholder(
+                    sourceUrl = post.sourceUrl,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(UiSizes.HomeCardMinHeight)
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    CyberColors.SurfaceElevated.copy(alpha = 0.5f),
-                                    CyberColors.SurfaceGlass.copy(alpha = 0.3f)
-                                )
-                            )
-                        )
-                        .clip(RoundedCornerShape(UiSizes.CardCornerRadius))
-                        .padding(UiSizes.SpacerLarge),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = "📰",
-                        style = CyberTypography.HeadlineLarge,
-                    )
-                    Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
-                    Text(
-                        text = stringResource(id = R.string.no_image),
-                        style = CyberTypography.BodySmall,
-                        color = CyberColors.TextSecondary,
-                    )
-                }
+                        .height(UiSizes.HomeCardMinHeight),
+                    cornerRadius = UiSizes.CardCornerRadius,
+                )
             }
             Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
 

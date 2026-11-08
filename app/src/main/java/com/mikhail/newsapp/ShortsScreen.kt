@@ -46,6 +46,7 @@ import com.mikhail.newsapp.data.Post
 import com.mikhail.newsapp.theme.CyberColors
 import com.mikhail.newsapp.theme.CyberTypography
 import com.mikhail.newsapp.theme.NeonButton
+import com.mikhail.newsapp.theme.SourceGradientPlaceholder
 import com.mikhail.newsapp.UiSizes
 
 /**
@@ -118,26 +119,7 @@ fun ShortsScreen(
                 )
             }
 
-            // Индикатор страниц (точки) поверх — TikTok-style
-            Row(
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(end = UiSizes.SpacerSmall),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                shortPosts.forEachIndexed { index, _ ->
-                    Box(
-                        modifier = Modifier
-                            .size(if (index == pagerState.currentPage) 8.dp else 5.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (index == pagerState.currentPage) CyberColors.AccentBlueBright
-                                else CyberColors.TextSecondary.copy(alpha = 0.4f)
-                            )
-                    )
-                }
-            }
+            // Индикатор страниц убран по требованию — чистая TikTok-лента
         }
     }
 }
@@ -154,7 +136,11 @@ fun ShortsFullScreenCard(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .clickable(onClick = onOpenArticle)
+    ) {
         // Фон: фото или заглушка
         post.imageUrl?.let { imageUrl ->
             AsyncImage(
@@ -166,18 +152,11 @@ fun ShortsFullScreenCard(
                 contentScale = ContentScale.Crop
             )
         } ?: run {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(CyberColors.SurfaceElevated, CyberColors.BackgroundDeep)
-                        )
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = "📰", style = CyberTypography.HeadlineLarge)
-            }
+            SourceGradientPlaceholder(
+                sourceUrl = post.sourceUrl,
+                modifier = Modifier.fillMaxSize(),
+                cornerRadius = 0.dp,
+            )
         }
 
         // Верхний и нижний градиенты для читаемости
@@ -239,7 +218,7 @@ fun ShortsFullScreenCard(
         ) {
             ShortsActionButton(
                 icon = R.drawable.ic_favorite,
-                label = if (isFavorite) "В избранном" else "Лайк",
+                label = if (isFavorite) "В избранном" else "В избранное",
                 tint = if (isFavorite) CyberColors.AccentBlueBright else CyberColors.TextPrimary,
                 onClick = onFavoriteClick
             )
@@ -248,12 +227,6 @@ fun ShortsFullScreenCard(
                 label = "Поделиться",
                 tint = CyberColors.TextPrimary,
                 onClick = onShareClick
-            )
-            ShortsActionButton(
-                icon = R.drawable.ic_open_external,
-                label = "Читать",
-                tint = CyberColors.TextPrimary,
-                onClick = onOpenArticle
             )
         }
 
