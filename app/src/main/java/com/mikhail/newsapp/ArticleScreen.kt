@@ -40,6 +40,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -68,6 +69,7 @@ fun ArticleScreen(
 ) {
     val context = LocalContext.current
     val fontScale by viewModel.fontScale.collectAsState()
+    val readingFont by viewModel.readingFont.collectAsState()
     val isReadLater = viewModel.isReadLater(post)
 
     // ---------- Позиция прокрутки (сохраняется между открытиями) ----------
@@ -148,7 +150,8 @@ fun ArticleScreen(
 
     val bodyStyle = CyberTypography.BodyLarge.copy(
         fontSize = (17 * fontScale).sp,
-        lineHeight = (27 * fontScale).sp
+        lineHeight = (27 * fontScale).sp,
+        fontFamily = if (readingFont == "serif") FontFamily.Serif else FontFamily.SansSerif
     )
 
     LazyColumn(

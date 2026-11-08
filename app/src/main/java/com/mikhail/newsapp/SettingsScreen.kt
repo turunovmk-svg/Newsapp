@@ -54,6 +54,7 @@ fun SettingsScreen(
     val sources by viewModel.sources.collectAsState()
     val fontScale by viewModel.fontScale.collectAsState()
     val darkTheme by viewModel.darkTheme.collectAsState()
+    val readingFont by viewModel.readingFont.collectAsState()
     val notifEnabled by viewModel.notifEnabled.collectAsState()
     val notifIntervalHours by viewModel.notifIntervalHours.collectAsState()
 
@@ -139,6 +140,42 @@ fun SettingsScreen(
                                         RoundedCornerShape(50)
                                     )
                                     .clickable { viewModel.setFontScale(scale) }
+                                    .padding(vertical = UiSizes.SpacerSmall),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = label,
+                                    style = CyberTypography.BodySmall,
+                                    color = if (selected) CyberColors.TextInverse else CyberColors.TextSecondary
+                                )
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
+
+                    // Шрифт чтения
+                    Text(
+                        text = "Шрифт статьи",
+                        style = CyberTypography.BodySmall,
+                        color = CyberColors.TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(UiSizes.SpacerSmall)
+                    ) {
+                        listOf("sans" to "Без засечек", "serif" to "С засечками").forEach { (key, label) ->
+                            val selected = readingFont == key
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(50))
+                                    .background(
+                                        if (selected) CyberColors.AccentBlue
+                                        else CyberColors.SurfaceElevated.copy(alpha = 0.6f),
+                                        RoundedCornerShape(50)
+                                    )
+                                    .clickable { viewModel.setReadingFont(key) }
                                     .padding(vertical = UiSizes.SpacerSmall),
                                 contentAlignment = Alignment.Center
                             ) {

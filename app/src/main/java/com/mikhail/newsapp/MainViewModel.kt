@@ -173,6 +173,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _viewMode = MutableStateFlow("cards")   // cards / list / grid
     val viewMode: StateFlow<String> = _viewMode.asStateFlow()
 
+    private val _readingFont = MutableStateFlow("sans")  // sans / serif
+    val readingFont: StateFlow<String> = _readingFont.asStateFlow()
+
+    fun setReadingFont(font: String) {
+        _readingFont.value = font
+        prefs.edit().putString("reading_font", font).apply()
+    }
+
     private val _sortMode = MutableStateFlow("date")    // date / source
     val sortMode: StateFlow<String> = _sortMode.asStateFlow()
 
