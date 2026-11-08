@@ -165,6 +165,7 @@ fun ShortsFullScreenCard(
             AsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(imageUrl)
+                    .size(coil.size.Size.ORIGINAL)   // без даунскейла — резче на полном экране
                     .crossfade(150)
                     .build(),
                 contentDescription = null,
@@ -230,11 +231,11 @@ fun ShortsFullScreenCard(
             }
         }
 
-        // Вертикальная панель действий справа (TikTok-style)
+        // Вертикальная панель действий справа (TikTok-style — низ правой части)
         Column(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
-                .padding(end = UiSizes.SpacerSmall, bottom = 96.dp),
+                .padding(end = UiSizes.SpacerSmall, bottom = 140.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(UiSizes.SpacerMedium)
         ) {

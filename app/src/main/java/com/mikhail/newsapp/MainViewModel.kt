@@ -641,22 +641,28 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     ?: msg.selectFirst("time")?.attr("datetime")
                     ?: msg.selectFirst("a.tgme_widget_message_date time")?.text()
                 val textEl = msg.selectFirst("div.tgme_widget_message_text")
-                val text = textEl?.text()?.trim()
+                // Только текст сообщения: без кнопок ("Поделиться", "Обсудить" и т.п.)
+                val rawText = textEl?.let { el ->
+                    el.select("script, style, a.tgme_widget_message_link_inline, .tgme_widget_message_meta").remove()
+                    el.wholeText().trim().ifEmpty { el.text().trim() }
+                }.orEmpty()
                 val imageUrl = msg.selectFirst("a.tgme_widget_message_photo_wrap")?.attr("style")
                     ?.let { Regex("url\\(['\"]?([^'\")]+)['\"]?\\)").find(it)?.groupValues?.get(1) }
                     ?: msg.selectFirst("img.tgme_widget_message_photo_image")?.attr("src")
                     ?: msg.selectFirst("img")?.attr("src")
-                if (text.isNullOrEmpty() && permalink == null) continue
-                val title = (text ?: channelTitle).take(120).let { if ((text?.length ?: 0) > 120) "$it…" else it }
-                val id = permalink ?: text?.hashCode()?.toString() ?: channelTitle
+                if (rawText.isEmpty() && permalink == null) continue
+                val title = rawText.take(120).let { if (rawText.length > 120) "$it…" else it }
+                val id = permalink ?: rawText.hashCode().toString()
                 posts.add(
                     Post(
                         id = id,
                         title = title,
-                        description = text,
+                        description = rawText.ifEmpty { null },
                         publishedAt = date,
-                        sourceUrl = permalink ?: "https://t.me/s/${channelTitle}",
-                        imageUrl = imageUrl
+                        sourceUrl = permalink ?: "https://t.me/s/$channelTitle",
+                        imageUrl = imageUrl,
+                        siteUrl = null,
+                        siteName = channelTitle
                     )
                 )
             }

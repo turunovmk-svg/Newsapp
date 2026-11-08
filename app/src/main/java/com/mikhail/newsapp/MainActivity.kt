@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -1153,7 +1154,6 @@ fun SwipeableNewsCard(
     modifier: Modifier = Modifier
 ) {
     var offsetX by remember { mutableStateOf(0f) }
-    var handled by remember { mutableStateOf(false) }
     val animSpec = androidx.compose.animation.core.tween<Float>(200)
     val animatedOffset by androidx.compose.animation.core.animateFloatAsState(
         targetValue = offsetX,
@@ -1183,29 +1183,42 @@ fun SwipeableNewsCard(
                 )
             )
             .pointerInput(post.id) {
-                detectDragGestures(
-                    onDragStart = {
-                        offsetX = 0f
-                        handled = false
-                    },
-                    onDrag = { _, dragAmount ->
-                        offsetX += dragAmount.x
-                    },
-                    onDragEnd = {
-                        if (!handled) {
-                            if (offsetX > 120f) {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                onFavoriteClick()
-                                handled = true
-                            } else if (offsetX < -120f) {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                onReadClick()
-                                handled = true
-                            }
+                // Жест активируется только при явно горизонтальном драге —
+                // вертикальные драйги проходят в LazyColumn (скролл работает).
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    var totalX = 0f
+                    var totalY = 0f
+                    var armed = false
+                    var finished = false
+                    drag(down.id) { change ->
+                        val delta = change.positionChange()
+                        totalX += delta.x
+                        totalY += delta.y
+                        if (!armed && !finished &&
+                            abs(totalX) > 40f && abs(totalX) > abs(totalY)
+                        ) {
+                            armed = true
                         }
+                        if (armed) {
+                            change.consume()
+                            offsetX = totalX.coerceIn(-300f, 300f)
+                        }
+                    }
+                    // жест завершён — обрабатываем действие
+                    if (armed && !finished) {
+                        finished = true
+                        val actionX = offsetX
+                        offsetX = 0f
+                        if (actionX > 120f) {
+                            onFavoriteClick()
+                        } else if (actionX < -120f) {
+                            onReadClick()
+                        }
+                    } else if (!armed) {
                         offsetX = 0f
                     }
-                )
+                }
             }
     ) {
         NewsCard(

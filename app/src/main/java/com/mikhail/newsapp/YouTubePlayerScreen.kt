@@ -96,38 +96,67 @@ fun YouTubePlayerScreen(
         }
 
         // Плеер
-        if (videoId != null) {
-            AndroidView(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(260.dp)
-                    .background(Color.Black),
-                factory = { ctx: Context ->
-                    YouTubePlayerView(ctx).also { view ->
-                        view.addYouTubePlayerListener(object : AbstractYouTubePlayerListener() {
-                            override fun onReady(youTubePlayer: YouTubePlayer) {
-                                youTubePlayer.loadVideo(videoId, 0f)
-                            }
-                        })
-                    }
-                },
-                onRelease = { view -> view.release() }
-            )
-        } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-                    .background(CyberColors.SurfaceElevated),
-                contentAlignment = Alignment.Center
+    var playerError by remember { mutableStateOf<String?>(null) }
+    if (videoId != null) {
+        AndroidView(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(260.dp)
+                .background(Color.Black),
+            factory = { ctx: Context ->
+                YouTubePlayerView(ctx).also { view ->
+                    view.addYouTubePlayerListener(object : AbstractYouTubePlayerListener() {
+                        override fun onReady(youTubePlayer: YouTubePlayer) {
+                            youTubePlayer.loadVideo(videoId, 0f)
+                        }
+                        override fun onError(
+                            youTubePlayer: YouTubePlayer,
+                            error: com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants.PlayerError
+                        ) {
+                            // 152/101/150 — встроенное воспроизведение запрещено
+                            playerError = error.name
+                        }
+                    })
+                }
+            },
+            onRelease = { view -> view.release() }
+        )
+    } else {
+        playerError = "no_video_id"
+    }
+
+    // Фолбэк: если плеер не работает — предлагаем открыть на YouTube
+    if (playerError != null) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+                .background(CyberColors.SurfaceElevated),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    text = "Видео недоступно",
+                    text = if (playerError == "no_video_id") "Не удалось определить видео"
+                    else "Видео нельзя воспроизвести в приложении",
                     style = CyberTypography.BodyMedium,
-                    color = CyberColors.TextSecondary
+                    color = CyberColors.TextSecondary,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
+                NeonButton(
+                    onClick = {
+                        post.sourceUrl?.let { url ->
+                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                        }
+                    },
+                    text = "Открыть на YouTube"
                 )
             }
         }
+    }
 
         Column(modifier = Modifier.padding(UiSizes.ArticlePadding)) {
             Text(
@@ -156,18 +185,6 @@ fun YouTubePlayerScreen(
             }
             Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
 
-            // Кнопка «Открыть в YouTube» — остаётся как опция
-            NeonButton(
-                onClick = {
-                    post.sourceUrl?.let { url ->
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                text = "Открыть в YouTube",
-                primaryColor = CyberColors.SurfaceElevated,
-            )
-            Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
         }
     }
 }

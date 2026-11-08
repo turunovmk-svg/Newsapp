@@ -47,12 +47,13 @@ data class Source(
                 val array = JSONArray(json)
                 for (i in 0 until array.length()) {
                     val obj = array.getJSONObject(i)
+                    val label = if (obj.isNull("label")) null else obj.optString("label", null)
                     sources.add(
                         Source(
                             obj.getString("type"),
                             obj.getString("url"),
-                            obj.optString("label", null),
-                            obj.optString("folder", "")
+                            label,
+                            if (obj.isNull("folder")) "" else obj.optString("folder", "")
                         )
                     )
                 }
