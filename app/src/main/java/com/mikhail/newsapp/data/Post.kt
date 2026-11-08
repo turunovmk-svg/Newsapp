@@ -92,9 +92,9 @@ data class Post(
             // 2) Regex-фолбэк: описание могло прийти экранированным (CDATA/entities),
             //    тогда парсер видел его как обычный текст — чистим регулярками.
             if (result.contains("<", true)) {
-                result = Regex("(?is)<\s*script.*?<\s*/script[^>]*>").replace(result, "")
-                result = Regex("(?is)<\s*style.*?<\s*/style[^>]*>").replace(result, "")
-                result = Regex("(?is)<[^>]+>").replace(result, " ")
+                result = Regex("""(?is)<\s*script.*?<\s*/script[^>]*>""").replace(result, "")
+                result = Regex("""(?is)<\s*style.*?<\s*/style[^>]*>""").replace(result, "")
+                result = Regex("""(?is)<[^>]+>""").replace(result, " ")
             }
             // 3) HTML-сущности
             result = result
