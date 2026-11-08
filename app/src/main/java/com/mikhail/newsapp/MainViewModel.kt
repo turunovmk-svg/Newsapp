@@ -211,8 +211,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                     ?.takeIf { it.isNotBlank() }
                                 if (lastBefore != null) {
                                     val pagedUrl = if (feedUrl.contains("?")) "$feedUrl&before=$lastBefore"
-                                    else "$feedUe, xml2)
-                                                  val xml2 = withContext(Dispatchers.Default) { fetchXml(pagedUrl) }
+                                    else "$feedUrl?before=$lastBefore"
+                                    val xml2 = withContext(Dispatchers.Default) { fetchXml(pagedUrl) }
                                     val parsed2 = withContext(Dispatchers.Default) {
                                         parseFeed(source.type, xml2)
                                     }
@@ -226,8 +226,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         }
                         allPosts.addAll(parsed)
                         success = true
+                        // сбрасываем ошибку этого источника при успехе
+                        if (_sourceErrors.value.containsKey(source.url)) {
+                            _sourceErrors.value = _sourceErrors.value - source.url
+                        }
+                        if (parsed.isEmpty()) {
+                            _sourceErrors.value = _sourceErrors.value + (source.url to "Источник загрузился, но новостей не найдено")
+                        }
                     } catch (e: Exception) {
                         e.printStackTrace()
+                        _sourceErrors.value = _sourceErrors.value + (source.url to (e.message ?: "Ошибка загрузки"))
                     }
                 }
                 if (allPosts.isEmpty() && _posts.value.isNotEmpty()) {
@@ -552,21 +560,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             saveSources(updated)
             // Удаляем посты этого источника
             _posts.value = _posts.value.filter { it.sourceUrl != url }
-            clearError()
-        }
-    }
-
-    /** Проверяет, находится ли публикация в избранном. */
-    fun isFavorite(post: Post): Boolean {
-        return _favorites.value.any { it.id == post.id }
-    }
-
-    /** Сбрасывает сообщение об ошибке. */
-    fun clearError() {
-        _error.value = null
-    }
-}
-{ it.sourceUrl != url }
             clearError()
         }
     }
