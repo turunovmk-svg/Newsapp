@@ -14,7 +14,7 @@ class NewsWidgetRemoteViewsService : RemoteViewsService() {
 }
 
 /** Фабрика элементов списка новостей для виджета. */
-inner class NewsWidgetRemoteViewsFactory(private val context: Context) : RemoteViewsService.RemoteViewsFactory {
+class NewsWidgetRemoteViewsFactory(private val context: Context) : RemoteViewsService.RemoteViewsFactory {
 
     private var posts: List<Post> = emptyList()
 
