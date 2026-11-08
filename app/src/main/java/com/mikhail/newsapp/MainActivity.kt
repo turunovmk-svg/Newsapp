@@ -1490,7 +1490,7 @@ fun NewsCard(
                             )
                     )
                 }
-            } ?: run {
+            } else {
                 // Градиентный плейсхолдер в цветах источника
                 SourceGradientPlaceholder(
                     sourceUrl = post.siteUrl ?: post.sourceUrl,

@@ -290,7 +290,7 @@ fun ArticleScreen(
                     .padding(horizontal = UiSizes.ArticlePadding)
             ) {
                 Text(
-                    text = if (showTranslation && translatedTitle != null) translatedTitle else post.title,
+                    text = translatedTitle ?: post.title,
                     style = CyberTypography.HeadlineLarge,
                     color = CyberColors.TextPrimary,
                 )

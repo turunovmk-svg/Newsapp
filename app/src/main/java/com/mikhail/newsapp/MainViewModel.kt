@@ -489,9 +489,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         return when {
             // BBC: https://ichef.bbci.co.uk/ace/ws/240/... → .../1024/...
             u.contains("ichef.bbci.co.uk/ace/ws/") ->
-                Regex("/ace/ws/\d+/").replace(u, "/ace/ws/1024/")
+                Regex("""\/ace\/ws\/\d+\/""").replace(u, "/ace/ws/1024/")
             u.contains("ichef-1.bbci.co.uk/ace/ws/") ->
-                Regex("/ace/ws/\d+/").replace(u, "/ace/ws/1024/")
+                Regex("""\/ace\/ws\/\d+\/""").replace(u, "/ace/ws/1024/")
             else -> u
         }
     }

@@ -47,6 +47,7 @@ import com.mikhail.newsapp.data.Post
 import com.mikhail.newsapp.theme.CyberColors
 import com.mikhail.newsapp.theme.CyberTypography
 import com.mikhail.newsapp.theme.NeonButton
+import com.mikhail.newsapp.theme.SmartNewsImage
 import com.mikhail.newsapp.theme.SourceGradientPlaceholder
 import com.mikhail.newsapp.UiSizes
 
