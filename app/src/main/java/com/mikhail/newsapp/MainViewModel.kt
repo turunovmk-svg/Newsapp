@@ -446,8 +446,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 if (allPosts.isEmpty() && _posts.value.isNotEmpty()) {
                     // Сохраняем предыдущие посты, если новая загрузка не вернула ничего
                 } else {
-                    // Дедупликация по sourceUrl (или title если URL пуст)
-                    val deduplicatedPosts = allPosts.distinctBy { it.sourceUrl ?: it.title }
+                    // Дедупликация: 1) по оригинальной ссылке (originalUrl для GNEWS, иначе sourceUrl)
+                    // 2) по нормализованному заголовку (для случаев, когда URL разные, но статья та же)
+                    fun normalizeTitle(t: String): String {
+                        return t.lowercase()
+                            .replace(Regex("[\\p{Punct}\\s]+"), " ")
+                            .trim()
+                    }
+                    val byUrl = allPosts.distinctBy { it.originalUrl ?: it.sourceUrl ?: it.title }
+                    val seenTitles = mutableSetOf<String>()
+                    val deduplicatedPosts = byUrl.filter { post ->
+                        val key = normalizeTitle(post.title)
+                        if (key in seenTitles) false else {
+                            seenTitles.add(key)
+                            true
+                        }
+                    }
                     _posts.value = deduplicatedPosts.sortedByDescending { it.publishedAt ?: "" }
                 }
                 if (!success && _posts.value.isEmpty()) {
