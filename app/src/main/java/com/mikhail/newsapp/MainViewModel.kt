@@ -7,6 +7,7 @@ import android.content.SharedPreferences
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.mikhail.newsapp.data.Source
+import com.mikhail.newsapp.data.SourceType
 import com.mikhail.newsapp.data.Post
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
