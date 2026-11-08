@@ -41,7 +41,14 @@
     <string name="favorites_empty">Избранное пусто</string>
     <string name="section_more_news">Остальные новости (%1$d)</string>
 
-    <!-- Error messages -->
-    <string name="error_loading_news">Ошибка загрузки новостей: %1$s</string>
+    <!-- Error messages (НЛП-стиль: поддерживающий рефрейминг + конкретика) -->
+    <string name="error_loading_news">Не получилось загрузить: %1$s. Уже пробуем снова — нажмите «Повторить», если сами захотите ускорить.</string>
     <string name="retry_button">Повторить</string>
+    <string name="error_gentle_hint">Проверьте подключение к интернету — скорее всего, дело в нём.</string>
+    <string name="source_added_full">Готово! Источник добавлен. Первые новости появятся в ленте через пару секунд.</string>
+    <string name="feed_empty_friendly">Здесь пока пусто. Добавьте первый источник — и новости начнут поступать сюда автоматически.</string>
+    <string name="favorites_empty_hint">Нажмите ♥ на любой новости — она появится здесь.</string>
+    <string name="readlater_empty_hint">Нажмите 🔖 в статье или на карточке — сложите сюда то, что прочитаете позже.</string>
+    <string name="no_search_results">По запросу «%1$s» пока ничего нет. Попробуйте другое слово или очистите поиск.</string>
+    <string name="splash_tagline">Ваши ленты. Один экран.</string>
 </resources>

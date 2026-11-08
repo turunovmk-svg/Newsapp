@@ -13,6 +13,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.size
@@ -171,10 +175,22 @@ fun NewsSplashScreen() {
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            // Монограмма в градиентном круге
+            // Монограмма в градиентном круге с мягкой пульсацией (pattern interrupt —
+            // внимание приковано к бренду в первые 700мс)
+            val pulse = androidx.compose.animation.core.rememberInfiniteTransition(label = "pulse")
+            val pulseScale by pulse.animateFloat(
+                initialValue = 1f,
+                targetValue = 1.06f,
+                animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+                    animation = androidx.compose.animation.core.tween(900, easing = androidx.compose.animation.core.FastOutSlowInEasing),
+                    repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
+                ),
+                label = "pulseScale"
+            )
             Box(
                 modifier = Modifier
                     .size(96.dp)
+                    .graphicsLayer(scaleX = pulseScale, scaleY = pulseScale)
                     .clip(CircleShape)
                     .background(
                         brush = Brush.linearGradient(
@@ -201,7 +217,7 @@ fun NewsSplashScreen() {
             )
             Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
             Text(
-                text = "Ваши ленты. Один экран.",
+                text = stringResource(id = R.string.splash_tagline),
                 style = CyberTypography.BodyMedium,
                 color = CyberColors.TextSecondary
             )
@@ -1110,6 +1126,13 @@ fun HomeScreen(
                 style = CyberTypography.TitleMedium,
                 color = CyberColors.Error
             )
+            Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
+            Text(
+                text = stringResource(id = R.string.error_gentle_hint),
+                style = CyberTypography.BodySmall,
+                color = CyberColors.TextSecondary,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
             Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
             Button(
                 onClick = { viewModel.loadPosts(); viewModel.clearError() },
@@ -1679,9 +1702,10 @@ fun SearchScreen(
 
         if (searchQuery.isNotBlank() && filteredPosts.isEmpty()) {
             Text(
-                text = "Ничего не найдено",
+                text = stringResource(id = R.string.no_search_results, searchQuery),
                 style = CyberTypography.TitleMedium,
                 color = CyberColors.TextSecondary,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
         } else {
             LazyColumn(

@@ -85,8 +85,8 @@ fun FavoritesScreen(
                 )
                 Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
                 Text(
-                    text = if (tab == 0) "Нажмите ♥ на карточке новости"
-                    else "Добавьте статьи кнопкой закладки в статье или на карточке",
+                    text = if (tab == 0) stringResource(id = R.string.favorites_empty_hint)
+                    else stringResource(id = R.string.readlater_empty_hint),
                     style = CyberTypography.BodySmall,
                     color = CyberColors.TextMuted,
                     textAlign = TextAlign.Center
