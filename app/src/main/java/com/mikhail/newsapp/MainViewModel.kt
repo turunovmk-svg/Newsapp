@@ -893,4 +893,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun clearError() {
         _error.value = null
     }
+
+    // ---------- Кэш полных текстов статей (ночной офлайн) ----------
+    /** Сохраняет полный текст статьи для офлайн-чтения. */
+    fun cacheFullText(postId: String, text: String) {
+        prefs.edit().putString("fulltext_$postId", text).apply()
+    }
+
+    /** Возвращает закешированный полный текст статьи или null. */
+    fun getCachedFullText(postId: String): String? {
+        return prefs.getString("fulltext_$postId", null)
+    }
+
+    /** Удаляет закешированный текст статьи. */
+    fun clearCachedFullText(postId: String) {
+        prefs.edit().remove("fulltext_$postId").apply()
+    }
 }

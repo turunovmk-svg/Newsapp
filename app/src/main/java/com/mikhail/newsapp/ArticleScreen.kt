@@ -149,15 +149,23 @@ fun ArticleScreen(
     val originalLink = post.originalUrl ?: post.sourceUrl
     LaunchedEffect(post.id, originalLink) {
         if (ArticleReader.needsFullText(post.description) && !originalLink.isNullOrBlank()) {
-            isLoadingFullText = true
-            val result = ArticleReader.fetch(originalLink)
-            if (result != null) {
-                fullContent = result.text
+            // 1) Пробуем закешированный текст (ночной офлайн)
+            val cached = viewModel.getCachedFullText(post.id)
+            if (cached != null) {
+                fullContent = cached
                 fullTextFailed = false
             } else {
-                fullTextFailed = true
+                isLoadingFullText = true
+                val result = ArticleReader.fetch(originalLink)
+                if (result != null) {
+                    fullContent = result.text
+                    fullTextFailed = false
+                    viewModel.cacheFullText(post.id, result.text)
+                } else {
+                    fullTextFailed = true
+                }
+                isLoadingFullText = false
             }
-            isLoadingFullText = false
         }
     }
 
