@@ -47,6 +47,7 @@ import com.mikhail.newsapp.UiSizes
 fun SettingsScreen(
     viewModel: MainViewModel,
     onNavigateBack: () -> Unit,
+    onOpenStats: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -190,6 +191,26 @@ fun SettingsScreen(
         item {
             GlassCard {
                 Column(modifier = Modifier.padding(UiSizes.CardPadding)) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onOpenStats() }
+                            .padding(vertical = UiSizes.SpacerSmall),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_view_cards),
+                            contentDescription = null,
+                            tint = CyberColors.AccentBlue,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(UiSizes.SpacerMedium))
+                        Text(
+                            text = "Статистика чтения",
+                            style = CyberTypography.BodyMedium,
+                            color = CyberColors.TextPrimary
+                        )
+                    }
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()

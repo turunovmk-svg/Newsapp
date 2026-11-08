@@ -311,6 +311,7 @@ fun NewsAppNavigator() {
                 SettingsScreen(
                     viewModel = viewModel,
                     onNavigateBack = { navController.navigate("home") },
+                    onOpenStats = { navController.navigate("stats") },
                     modifier = Modifier.padding(paddingValues)
                 )
             }
@@ -326,6 +327,14 @@ fun NewsAppNavigator() {
                             navController.navigate("article") { launchSingleTop = true }
                         }
                     },
+                    modifier = Modifier.padding(paddingValues)
+                )
+            }
+            composable("stats") {
+                val posts by viewModel.posts.collectAsState()
+                StatsScreen(
+                    posts = posts,
+                    onNavigateBack = { navController.popBackStack() },
                     modifier = Modifier.padding(paddingValues)
                 )
             }

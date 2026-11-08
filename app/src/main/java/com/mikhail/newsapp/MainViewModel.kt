@@ -129,6 +129,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (_readIds.value.contains(post.id)) return
         _readIds.value = _readIds.value + post.id
         prefs.edit().putStringSet("read_ids", _readIds.value).apply()
+        // временные метки для статистики
+        val ts = prefs.getString("read_ts_json", null)
+        val map = org.json.JSONObject(ts ?: "{}")
+        map.put(post.id, System.currentTimeMillis())
+        prefs.edit().putString("read_ts_json", map.toString()).apply()
     }
 
     fun isRead(post: Post): Boolean = _readIds.value.contains(post.id)
