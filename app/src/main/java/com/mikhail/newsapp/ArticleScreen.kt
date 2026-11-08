@@ -63,6 +63,7 @@ fun ArticleScreen(
     post: Post,
     viewModel: MainViewModel,
     onNavigateBack: () -> Unit,
+    onImageClick: (String) -> Unit = {},
     onPrevious: (() -> Unit)? = null,
     onNext: (() -> Unit)? = null,
     modifier: Modifier = Modifier
