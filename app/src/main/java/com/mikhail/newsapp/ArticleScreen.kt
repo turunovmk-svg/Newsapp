@@ -70,6 +70,7 @@ fun ArticleScreen(
 ) {
     val context = LocalContext.current
     val fontScale by viewModel.fontScale.collectAsState()
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
     val readingFont by viewModel.readingFont.collectAsState()
     val isReadLater = viewModel.isReadLater(post)
 
@@ -123,6 +124,11 @@ fun ArticleScreen(
             isSpeaking = true
         }
     }
+
+    // ---------- Перевод статьи ----------
+    var translatedText by remember { mutableStateOf<String?>(null) }
+    var isTranslating by remember { mutableStateOf(false) }
+    var showTranslation by remember { mutableStateOf(false) }
 
     // Полнотекстовая догрузка, если в RSS только анонс
     var fullContent by remember { mutableStateOf<String?>(null) }
@@ -224,6 +230,21 @@ fun ArticleScreen(
         }
 
         item {
+            // Видео (Telegram mp4) — поверх фото
+            if (post.videoUrl != null) {
+                TelegramVideoPlayer(
+                    videoUrl = post.videoUrl,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = UiSizes.ArticlePadding)
+                        .height(240.dp)
+                        .clip(RoundedCornerShape(UiSizes.ArticleCornerRadius))
+                )
+                Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
+            }
+        }
+
+        item {
             // Фото статьи
             post.imageUrl?.let { imageUrl ->
                 Box(
@@ -297,7 +318,8 @@ fun ArticleScreen(
                     .padding(horizontal = UiSizes.ArticlePadding)
             ) {
                 val rawText = fullContent ?: post.description?.let { Post.stripHtml(it) }
-                val displayText = rawText
+                val effectiveText = if (showTranslation && translatedText != null) translatedText else rawText
+                val displayText = effectiveText
                     ?.let { Post.stripHtml(it) }
                     ?.lines()
                     ?.filterNot { line ->
@@ -358,6 +380,53 @@ fun ArticleScreen(
 
         item {
             Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
+        }
+
+        item {
+            // Кнопка перевода (если исходный текст не русский)
+            Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
+        }
+
+        item {
+            val articleText = fullContent ?: post.description?.let { Post.stripHtml(it) } ?: ""
+            if (!ArticleTranslator.looksRussian(articleText) && articleText.length > 20) {
+                if (translatedText == null) {
+                    NeonButton(
+                        onClick = {
+                            isTranslating = true
+                            scope.launch {
+                                translatedText = ArticleTranslator.toRussian(articleText)
+                                isTranslating = false
+                                showTranslation = translatedText != null
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = UiSizes.ArticlePadding),
+                        text = if (isTranslating) "Переводим…" else "Перевести на русский",
+                        primaryColor = CyberColors.AccentBlueBright,
+                    )
+                } else if (!showTranslation) {
+                    NeonButton(
+                        onClick = { showTranslation = true },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = UiSizes.ArticlePadding),
+                        text = "Показать перевод",
+                        primaryColor = CyberColors.AccentBlueBright
+                    )
+                } else {
+                    NeonButton(
+                        onClick = { showTranslation = false },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = UiSizes.ArticlePadding),
+                        text = "Показать оригинал",
+                        primaryColor = CyberColors.SurfaceElevated
+                    )
+                }
+                Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
+            }
         }
 
         item {

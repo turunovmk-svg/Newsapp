@@ -13,6 +13,7 @@ data class Post(
     val publishedAt: String?,
     val sourceUrl: String?,
     val imageUrl: String?,
+    val videoUrl: String? = null,  // mp4 (Telegram, <video>)
     val siteUrl: String? = null,      // домен первоисточника (для Google News)
     val siteName: String? = null      // название источника
 ) {
@@ -28,6 +29,7 @@ data class Post(
                         .put("publishedAt", post.publishedAt)
                         .put("sourceUrl", post.sourceUrl)
                         .put("imageUrl", post.imageUrl)
+                        .put("videoUrl", post.videoUrl ?: JSONObject.NULL)
                         .put("siteUrl", post.siteUrl ?: JSONObject.NULL)
                         .put("siteName", post.siteName ?: JSONObject.NULL)
                 )
@@ -49,6 +51,7 @@ data class Post(
                             publishedAt = if (obj.isNull("publishedAt")) null else obj.optString("publishedAt", null),
                             sourceUrl = if (obj.isNull("sourceUrl")) null else obj.optString("sourceUrl", null),
                             imageUrl = if (obj.isNull("imageUrl")) null else obj.optString("imageUrl", null),
+                            videoUrl = if (obj.isNull("videoUrl")) null else obj.optString("videoUrl", null),
                             siteUrl = if (obj.isNull("siteUrl")) null else obj.optString("siteUrl", null),
                             siteName = if (obj.isNull("siteName")) null else obj.optString("siteName", null)
                         )

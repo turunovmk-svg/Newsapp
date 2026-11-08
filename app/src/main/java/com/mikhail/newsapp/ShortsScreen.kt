@@ -160,24 +160,32 @@ fun ShortsFullScreenCard(
             .fillMaxSize()
             .clickable(onClick = onOpenArticle)
     ) {
-        // Фон: фото или заглушка
-        post.imageUrl?.let { imageUrl ->
-            AsyncImage(
-                model = ImageRequest.Builder(context)
-                    .data(imageUrl)
-                    .size(coil.size.Size.ORIGINAL)   // без даунскейла — резче на полном экране
-                    .crossfade(150)
-                    .build(),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
+        // Фон: видео (если есть), фото или градиентная заглушка
+        if (post.videoUrl != null) {
+            ShortsVideoBox(
+                videoUrl = post.videoUrl,
+                posterUrl = post.imageUrl,
+                modifier = Modifier.fillMaxSize()
             )
-        } ?: run {
-            SourceGradientPlaceholder(
-                sourceUrl = post.siteUrl ?: post.sourceUrl,
-                modifier = Modifier.fillMaxSize(),
-                cornerRadius = 0.dp,
-            )
+        } else {
+            post.imageUrl?.let { imageUrl ->
+                AsyncImage(
+                    model = ImageRequest.Builder(context)
+                        .data(imageUrl)
+                        .size(coil.size.Size.ORIGINAL)   // без даунскейла — резче на полном экране
+                        .crossfade(150)
+                        .build(),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } ?: run {
+                SourceGradientPlaceholder(
+                    sourceUrl = post.siteUrl ?: post.sourceUrl,
+                    modifier = Modifier.fillMaxSize(),
+                    cornerRadius = 0.dp,
+                )
+            }
         }
 
         // Верхний и нижний градиенты для читаемости

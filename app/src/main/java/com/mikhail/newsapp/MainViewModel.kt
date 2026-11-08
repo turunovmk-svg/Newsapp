@@ -731,11 +731,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     el.select("script, style, a.tgme_widget_message_link_inline, .tgme_widget_message_meta").remove()
                     el.wholeText().trim().ifEmpty { el.text().trim() }
                 }.orEmpty()
-                val imageUrl = msg.selectFirst("a.tgme_widget_message_photo_wrap")?.attr("style")
+                // Видео-пост: <video src=...> + постер (thumbnail)
+                val videoUrl = msg.selectFirst("video.js-message_video, video.tgme_widget_message_video, video")
+                    ?.attr("src")?.takeIf { it.isNotBlank() }
+                val videoThumb = msg.selectFirst(".tgme_widget_message_video_thumb")
+                    ?.attr("style")
                     ?.let { Regex("url\\(['\"]?([^'\")]+)['\"]?\\)").find(it)?.groupValues?.get(1) }
+                val imageUrl = videoThumb
+                    ?: msg.selectFirst("a.tgme_widget_message_photo_wrap")?.attr("style")
+                        ?.let { Regex("url\\(['\"]?([^'\")]+)['\"]?\\)").find(it)?.groupValues?.get(1) }
                     ?: msg.selectFirst("img.tgme_widget_message_photo_image")?.attr("src")
                     ?: msg.selectFirst("img")?.attr("src")
-                if (rawText.isEmpty() && permalink == null) continue
+                if (rawText.isEmpty() && permalink == null && videoUrl == null) continue
                 val title = rawText.take(120).let { if (rawText.length > 120) "$it…" else it }
                 val id = permalink ?: rawText.hashCode().toString()
                 posts.add(
@@ -746,6 +753,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         publishedAt = date,
                         sourceUrl = permalink ?: "https://t.me/s/$channelTitle",
                         imageUrl = imageUrl,
+                        videoUrl = videoUrl,
                         siteUrl = null,
                         siteName = channelTitle
                     )
