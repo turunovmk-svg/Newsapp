@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/background_dark"
+    android:padding="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#0B0F18"
+        android:orientation="vertical"
+        android:padding="4dp">
+
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="NewsApp"
+            android:textColor="#32B4FF"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:paddingBottom="8dp" />
+
+        <ListView
+            android:id="@+id/widget_list"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:divider="#333333"
+            android:dividerHeight="1dp"
+            android:listSelector="#1A2A3A" />
+
+        <Button
+            android:id="@+id/widget_refresh"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Обновить"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#0078FF"
+            android:textSize="14sp" />
+
+    </LinearLayout>
+
+</FrameLayout>

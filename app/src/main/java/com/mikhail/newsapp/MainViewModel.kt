@@ -170,6 +170,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         prefs.edit().putString("reading_font", font).apply()
     }
 
+    // ---------- Тема чтения (светлая / тёмная / сепия) ----------
+    private val _readingTheme = MutableStateFlow("light")  // light / dark / sepia
+    val readingTheme: StateFlow<String> = _readingTheme.asStateFlow()
+    fun setReadingTheme(theme: String) {
+        _readingTheme.value = theme
+        prefs.edit().putString("reading_theme", theme).apply()
+    }
+
     private val _sortMode = MutableStateFlow("date")    // date / source
     val sortMode: StateFlow<String> = _sortMode.asStateFlow()
 
@@ -575,6 +583,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /** Категоризация статьи по темам на основе заголовка и описания. */
+    private fun categorizePost(title: String?, description: String?): List<String> {
+        val text = (title ?: "") + " " + (description ?: "")
+        val lower = text.lowercase()
+        val tags = mutableListOf<String>()
+        if (lower.contains("политик") || lower.contains("выбор") || lower.contains("парламент") || lower.contains("президент") || lower.contains("депутат")) tags.add("Политика")
+        if (lower.contains("технолог") || lower.contains("гитхаб") || lower.contains("программ") || lower.contains("айти") || lower.contains("разработ") || lower.contains("сервер") || lower.contains("код")) tags.add("Технологии")
+        if (lower.contains("экон") || lower.contains("доллар") || lower.contains("валюта") || lower.contains("рынок") || lower.contains("бизнес") || lower.contains("финанс")) tags.add("Экономика")
+        if (lower.contains("спорт") || lower.contains("футбол") || lower.contains("баскетбол") || lower.contains("олимпи")) tags.add("Спорт")
+        if (lower.contains("культур") || lower.contains("кино") || lower.contains("музык") || lower.contains("книг") || lower.contains("艺术")) tags.add("Культура")
+        if (lower.contains("наука") || lower.contains("исследов") || lower.contains("учен") || lower.contains("космос")) tags.add("Наука")
+        if (lower.contains("здоров") || lower.contains("медиц") || lower.contains("врач") || lower.contains("лечен") || lower.contains("эпидеми")) tags.add("Здоровье")
+        if (lower.contains("погода") || lower.contains("климат") || lower.contains("эколог") || lower.contains("природ")) tags.add("Природа")
+        return tags
+    }
+
     private fun parseRss(xml: String): List<Post> {
         val posts = mutableListOf<Post>()
         try {
@@ -669,7 +693,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                     originalUrl = currentOriginalUrl,
                                     imageUrl = finalImageUrl?.let { upgradeImageUrl(it) },
                                     siteUrl = currentSiteUrl,
-                                    siteName = currentSiteName
+                                    siteName = currentSiteName,
+                                    tags = categorizePost(currentTitle, currentDesc)
                                 ))
                             }
                             currentTitle = null

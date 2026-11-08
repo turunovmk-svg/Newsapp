@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Switch
@@ -55,6 +57,7 @@ fun SettingsScreen(
     val fontScale by viewModel.fontScale.collectAsState()
     val darkTheme by viewModel.darkTheme.collectAsState()
     val readingFont by viewModel.readingFont.collectAsState()
+    val readingTheme by viewModel.readingTheme.collectAsState()
     val notifEnabled by viewModel.notifEnabled.collectAsState()
     val notifIntervalHours by viewModel.notifIntervalHours.collectAsState()
     val notifSound by viewModel.notifSound.collectAsState()
@@ -171,6 +174,46 @@ fun SettingsScreen(
                                         RoundedCornerShape(50)
                                     )
                                     .clickable { viewModel.setReadingFont(key) }
+                                    .padding(vertical = UiSizes.SpacerSmall),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = label,
+                                    style = CyberTypography.BodySmall,
+                                    color = if (selected) CyberColors.TextInverse else CyberColors.TextSecondary
+                                )
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
+
+                    // Тема чтения
+                    Text(
+                        text = "Тема чтения",
+                        style = CyberTypography.BodySmall,
+                        color = CyberColors.TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(UiSizes.SpacerSmall)
+                    ) {
+                        listOf(
+                            "light" to "Светлая",
+                            "dark" to "Тёмная",
+                            "sepia" to "Сепия"
+                        ).forEach { (key, label) ->
+                            val selected = readingTheme == key
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(50))
+                                    .background(
+                                        if (selected) CyberColors.AccentBlue
+                                        else CyberColors.SurfaceElevated.copy(alpha = 0.6f),
+                                        RoundedCornerShape(50)
+                                    )
+                                    .clickable { viewModel.setReadingTheme(key) }
                                     .padding(vertical = UiSizes.SpacerSmall),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -484,84 +527,27 @@ fun SettingsScreen(
         item {
             SectionTitle("Источники (${sources.size})")
         }
-        items(sources.size) { index ->
-            val source = sources[index]
-            GlassCard(
-                modifier = Modifier.fillMaxWidth(),
-                borderColor = CyberColors.BorderGlass,
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(UiSizes.CardPadding),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        // Чип типа
-                        val typeLabel = when (source.type) {
-                            SourceType.REDDIT -> "Reddit"
-                            SourceType.YOUTUBE -> "YouTube"
-                            SourceType.TELEGRAM -> "Telegram"
-                            SourceType.TWITTER -> "X (Twitter)"
-                            SourceType.GNEWS -> "Сайт"
-                            else -> "RSS"
-                        }
-                        Row(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(50))
-                                .background(CyberColors.AccentBlue.copy(alpha = 0.12f))
-                                .padding(horizontal = UiSizes.SpacerSmall, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = typeLabel,
-                                style = CyberTypography.BodySmall,
-                                color = CyberColors.AccentBlueBright,
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(UiSizes.SpacerXSmall))
-                        Text(
-                            text = when {
-                                !source.label.isNullOrBlank() -> source.label
-                                source.type == SourceType.GNEWS -> source.url
-                                    .substringAfter("site:")
-                                    .substringBefore('&')
-                                else -> source.url
-                                    .removePrefix("https://")
-                                    .removePrefix("http://")
-                            }.take(60),
-                            style = CyberTypography.BodySmall,
-                            color = CyberColors.TextSecondary,
-                            maxLines = 2,
-                        )
-                    }
-                    // Переключатель уведомлений для источника
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(RoundedCornerShape(50))
-                            .clickable { viewModel.toggleSourceNotify(source.url) },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_check),
-                            contentDescription = if (source.url in notifDisabledSources) "Включить уведомления" else "Отключить уведомления",
-                            tint = if (source.url in notifDisabledSources) CyberColors.TextMuted else CyberColors.AccentBlueBright,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                    IconButton(
-                        onClick = { viewModel.removeSource(source.url) }
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_delete),
-                            contentDescription = "Удалить источник",
-                            tint = CyberColors.Error,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
+        items(
+            items = sources,
+            key = { it.url }
+        ) { source ->
+            var showFolderMenu by remember(source) { mutableStateOf(false) }
+            val allFolders = remember(sources) {
+                sources.map { it.folder }.filter { it.isNotBlank() }.distinct().sorted()
             }
+            SourceFolderCard(
+                source = source,
+                allFolders = allFolders,
+                showFolderMenu = showFolderMenu,
+                onFolderMenuToggle = { showFolderMenu = it },
+                onFolderSelected = { folder ->
+                    viewModel.setSourceFolder(source.url, folder)
+                    showFolderMenu = false
+                },
+                onNotifyToggle = { viewModel.toggleSourceNotify(source.url) },
+                onRemove = { viewModel.removeSource(source.url) },
+                notifDisabledSources = notifDisabledSources,
+            )
         }
 
         item {
@@ -573,6 +559,141 @@ fun SettingsScreen(
                 primaryColor = CyberColors.SurfaceElevated,
             )
             Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
+        }
+    }
+}
+
+/** Карточка источника с возможностью смены папки. */
+@Composable
+private fun SourceFolderCard(
+    source: com.mikhail.newsapp.data.Source,
+    allFolders: List<String>,
+    showFolderMenu: Boolean,
+    onFolderMenuToggle: (Boolean) -> Unit,
+    onFolderSelected: (String) -> Unit,
+    onNotifyToggle: () -> Unit,
+    onRemove: () -> Unit,
+    notifDisabledSources: Set<String>,
+) {
+    val currentFolder = source.folder.takeIf { it.isNotBlank() } ?: "—"
+    GlassCard(
+        modifier = Modifier.fillMaxWidth(),
+        borderColor = CyberColors.BorderGlass,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(UiSizes.CardPadding),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                // Чип типа
+                val typeLabel = when (source.type) {
+                    SourceType.REDDIT -> "Reddit"
+                    SourceType.YOUTUBE -> "YouTube"
+                    SourceType.TELEGRAM -> "Telegram"
+                    SourceType.TWITTER -> "X (Twitter)"
+                    SourceType.GNEWS -> "Сайт"
+                    else -> "RSS"
+                }
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(CyberColors.AccentBlue.copy(alpha = 0.12f))
+                        .padding(horizontal = UiSizes.SpacerSmall, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = typeLabel,
+                        style = CyberTypography.BodySmall,
+                        color = CyberColors.AccentBlueBright,
+                    )
+                }
+                Spacer(modifier = Modifier.height(UiSizes.SpacerXSmall))
+                Text(
+                    text = when {
+                        !source.label.isNullOrBlank() -> source.label
+                        source.type == SourceType.GNEWS -> source.url
+                            .substringAfter("site:")
+                            .substringBefore('&')
+                        else -> source.url
+                            .removePrefix("https://")
+                            .removePrefix("http://")
+                    }.take(60),
+                    style = CyberTypography.BodySmall,
+                    color = CyberColors.TextSecondary,
+                    maxLines = 2,
+                )
+                // Папка
+                Spacer(modifier = Modifier.height(UiSizes.SpacerXSmall))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_link),
+                        contentDescription = "Папка",
+                        tint = CyberColors.TextSecondary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(UiSizes.SpacerXSmall))
+                    Text(
+                        text = "Папка: $currentFolder",
+                        style = CyberTypography.BodySmall,
+                        color = CyberColors.TextSecondary,
+                    )
+                    Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
+                    IconButton(onClick = { onFolderMenuToggle(true) }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_chevron_right),
+                            contentDescription = "Сменить папку",
+                            tint = CyberColors.TextSecondary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+            }
+            // Переключатель уведомлений для источника
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(50))
+                    .clickable { onNotifyToggle() },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_check),
+                    contentDescription = if (source.url in notifDisabledSources) "Включить уведомления" else "Отключить уведомления",
+                    tint = if (source.url in notifDisabledSources) CyberColors.TextMuted else CyberColors.AccentBlueBright,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            IconButton(
+                onClick = { onRemove() }
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_delete),
+                    contentDescription = "Удалить источник",
+                    tint = CyberColors.Error,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+        // Выпадающее меню смены папки
+        DropdownMenu(
+            expanded = showFolderMenu,
+            onDismissRequest = { onFolderMenuToggle(false) }
+        ) {
+            DropdownMenuItem(
+                text = { Text(text = "Без папки", style = CyberTypography.BodyMedium) },
+                onClick = { onFolderSelected("") }
+            )
+            allFolders.forEach { folder ->
+                DropdownMenuItem(
+                    text = { Text(text = folder, style = CyberTypography.BodyMedium) },
+                    onClick = { onFolderSelected(folder) }
+                )
+            }
         }
     }
 }

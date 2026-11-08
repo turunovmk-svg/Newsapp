@@ -12,4 +12,41 @@
     <string name="source_telegram">Telegram-канал</string>
     <string name="section_more_news">Інші новини (%1$d)</string>
     <string name="add_sources_hint">Натисніть «Додати джерело», щоб завантажити новини</string>
+    <string name="back_to_feed">До ленти новин</string>
+    <string name="no_image">Зображення недоступне</string>
+    <string name="open_original">Відкрити оригінал</string>
+    <string name="article_no_content">У цьому джерелі немає тексту статті. Відкрийте оригінал для читання повної версії.</string>
+
+    <!-- AddSourceScreen -->
+    <string name="add_source_title">Додати джерело</string>
+    <string name="add_source_subtitle">Введіть URL RSS-ленти або оберіть популярне джерело нижче</string>
+    <string name="source_type_label">Тип джерела:</string>
+    <string name="source_url_label">URL джерела</string>
+    <string name="url_empty_error">Введіть адресу джерела</string>
+    <string name="url_format_error">URL повинен починатися з http:// або https://</string>
+    <string name="url_duplicate_error">Джерело вже додано</string>
+    <string name="url_format_hint">Приклад: https://feeds.bbci.co.uk/ukrainian/rss.xml</string>
+    <string name="adding_source">Додається...</string>
+    <string name="source_added_success">Джерело успішно додано</string>
+    <string name="source_removed">Джерело видалено</string>
+    <string name="add_source_button">Додати джерело</string>
+    <string name="popular_sources_title">Популярні джерела:</string>
+
+    <!-- Названия популярных источников -->
+    <string name="source_bbc_ukraine">BBC Україна</string>
+    <string name="source_pravda">Українська правда</string>
+    <string name="source_reddit_world">Reddit World News</string>
+    <string name="source_youtube_tech">YouTube Технології</string>
+
+    <!-- FavoritesScreen -->
+    <string name="favorites_empty">Обране порожнє</string>
+    <string name="section_more_news">Інші новини (%1$d)</string>
+
+    <!-- Error messages -->
+    <string name="error_loading_news">Не вдалося завантажити: %1$s. Вже пробуємо знову — натисніть «Повторити», якщо хочете прискорити самі.</string>
+    <string name="retry_button">Повторити</string>
+    <string name="error_gentle_hint">Перевірте підключення до інтернету — швидше за все, у ньому справа.</string>
+    <string name="source_added_full">Готово! Джерело додано. Перші новини з\'являться в ленті через кілька секунд.</string>
+    <string name="feed_empty_friendly">Тут поки що порожньо. Додайте перше джерело — і новини почнуть надходити сюди автоматично.</string>
+    <string name="favorites_empty_hint">Натисніть ♥ на будь-якій новині — вона з\'явиться тут.</string>
 </resources>

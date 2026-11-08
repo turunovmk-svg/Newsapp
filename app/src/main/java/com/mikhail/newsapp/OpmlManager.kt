@@ -75,14 +75,23 @@ class OpmlManager(private val context: Context) {
                 ) {
                     val xmlUrl = parser.getAttributeValue(null, "xmlUrl")
                         ?: parser.getAttributeValue(null, "xmlurl")
-                    if (!xmlUrl.isNullOrBlank()) {
+                        ?: parser.getAttributeValue(null, "url")
+                    // Feedly иногда использует title как URL, если xmlUrl отсутствует
+                    val feedUrl = if (!xmlUrl.isNullOrBlank()) xmlUrl
+                    else {
+                        val title = parser.getAttributeValue(null, "title") ?: ""
+                        if (title.startsWith("http://") || title.startsWith("https://")) title else null
+                    }
+                    if (!feedUrl.isNullOrBlank()) {
                         val rawType = parser.getAttributeValue(null, "type")?.uppercase() ?: "RSS"
                         val normalizedType = when {
                             rawType.contains("REDDIT") -> "REDDIT"
                             rawType.contains("YOUTUBE") -> "YOUTUBE"
                             else -> "RSS"
                         }
-                        sources.add(Source(normalizedType, xmlUrl))
+                        // Feedly category → папка
+                        val folder = parser.getAttributeValue(null, "category")?.takeIf { it.isNotBlank() } ?: ""
+                        sources.add(Source(normalizedType, feedUrl, feedUrl, folder))
                     }
                 }
                 eventType = parser.next()

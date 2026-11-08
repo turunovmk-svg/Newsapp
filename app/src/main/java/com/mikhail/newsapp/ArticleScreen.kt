@@ -76,6 +76,7 @@ fun ArticleScreen(
     val fontScale by viewModel.fontScale.collectAsState()
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     val readingFont by viewModel.readingFont.collectAsState()
+    val readingTheme by viewModel.readingTheme.collectAsState()
     val isReadLater = viewModel.isReadLater(post)
 
     // ---------- Позиция прокрутки (сохраняется между открытиями) ----------
@@ -175,10 +176,18 @@ fun ArticleScreen(
         fontFamily = if (readingFont == "serif") FontFamily.Serif else FontFamily.SansSerif
     )
 
+    // Цвет фона чтения в зависимости темы
+    val readingBackground = when (readingTheme) {
+        "sepia" -> Color(0xFFF5E6D3)
+        "dark" -> CyberColors.BackgroundDeep
+        else -> Color(0xFFFFFFFF)
+    }
+
     LazyColumn(
         state = listState,
         modifier = modifier
             .fillMaxSize()
+            .background(readingBackground)
             .then(if (isTablet || isLandscape) Modifier.widthIn(max = UiSizes.ArticleContentMaxWidth) else Modifier)
             .pointerInput(onPrevious, onNext) {
                 var accumulatedX = 0f

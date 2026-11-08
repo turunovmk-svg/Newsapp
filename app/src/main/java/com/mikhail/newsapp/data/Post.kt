@@ -16,7 +16,8 @@ data class Post(
     val imageUrl: String?,
     val videoUrl: String? = null,  // mp4 (Telegram, <video>)
     val siteUrl: String? = null,      // домен первоисточника (для Google News)
-    val siteName: String? = null      // название источника
+    val siteName: String? = null,      // название источника
+    val tags: List<String> = emptyList()   // темы/теги статьи (политика, техника и т.д.)
 ) {
     companion object {
         fun toJsonList(posts: List<Post>): String {
@@ -30,6 +31,7 @@ data class Post(
                         .put("publishedAt", post.publishedAt)
                         .put("sourceUrl", post.sourceUrl)
                         .put("originalUrl", post.originalUrl ?: JSONObject.NULL)
+                        .put("tags", org.json.JSONArray(post.tags))
                         .put("imageUrl", post.imageUrl)
                         .put("videoUrl", post.videoUrl ?: JSONObject.NULL)
                         .put("siteUrl", post.siteUrl ?: JSONObject.NULL)
@@ -53,6 +55,10 @@ data class Post(
                             publishedAt = if (obj.isNull("publishedAt")) null else obj.optString("publishedAt", null),
                             sourceUrl = if (obj.isNull("sourceUrl")) null else obj.optString("sourceUrl", null),
                             originalUrl = if (obj.isNull("originalUrl")) null else obj.optString("originalUrl", null),
+                            tags = if (obj.isNull("tags")) emptyList() else {
+                                val arr = obj.optJSONArray("tags")
+                                if (arr == null) emptyList() else (0 until arr.length()).map { arr.getString(it) }
+                            },
                             imageUrl = if (obj.isNull("imageUrl")) null else obj.optString("imageUrl", null),
                             videoUrl = if (obj.isNull("videoUrl")) null else obj.optString("videoUrl", null),
                             siteUrl = if (obj.isNull("siteUrl")) null else obj.optString("siteUrl", null),
@@ -96,10 +102,16 @@ data class Post(
                 // парсер не справился — работаем с сырым текстом дальше
             }
             // 2) Regex-фолбэк: описание могло прийти экранированным (CDATA/entities),
-            //    тогда парсер видел его как обычный текст — чистим регулярками.
+            //    тогда парсер видел его как обычный текст — конвертируем блочные теги
+            //    в переносы строк, остальные теги удаляем.
             if (result.contains("<", true)) {
                 result = Regex("""(?is)<\s*script.*?<\s*/script[^>]*>""").replace(result, "")
                 result = Regex("""(?is)<\s*style.*?<\s*/style[^>]*>""").replace(result, "")
+                // Блочные элементы → перенос строки (сохраняем структуру абзацев)
+                result = Regex("""(?is)</\s*(p|div|br|li|h[1-6]|tr|blockquote|pre)\s*>""").replace(result, "\n")
+                result = Regex("""(?is)<br\s*/?>""").replace(result, "\n")
+                result = Regex("""(?is)<\s*(p|div|h[1-6]|li|blockquote|pre)[^>]*>""").replace(result, "\n")
+                // Остальные теги — убираем
                 result = Regex("""(?is)<[^>]+>""").replace(result, " ")
             }
             // 3) HTML-сущности
