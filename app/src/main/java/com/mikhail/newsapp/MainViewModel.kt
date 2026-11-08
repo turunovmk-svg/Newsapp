@@ -479,13 +479,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     /** Дайджест «Утро»: посты за последние 12 часов (кроме уже прочитанных). */
     fun getMorningDigest(): List<Post> {
-        val now = java.util.System.currentTimeMillis()
+        val now = System.currentTimeMillis()
         val twelveHoursAgo = now - 12 * 60 * 60 * 1000L
         return _posts.value.filter { post ->
             post.publishedAt?.let { dateStr ->
                 try {
                     val sdf = java.text.SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss Z", java.util.Locale.US)
-                    val postTime = sdf.parse(dateStr)?.time ?: 0L
+                    val parsed: java.util.Date? = sdf.parse(dateStr)
+                    val postTime = parsed?.time ?: 0L
                     postTime >= twelveHoursAgo && !isRead(post)
                 } catch (e: Exception) {
                     false
