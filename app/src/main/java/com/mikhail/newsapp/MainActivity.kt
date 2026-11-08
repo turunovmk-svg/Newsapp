@@ -1,5 +1,3 @@
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3WindowSizeClassApi::class)
-
 package com.mikhail.newsapp
 
 import android.content.Context
