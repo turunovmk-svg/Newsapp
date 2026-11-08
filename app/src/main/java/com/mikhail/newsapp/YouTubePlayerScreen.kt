@@ -17,6 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -99,7 +100,59 @@ fun YouTubePlayerScreen(
             }
         }
 
-        // Плеер (скрыт полностью при ошибке)
+        /**
+ * Встроенный «браузер-плеер» YouTube: грузит настоящую мобильную страницу
+ * watch?v= вместо embed. Обходит ошибку 152 (правообладатель запретил embed),
+ * выглядит как обычный плеер, но работает как в браузере.
+ */
+@Composable
+fun YouTubeWebPlayer(videoId: String, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    var webOk by remember { mutableStateOf(true) }
+
+    if (webOk) {
+        AndroidView(
+            modifier = modifier.background(Color.Black),
+            factory = { ctx: Context ->
+                android.webkit.WebView(ctx).apply {
+                    settings.javaScriptEnabled = true
+                    settings.domStorageEnabled = true
+                    settings.mediaPlaybackRequiresUserGesture = false
+                    settings.loadWithOverviewMode = true
+                    settings.useWideViewPort = true
+                    settings.userAgentString =
+                        "Mozilla/5.0 (Linux; Android 10; Pixel 4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+                    setBackgroundColor(android.graphics.Color.BLACK)
+                    webViewClient = object : android.webkit.WebViewClient() {
+                        override fun onReceivedError(
+                            view: android.webkit.WebView?,
+                            request: android.webkit.WebResourceRequest?,
+                            error: android.webkit.WebResourceError?
+                        ) {
+                            if (request?.isForMainFrame == true) webOk = false
+                        }
+                    }
+                    loadUrl("https://m.youtube.com/watch?v=$videoId")
+                }
+            },
+            onRelease = { view -> view.destroy() }
+        )
+    } else {
+        // WebView тоже не справился — честный фолбэк
+        Box(
+            modifier = modifier.background(CyberColors.SurfaceElevated),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Видео недоступно",
+                style = CyberTypography.BodyMedium,
+                color = CyberColors.TextSecondary
+            )
+        }
+    }
+}
+
+// Плеер (скрыт полностью при ошибке)
     var playerError by remember { mutableStateOf<String?>(null) }
     if (videoId != null && playerError == null) {
         AndroidView(
@@ -125,8 +178,8 @@ fun YouTubePlayerScreen(
             },
             onRelease = { view -> view.release() }
         )
-    } else {
-        // Фолбэк: плеер не работает или не определился
+    } else if (playerError == "no_video_id" || playerError == "web_failed") {
+        // Фолбэк: плеер не определился — предлагаем открыть на YouTube
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -152,8 +205,7 @@ fun YouTubePlayerScreen(
                 )
                 Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
                 Text(
-                    text = if (playerError == "no_video_id") "Не удалось определить видео"
-                    else "Видео нельзя воспроизвести в приложении",
+                    text = "Не удалось определить видео",
                     style = CyberTypography.BodyMedium,
                     color = CyberColors.TextSecondary,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -166,6 +218,32 @@ fun YouTubePlayerScreen(
                         }
                     },
                     text = "Открыть на YouTube"
+                )
+            }
+        }
+    } else {
+        // Ошибка встроенного плеера (152/101/150) — пробуем «браузер-плеер»:
+        // настоящая страница watch?v= вместо embed, обходит блокировку.
+        Box(modifier = Modifier.fillMaxWidth()) {
+            YouTubeWebPlayer(
+                videoId = videoId ?: "",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(280.dp)
+            )
+            // Кнопка «открыть в YouTube» остаётся доступной
+            TextButton(
+                onClick = {
+                    post.sourceUrl?.let { url ->
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                    }
+                },
+                modifier = Modifier.align(Alignment.TopEnd)
+            ) {
+                Text(
+                    text = "В YouTube ↗",
+                    style = CyberTypography.BodySmall,
+                    color = CyberColors.AccentBlueBright
                 )
             }
         }
