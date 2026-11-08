@@ -338,6 +338,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             var currentDate: String? = null
             var currentLink: String? = null
             var currentImageUrl: String? = null
+            var currentSiteUrl: String? = null
+            var currentSiteName: String? = null
             var inItem = false
 
             while (eventType != XmlPullParser.END_DOCUMENT) {
@@ -352,6 +354,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                             currentDate = null
                             currentLink = null
                             currentImageUrl = null
+                            currentSiteUrl = null
+                            currentSiteName = null
+                        } else if (inItem && tag == "source") {
+                            // <source url="https://site.domain">Название</source> (Google News)
+                            currentSiteUrl = parser.getAttributeValue(null, "url")
                         } else if (inItem && (tag == "enclosure" || tag == "content" || tag == "thumbnail"
                                 || tag == "media:content" || tag == "media:thumbnail" || tag == "itunes:image")) {
                             val imgUrl = parser.getAttributeValue(null, "url")
@@ -370,6 +377,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                 "description" -> currentDesc = text
                                 "pubDate" -> currentDate = text
                                 "link" -> currentLink = text
+                                "source" -> currentSiteName = text
                             }
                         }
                     }
@@ -378,7 +386,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         if (tag == "item") {
                             inItem = false
                             if (currentTitle != null) {
-                                // Fallback: ищем <img src="..."> в описании, если нет явного imageUrl
+                                // Fallback: <img src> в описании
                                 val finalImageUrl = currentImageUrl ?: run {
                                     val desc = currentDesc ?: ""
                                     val imgRegex = Regex("""<img[^>]+src=["']([^"']+)["']""", RegexOption.IGNORE_CASE)
@@ -390,13 +398,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                     description = currentDesc,
                                     publishedAt = currentDate,
                                     sourceUrl = currentLink,
-                                    imageUrl = finalImageUrl
+                                    imageUrl = finalImageUrl,
+                                    siteUrl = currentSiteUrl,
+                                    siteName = currentSiteName
                                 ))
                             }
                             currentTitle = null
                             currentDesc = null
                             currentDate = null
                             currentLink = null
+                            currentImageUrl = null
+                            currentSiteUrl = null
+                            currentSiteName = null
                         }
                         currentTag = null
                     }

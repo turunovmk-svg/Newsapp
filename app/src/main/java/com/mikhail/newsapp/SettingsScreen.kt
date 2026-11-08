@@ -34,7 +34,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.mikhail.newsapp.data.Source
 import com.mikhail.newsapp.data.SourceType
 import com.mikhail.newsapp.theme.CyberColors
 import com.mikhail.newsapp.theme.CyberTypography
@@ -307,10 +306,15 @@ fun SettingsScreen(
                         }
                         Spacer(modifier = Modifier.height(UiSizes.SpacerXSmall))
                         Text(
-                            text = source.url
-                                .removePrefix("https://")
-                                .removePrefix("http://")
-                                .take(60),
+                            text = when {
+                                !source.label.isNullOrBlank() -> source.label
+                                source.type == SourceType.GNEWS -> source.url
+                                    .substringAfter("site:")
+                                    .substringBefore('&')
+                                else -> source.url
+                                    .removePrefix("https://")
+                                    .removePrefix("http://")
+                            }.take(60),
                             style = CyberTypography.BodySmall,
                             color = CyberColors.TextSecondary,
                             maxLines = 2,
@@ -357,16 +361,6 @@ private fun SectionTitle(text: String) {
                 .height(16.dp)
                 .clip(RoundedCornerShape(2.dp))
                 .background(CyberColors.AccentBlue)
-        )
-        Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
-        Text(
-            text = text,
-            style = CyberTypography.TitleMedium,
-            color = CyberColors.TextSecondary,
-        )
-    }
-}
-      .background(CyberColors.AccentBlue)
         )
         Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
         Text(
