@@ -40,7 +40,6 @@
 
     <!-- FavoritesScreen -->
     <string name="favorites_empty">Обране порожнє</string>
-    <string name="section_more_news">Інші новини (%1$d)</string>
 
     <!-- Error messages -->
     <string name="error_loading_news">Не вдалося завантажити: %1$s. Вже пробуємо знову — натисніть «Повторити», якщо хочете прискорити самі.</string>
