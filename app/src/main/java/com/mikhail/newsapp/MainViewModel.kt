@@ -562,6 +562,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             var currentImageWidth = 0
             var currentSiteUrl: String? = null
             var currentSiteName: String? = null
+            var currentOriginalUrl: String? = null
             var inItem = false
 
             while (eventType != XmlPullParser.END_DOCUMENT) {
@@ -579,9 +580,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                             currentImageWidth = 0
                             currentSiteUrl = null
                             currentSiteName = null
+                            currentOriginalUrl = null
                         } else if (inItem && tag == "source") {
                             // <source url="https://site.domain">Название</source> (Google News)
                             currentSiteUrl = parser.getAttributeValue(null, "url")
+                        } else if (inItem && tag == "link" && currentLink == null) {
+                            // <link> — для GNEWS это редирект Google, для обычных RSS — прямая ссылка на статью
+                            currentOriginalUrl = parser.nextText()
+                            currentLink = currentOriginalUrl
+                        }
                         } else if (inItem && (tag == "enclosure" || tag == "content" || tag == "thumbnail"
                                 || tag == "media:content" || tag == "media:thumbnail" || tag == "itunes:image")) {
                             val imgUrl = parser.getAttributeValue(null, "url")
@@ -628,6 +635,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                                     description = currentDesc,
                                     publishedAt = currentDate,
                                     sourceUrl = currentLink,
+                                    originalUrl = currentOriginalUrl,
                                     imageUrl = finalImageUrl?.let { upgradeImageUrl(it) },
                                     siteUrl = currentSiteUrl,
                                     siteName = currentSiteName

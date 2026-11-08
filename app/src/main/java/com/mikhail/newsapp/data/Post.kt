@@ -12,6 +12,7 @@ data class Post(
     val description: String?,
     val publishedAt: String?,
     val sourceUrl: String?,
+    val originalUrl: String? = null,  // оригинальная ссылка на статью (мимо Google News редиректа)
     val imageUrl: String?,
     val videoUrl: String? = null,  // mp4 (Telegram, <video>)
     val siteUrl: String? = null,      // домен первоисточника (для Google News)
@@ -28,6 +29,7 @@ data class Post(
                         .put("description", post.description)
                         .put("publishedAt", post.publishedAt)
                         .put("sourceUrl", post.sourceUrl)
+                        .put("originalUrl", post.originalUrl ?: JSONObject.NULL)
                         .put("imageUrl", post.imageUrl)
                         .put("videoUrl", post.videoUrl ?: JSONObject.NULL)
                         .put("siteUrl", post.siteUrl ?: JSONObject.NULL)
@@ -50,6 +52,7 @@ data class Post(
                             description = if (obj.isNull("description")) null else obj.optString("description", null),
                             publishedAt = if (obj.isNull("publishedAt")) null else obj.optString("publishedAt", null),
                             sourceUrl = if (obj.isNull("sourceUrl")) null else obj.optString("sourceUrl", null),
+                            originalUrl = if (obj.isNull("originalUrl")) null else obj.optString("originalUrl", null),
                             imageUrl = if (obj.isNull("imageUrl")) null else obj.optString("imageUrl", null),
                             videoUrl = if (obj.isNull("videoUrl")) null else obj.optString("videoUrl", null),
                             siteUrl = if (obj.isNull("siteUrl")) null else obj.optString("siteUrl", null),

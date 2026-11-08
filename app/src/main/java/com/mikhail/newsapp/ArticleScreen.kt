@@ -145,10 +145,11 @@ fun ArticleScreen(
     }
 
     // Догружаем полный текст, если описание короткое (анонс)
-    LaunchedEffect(post.id, post.sourceUrl) {
-        if (ArticleReader.needsFullText(post.description) && !post.sourceUrl.isNullOrBlank()) {
+    val originalLink = post.originalUrl ?: post.sourceUrl
+    LaunchedEffect(post.id, originalLink) {
+        if (ArticleReader.needsFullText(post.description) && !originalLink.isNullOrBlank()) {
             isLoadingFullText = true
-            val result = ArticleReader.fetch(post.sourceUrl)
+            val result = ArticleReader.fetch(originalLink)
             if (result != null) {
                 fullContent = result.text
                 fullTextFailed = false
@@ -228,6 +229,23 @@ fun ArticleScreen(
                             text = host,
                             style = CyberTypography.BodySmall,
                             color = CyberColors.AccentBlueBright,
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
+                // Открыть оригинальную статью в браузере (мимо Google News редиректа для GNEWS)
+                val openUrl = post.originalUrl ?: post.sourceUrl
+                if (openUrl != null) {
+                    IconButton(onClick = {
+                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                            data = Uri.parse(openUrl)
+                        }
+                        context.startActivity(intent)
+                    }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_open_external),
+                            contentDescription = "Открыть оригинал",
+                            tint = CyberColors.TextPrimary
                         )
                     }
                 }
