@@ -67,6 +67,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.AnnotatedStringBuilder
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.pointerInput
@@ -1324,6 +1327,7 @@ fun NewsCard(
     isFavorite: Boolean = false,
     isRead: Boolean = false,
     isReadLater: Boolean = false,
+    highlightQuery: String = "",
     onReadLaterClick: () -> Unit = {},
     onFavoriteClick: () -> Unit = {},
     onShareClick: () -> Unit = {},
@@ -1430,9 +1434,9 @@ fun NewsCard(
             }
             Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
 
-            // Заголовок — крупный редакционный
+            // Заголовок — крупный редакционный (с подсветкой поиска)
             Text(
-                text = post.title,
+                text = highlightText(post.title, highlightQuery, CyberColors.Warning),
                 style = CyberTypography.HeadlineMedium,
                 color = if (isRead) CyberColors.TextSecondary else CyberColors.TextPrimary,
                 maxLines = 2,
@@ -1445,7 +1449,7 @@ fun NewsCard(
                 val cleanDesc = Post.stripHtml(desc)
                 if (cleanDesc?.isNotEmpty() == true) {
                     Text(
-                        text = cleanDesc ?: "",
+                        text = highlightText(cleanDesc ?: "", highlightQuery, CyberColors.Warning),
                         style = CyberTypography.BodyMedium,
                         color = CyberColors.TextSecondary,
                         maxLines = 3,
@@ -1547,10 +1551,21 @@ fun SearchScreen(
                     tint = CyberColors.TextSecondary
                 )
             },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { searchQuery = "" }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_close),
+                            contentDescription = "Очистить",
+                            tint = CyberColors.TextSecondary
+                        )
+                    }
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
         )
-        Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
+        Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
 
         val filteredPosts = if (searchQuery.isNotBlank()) {
             posts.filter { post ->
@@ -1560,6 +1575,15 @@ fun SearchScreen(
         } else {
             posts
         }
+
+        // Счётчик результатов
+        Text(
+            text = if (searchQuery.isBlank()) "Все новости (${posts.size})"
+            else "Найдено: ${filteredPosts.size} из ${posts.size}",
+            style = CyberTypography.BodySmall,
+            color = CyberColors.TextSecondary,
+        )
+        Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
 
         if (searchQuery.isNotBlank() && filteredPosts.isEmpty()) {
             Text(
@@ -1581,6 +1605,7 @@ fun SearchScreen(
                         isFavorite = viewModel.isFavorite(post),
                         isRead = viewModel.isRead(post),
                         isReadLater = viewModel.isReadLater(post),
+                        highlightQuery = searchQuery,
                         onReadLaterClick = { viewModel.toggleReadLater(post) },
                         onFavoriteClick = { viewModel.toggleFavorite(post) },
                         onShareClick = {
