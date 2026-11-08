@@ -1337,7 +1337,8 @@ fun SwipeableNewsCard(
                     val actionX = offsetX
                     // ВСЕГДА плавно возвращаем на место
                     offsetX = 0f
-                    whenА плавно возв   actionX > 90f -> {
+                    when {
+                        actionX > 90f -> {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             onFavoriteClick()
                         }
