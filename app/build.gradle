@@ -10,7 +10,7 @@ android {
         applicationId "com.mikhail.newsapp"
         minSdk 21
         targetSdk 34
-        versionCode new Date().time / 1000L
+        versionCode new Date().getTime().intdiv(1000)
         versionName "1.0"
     }
 
