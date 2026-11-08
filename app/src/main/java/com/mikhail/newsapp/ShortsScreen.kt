@@ -243,7 +243,7 @@ fun ShortsFullScreenCard(
         // Вертикальная панель действий справа — над текстовым блоком (низ экрана)
         Column(
             modifier = Modifier
-                .align(Alignment.CenterEnd)
+                .align(Alignment.BottomEnd)
                 .padding(end = UiSizes.SpacerSmall, bottom = 250.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(UiSizes.SpacerMedium)

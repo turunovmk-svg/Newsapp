@@ -101,15 +101,6 @@ fun SettingsScreen(
             .padding(horizontal = UiSizes.ScreenPadding),
         verticalArrangement = Arrangement.spacedBy(UiSizes.SpacerMedium)
     ) {
-        item {
-            Text(
-                text = stringResource(id = R.string.settings_title),
-                style = CyberTypography.HeadlineMedium,
-                color = CyberColors.TextPrimary,
-                modifier = Modifier.padding(top = UiSizes.SpacerMedium)
-            )
-        }
-
         // ---------- Внешний вид ----------
         item {
             SectionTitle("Внешний вид")
