@@ -289,7 +289,7 @@ fun ArticleScreen(
                     .padding(horizontal = UiSizes.ArticlePadding)
             ) {
                 Text(
-                    text = post.title,
+                    text = if (showTranslation && translatedTitle != null) translatedTitle else post.title,
                     style = CyberTypography.HeadlineLarge,
                     color = CyberColors.TextPrimary,
                 )
@@ -397,6 +397,10 @@ fun ArticleScreen(
                             isTranslating = true
                             scope.launch {
                                 translatedText = ArticleTranslator.toRussian(articleText)
+                                // заголовок тоже переводим (короткий запрос)
+                                if (ArticleTranslator.looksRussian(post.title).not() && post.title.isNotBlank()) {
+                                    translatedTitle = ArticleTranslator.toRussian(post.title.take(250))
+                                }
                                 isTranslating = false
                                 showTranslation = translatedText != null
                             }

@@ -136,14 +136,8 @@ data class Source(
                     }
                 }
             }
-            // ручное переопределение типа
-            return if (forcedType != null && forcedType != feed.type && host.let { h ->
-                    h == "reddit.com" || h == "x.com" || h == "twitter.com" || h == "t.me" || h == "youtube.com"
-                }) {
-                null // не позволяем явно сломать автоопределение
-            } else {
-                feed
-            }
+            // ручной выбор типа убран — detect всегда возвращает авто-тип
+            return feed
         }
     }
 }
