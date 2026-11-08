@@ -1307,14 +1307,10 @@ fun FeaturedNewsCard(
                     .fillMaxWidth()
                     .height(UiSizes.FeaturedImageHeight)
             ) {
-                post.imageUrl?.let { imageUrl ->
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(imageUrl)
-                            .build(),
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+                if (post.imageUrl != null) {
+                    SmartNewsImage(
+                        imageUrl = post.imageUrl,
+                        modifier = Modifier.fillMaxSize()
                     )
                     Box(
                         modifier = Modifier
@@ -1466,20 +1462,18 @@ fun NewsCard(
         )
         Column(modifier = Modifier.padding(UiSizes.CardPadding)) {
             // Изображение или типографическая заглушка
-            post.imageUrl?.let { imageUrl ->
+            if (post.imageUrl != null) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(UiSizes.HomeCardMaxHeight)
                         .clip(RoundedCornerShape(UiSizes.CardCornerRadius))
                 ) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(imageUrl)
-                            .build(),
-                        contentDescription = null,
+                    SmartNewsImage(
+                        imageUrl = post.imageUrl,
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                        cornerRadius = UiSizes.CardCornerRadius,
+                        blurRadius = 20.dp
                     )
                     // Градиентная подложка снизу изображения
                     Box(
