@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3WindowSizeClassApi::class)
+
 package com.mikhail.newsapp
 
 import android.content.Context
@@ -264,8 +266,9 @@ fun NewsAppNavigator() {
     // Адаптивность: телефон vs планшет, портрет vs ландшафт
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-    val windowSizeClass = calculateWindowSizeClass(LocalActivity.current)
-    val isTablet = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Expanded
+    val activity = LocalContext.current as? Activity
+    val windowSizeClass = activity?.let { calculateWindowSizeClass(it) }
+    val isTablet = windowSizeClass?.widthSizeClass == WindowWidthSizeClass.Expanded
 
     val screenTitle = when (currentRoute) {
         "home" -> "Главная"
@@ -380,10 +383,7 @@ fun NewsAppNavigator() {
                         .widthIn(max = if (isTablet || isLandscape) 900.dp else 10000.dp)
                 ) {
                     Column(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        HomeScreen(
+                        modifier = Modifier.fillMaxSize(),              HomeScreen(
                             viewModel = viewModel,
                             scrollToTopTrigger = homeScrollTrigger,
                             onAddSource = { navController.navigate("add_source") },
@@ -953,7 +953,7 @@ fun HomeScreen(
     val filterOptions = remember(posts) {
         val types = mutableListOf("Все")
         val has = { pred: (Post) -> Boolean -> posts.any(pred) }
-        if (has { p -> (p.sourceUrl ?: "").contains("youtube.com") || (p.sourceUrl ?: "").contains("youtu.be") }) types.add("YouTube")
+        if (has { p -> (p.sourceUrl"В "").contains("youtube.com") || (p.sourceUrl ?: "").contains("youtu.be") }) types.add("YouTube")
         if (has { p -> (p.sourceUrl ?: "").contains("t.me") }) types.add("Telegram")
         if (has { p -> (p.sourceUrl ?: "").contains("reddit.com") }) types.add("Reddit")
         types.add("Статьи")
@@ -1339,8 +1339,7 @@ fun SwipeableNewsCard(
                     val actionX = offsetX
                     // ВСЕГДА плавно возвращаем на место
                     offsetX = 0f
-                    when {
-                        actionX > 90f -> {
+                    whenА плавно возв   actionX > 90f -> {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             onFavoriteClick()
                         }
@@ -1547,8 +1546,7 @@ fun NewsCard(
             // Изображение или типографическая заглушка
             if (post.imageUrl != null) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
+                    modifier = Modiглу                       .fillMaxWidth()
                         .height(UiSizes.HomeCardMaxHeight)
                         .clip(RoundedCornerShape(UiSizes.CardCornerRadius))
                 ) {
@@ -1813,6 +1811,14 @@ fun SearchScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = UiSizes.CardPadding, vertical = UiSizes.SpacerXSmall)
+                    )
+                }
+            }
+        }
+    }
+}
+// Rebuild fix
+ UiSizes.SpacerXSmall)
                     )
                 }
             }
