@@ -1326,7 +1326,7 @@ fun FeaturedNewsCard(
                                 )
                             )
                     )
-                } ?: run {
+                } else {
                     SourceGradientPlaceholder(
                         sourceUrl = post.siteUrl ?: post.sourceUrl,
                         modifier = Modifier.fillMaxSize(),
