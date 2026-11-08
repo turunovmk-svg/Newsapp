@@ -165,7 +165,6 @@ fun ShortsFullScreenCard(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .clickable(onClick = onOpenArticle)
     ) {
         // Фон: видео (если есть), фото или градиентная заглушка
         if (post.videoUrl != null) {
