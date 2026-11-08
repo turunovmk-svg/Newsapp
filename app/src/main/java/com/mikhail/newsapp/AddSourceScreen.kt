@@ -52,6 +52,7 @@ import com.mikhail.newsapp.UiSizes
 fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifier: Modifier = Modifier) {
     var sourceUrl by remember { mutableStateOf("") }
     var sourceType by remember { mutableStateOf(SourceType.RSS) }
+    var sourceFolder by remember { mutableStateOf("") }
     var urlError by remember { mutableStateOf<String?>(null) }
     var isAdding by remember { mutableStateOf(false) }
     var addedSource by remember { mutableStateOf<Boolean?>(null) } // null = не пытались, true = успех, false = ошибка
@@ -59,6 +60,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
     val error by viewModel.error.collectAsState()
     val sources by viewModel.sources.collectAsState()
     val sourceErrors by viewModel.sourceErrors.collectAsState()
+    val folders by viewModel.folders.collectAsState()
     val context = LocalContext.current
 
     // Предзагружаем строковые ресурсы для использования в onClick лямбдах
@@ -176,8 +178,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
                         ) {
                             SourceTypeChip("RSS", sourceType, CyberColors.AccentBlue) { sourceType = SourceType.RSS }
                             SourceTypeChip("Reddit", sourceType, CyberColors.AccentBlue) { sourceType = SourceType.REDDIT }
-                            SourceTypeChip("YouTube", sourceType, CyberColors.AccentBlue) { sourceType = SourceType.YOUTUBE }
-                            SourceTypeChip("TG", sourceType, CyberColors.AccentBlue) { sourceType = SourceType.TELEGRAM }
+                            SourceTypeChip("YouTube", sourceType, CyberColors.AccentBlue) { sourceType = SourceTy) { sourceType = SourceType.TELEGRAM }
                             SourceTypeChip("X", sourceType, CyberColors.AccentBlue) { sourceType = SourceType.TWITTER }
                         }
                     }
@@ -205,6 +206,23 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
                         }
                         Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
                     }
+                    Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
+
+                    // Папка источника (необязательно)
+                    OutlinedTextField(
+                        value = sourceFolder,
+                        onValueChange = { sourceFolder = it },
+                        label = { Text("Папка (необязательно)") },
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_link),
+                                contentDescription = "Папка",
+                                tint = CyberColors.TextSecondary
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                    )
                     Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
 
                     // Ошибка валидации
@@ -418,6 +436,11 @@ private fun typeLabel(type: String): String = when (type) {
     SourceType.REDDIT -> "Reddit"
     SourceType.YOUTUBE -> "YouTube"
     SourceType.TELEGRAM -> "Telegram"
+    SourceType.TWITTER -> "X (Twitter)"
+    SourceType.GNEWS -> "Сайт"
+    else -> "RSS"
+}
+
     SourceType.TWITTER -> "X (Twitter)"
     SourceType.GNEWS -> "Сайт"
     else -> "RSS"

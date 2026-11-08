@@ -23,7 +23,8 @@ object SourceType {
 data class Source(
     val type: String,   // RSS / REDDIT / YOUTUBE / TELEGRAM / TWITTER / GNEWS
     val url: String,    // нормализованный URL ленты/фида
-    val label: String? = null  // человекочитаемое имя (домен для GNEWS)
+    val label: String? = null,  // человекочитаемое имя (домен для GNEWS)
+    val folder: String = ""     // папка/категория (пусто = без папки)
 ) {
     companion object {
         fun toJsonList(sources: List<Source>): String {
@@ -34,6 +35,7 @@ data class Source(
                         .put("type", source.type)
                         .put("url", source.url)
                         .put("label", source.label ?: JSONObject.NULL)
+                        .put("folder", source.folder)
                 )
             }
             return array.toString()
@@ -49,7 +51,8 @@ data class Source(
                         Source(
                             obj.getString("type"),
                             obj.getString("url"),
-                            obj.optString("label", null)
+                            obj.optString("label", null),
+                            obj.optString("folder", "")
                         )
                     )
                 }

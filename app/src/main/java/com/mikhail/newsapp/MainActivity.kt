@@ -463,6 +463,59 @@ fun HomeScreen(
     // Поисковое поле
     var searchQuery by remember { mutableStateOf("") }
     var filterType by remember { mutableStateOf("Все") }
+    val folders by viewModel.folders.collectAsState()
+    val selectedFolder by viewModel.selectedFolder.collectAsState()
+
+    // Чипы папок (если есть)
+    if (folders.isNotEmpty()) {
+        LazyRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = UiSizes.ScreenPadding, vertical = UiSizes.SpacerXSmall),
+            horizontalArrangement = Arrangement.spacedBy(UiSizes.SpacerSmall)
+        ) {
+            item {
+                val selected = selectedFolder.isEmpty()
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(
+                            if (selected) CyberColors.AccentBlueBright else CyberColors.SurfaceElevated.copy(alpha = 0.6f),
+                            RoundedCornerShape(50)
+                        )
+                        .clickable { viewModel.setSelectedFolder("") }
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        text = "Все источники",
+                        style = CyberTypography.BodySmall,
+                        color = if (selected) CyberColors.TextInverse else CyberColors.TextSecondary,
+                    )
+                }
+            }
+            items(folders.size) { i ->
+                val folder = folders[i]
+                val selected = selectedFolder == folder
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(
+                            if (selected) CyberColors.AccentBlueBright else CyberColors.SurfaceElevated.copy(alpha = 0.6f),
+                            RoundedCornerShape(50)
+                        )
+                        .clickable { viewModel.setSelectedFolder(folder) }
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        text = folder,
+                        style = CyberTypography.BodySmall,
+                        color = if (selected) CyberColors.TextInverse else CyberColors.TextSecondary,
+                    )
+                }
+            }
+        }
+    }
+
     GlassCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -617,6 +670,8 @@ fun HomeScreen(
                     post = post,
                     isFavorite = viewModel.isFavorite(post),
                     isRead = viewModel.isRead(post),
+                    isReadLater = viewModel.isReadLater(post),
+                    onReadLaterClick = { viewModel.toggleReadLater(post) },
                     onFavoriteClick = { viewModel.toggleFavorite(post) },
                     onShareClick = {
                         post.sourceUrl?.let { url ->
@@ -817,6 +872,8 @@ fun NewsCard(
     post: Post,
     isFavorite: Boolean = false,
     isRead: Boolean = false,
+    isReadLater: Boolean = false,
+    onReadLaterClick: () -> Unit = {},
     onFavoriteClick: () -> Unit = {},
     onShareClick: () -> Unit = {},
     onClick: () -> Unit = {},
@@ -969,6 +1026,15 @@ fun NewsCard(
                     )
                 }
                 IconButton(
+                    onClick = onReadLaterClick,
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_bookmark),
+                        contentDescription = if (isReadLater) "Убрать из 'Читать позже'" else "Читать позже",
+                        tint = if (isReadLater) CyberColors.AccentBlueBright else CyberColors.TextMuted
+                    )
+                }
+                IconButton(
                     onClick = onShareClick,
                 ) {
                     Icon(
@@ -982,56 +1048,6 @@ fun NewsCard(
     }
 }
 
-@Composable
-fun FavoritesScreen(viewModel: MainViewModel, onArticleClick: (Post) -> Unit, modifier: Modifier = Modifier) {
-    val favorites by viewModel.favorites.collectAsState()
-
-    Column(modifier = modifier.fillMaxSize().padding(UiSizes.ScreenPadding)) {
-        if (favorites.isEmpty()) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = stringResource(id = R.string.favorites_empty),
-                    style = CyberTypography.HeadlineMedium,
-                    color = CyberColors.TextSecondary
-                )
-            }
-        } else {
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(
-                    items = favorites,
-                    key = { it.id }
-                ) { post ->
-                    val ctx = LocalContext.current
-                    NewsCard(
-                        post = post,
-                        isFavorite = true,
-                        isRead = viewModel.isRead(post),
-                        onFavoriteClick = { viewModel.toggleFavorite(post) },
-                        onShareClick = {
-                            post.sourceUrl?.let { url ->
-                                val intent = Intent(Intent.ACTION_SEND).apply {
-                                    type = "text/plain"
-                                    putExtra(Intent.EXTRA_TEXT, "$url")
-                                }
-                                ctx.startActivity(Intent.createChooser(intent, "Поделиться"))
-                            }
-                        },
-                        onClick = { onArticleClick(post) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = UiSizes.CardPadding, vertical = UiSizes.SpacerXSmall)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
     viewModel: MainViewModel,
@@ -1113,6 +1129,8 @@ fun SearchScreen(
                         post = post,
                         isFavorite = viewModel.isFavorite(post),
                         isRead = viewModel.isRead(post),
+                        isReadLater = viewModel.isReadLater(post),
+                        onReadLaterClick = { viewModel.toggleReadLater(post) },
                         onFavoriteClick = { viewModel.toggleFavorite(post) },
                         onShareClick = {
                             post.sourceUrl?.let { url ->

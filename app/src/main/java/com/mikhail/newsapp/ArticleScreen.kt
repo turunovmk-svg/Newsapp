@@ -21,9 +21,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,10 +66,58 @@ fun ArticleScreen(
 ) {
     val context = LocalContext.current
     val fontScale by viewModel.fontScale.collectAsState()
+    val isReadLater = viewModel.isReadLater(post)
+
+    // ---------- Озвучивание (TTS) ----------
+    var isSpeaking by remember { mutableStateOf(false) }
+    val tts = remember {
+        android.speech.tts.TextToSpeech(context) { status ->
+            if (status != android.speech.tts.TextToSpeech.SUCCESS) {
+                isSpeaking = false
+            }
+        }.apply {
+            language = java.util.Locale("ru")
+        }
+    }
+    DisposableEffect(Unit) {
+        onDispose {
+            tts.stop()
+            tts.shutdown()
+        }
+    }
+    fun toggleSpeak(text: String?) {
+        if (isSpeaking) {
+            tts.stop()
+            isSpeaking = false
+        } else if (!text.isNullOrBlank()) {
+            tts.speak(text, android.speech.tts.TextToSpeech.QUEUE_FLUSH, null, "article")
+            isSpeaking = true
+        }
+    }
+
+    // Полнотекстовая догрузка, если в RSS только анонс
+    var fullContent by remember { mutableStateOf<String?>(null) }
+    var isLoadingFullText by remember { mutableStateOf(false) }
+    var fullTextFailed by remember { mutableStateOf(false) }
 
     // Помечаем прочитанным при открытии
     LaunchedEffect(post.id) {
         viewModel.markAsRead(post)
+    }
+
+    // Догружаем полный текст, если описание короткое (анонс)
+    LaunchedEffect(post.id, post.sourceUrl) {
+        if (ArticleReader.needsFullText(post.description) && !post.sourceUrl.isNullOrBlank()) {
+            isLoadingFullText = true
+            val result = ArticleReader.fetch(post.sourceUrl)
+            if (result != null) {
+                fullContent = result.text
+                fullTextFailed = false
+            } else {
+                fullTextFailed = true
+            }
+            isLoadingFullText = false
+        }
     }
 
     val bodyStyle = CyberTypography.BodyLarge.copy(
@@ -109,6 +161,13 @@ fun ArticleScreen(
                     )
                 }
                 Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
+                IconButton(onClick = { viewModel.toggleReadLater(post) }) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_bookmark),
+                        contentDescription = if (isReadLater) "Убрать из 'Читать позже'" else "Читать позже",
+                        tint = if (isReadLater) CyberColors.AccentBlueBright else CyberColors.TextSecondary
+                    )
+                }
                 post.sourceUrl?.let { url ->
                     val host = url
                         .removePrefix("https://")
@@ -205,27 +264,44 @@ fun ArticleScreen(
                     .fillMaxWidth()
                     .padding(horizontal = UiSizes.ArticlePadding)
             ) {
-                post.description?.let { desc ->
-                    val cleanDesc = Post.stripHtml(desc)
-                    if (!cleanDesc.isNullOrEmpty()) {
-                        Text(
-                            text = cleanDesc,
-                            style = bodyStyle,
-                            color = CyberColors.TextPrimary,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    } else {
-                        Text(
-                            text = stringResource(id = R.string.article_no_content),
-                            style = CyberTypography.BodyMedium,
-                            color = CyberColors.TextSecondary,
-                        )
-                    }
-                } ?: run {
+                val displayText = fullContent ?: post.description?.let { Post.stripHtml(it) }
+                if (!displayText.isNullOrEmpty()) {
+                    Text(
+                        text = displayText,
+                        style = bodyStyle,
+                        color = CyberColors.TextPrimary,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                } else {
                     Text(
                         text = stringResource(id = R.string.article_no_content),
                         style = CyberTypography.BodyMedium,
                         color = CyberColors.TextSecondary,
+                    )
+                }
+                // Статус догрузки полного текста
+                if (isLoadingFullText) {
+                    Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
+                    Text(
+                        text = "Загружаем полный текст…",
+                        style = CyberTypography.BodySmall,
+                        color = CyberColors.AccentBlueBright,
+                    )
+                }
+                if (fullTextFailed && !isLoadingFullText) {
+                    Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
+                    Text(
+                        text = "Не удалось загрузить полный текст — открыть оригинал",
+                        style = CyberTypography.BodySmall,
+                        color = CyberColors.TextSecondary,
+                    )
+                }
+                if (fullContent != null) {
+                    Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
+                    Text(
+                        text = "Загружен полный текст с сайта",
+                        style = CyberTypography.BodySmall,
+                        color = CyberColors.AccentBlueBright,
                     )
                 }
             }
@@ -236,6 +312,17 @@ fun ArticleScreen(
         }
 
         item {
+            // Кнопка озвучивания
+            NeonButton(
+                onClick = { toggleSpeak(fullContent ?: post.description?.let { Post.stripHtml(it) }) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = UiSizes.ArticlePadding),
+                text = if (isSpeaking) "Остановить озвучивание" else "Слушать статью",
+                primaryColor = if (isSpeaking) CyberColors.SurfaceElevated else CyberColors.AccentBlueBright,
+            )
+            Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
+
             // Кнопка открытия оригинала
             NeonButton(
                 onClick = {

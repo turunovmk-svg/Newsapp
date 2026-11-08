@@ -12,6 +12,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -41,11 +44,29 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _favorites = MutableStateFlow<List<Post>>(emptyList())
     val favorites: StateFlow<List<Post>> = _favorites.asStateFlow()
 
+    // ---------- Читать позже (persisted) ----------
+    private val _readLater = MutableStateFlow<List<Post>>(emptyList())
+    val readLater: StateFlow<List<Post>> = _readLater.asStateFlow()
+
     private val _currentShortsIndex = MutableStateFlow(0)
     val currentShortsIndex: StateFlow<Int> = _currentShortsIndex.asStateFlow()
 
     fun setCurrentShortsIndex(index: Int) {
         _currentShortsIndex.value = index
+    }
+
+    // ---------- Папки источников ----------
+    private val _selectedFolder = MutableStateFlow("")   // "" = все источники
+    val selectedFolder: StateFlow<String> = _selectedFolder.asStateFlow()
+
+    /** Список непустых папок из источников. */
+    val folders: StateFlow<List<String>> = _sources.map { list ->
+        list.map { it.folder }.filter { it.isNotBlank() }.distinct().sorted()
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    fun setSelectedFolder(folder: String) {
+        _selectedFolder.value = folder
+        loadPosts()
     }
 
     // ---------- Ошибки конкретных источников (url → текст) ----------
@@ -73,6 +94,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         init {
         loadSources()
         loadFavorites()
+        loadReadLater()
         loadReadIds()
         loadSettings()
         loadCachedPosts()
@@ -153,7 +175,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /** Добавляет источник по вставленной ссылке: тип определяется автоматически. */
-    fun addSource(type: String, url: String) {
+    fun addSource(type: String, url: String, folder: String = "") {
         val detected = Source.detect(url, type)
         if (detected == null) {
             _error.value = "Не удалось распознать ссылку"
@@ -173,17 +195,27 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _error.value = "Источник уже добавлен"
             return
         }
-        val newSource = Source(detected.type, trimmedUrl)
+        val newSource = Source(detected.type, trimmedUrl, detected.label, folder.trim())
         val updated = current + newSource
         saveSources(updated)
         clearError()
         loadPosts()
     }
 
+    /** Меняет папку источника. */
+    fun setSourceFolder(url: String, folder: String) {
+        val updated = _sources.value.map {
+            if (it.url == url) it.copy(folder = folder.trim()) else it
+        }
+        saveSources(updated)
+    }
+
     /** Загружает посты из всех сохранённых источников. */
     fun loadPosts() {
         viewModelScope.launch {
-            val sources = _sources.value
+            val allSources = _sources.value
+            val folder = _selectedFolder.value
+            val sources = if (folder.isBlank()) allSources else allSources.filter { it.folder == folder }
             if (sources.isEmpty()) {
                 _posts.value = emptyList()
                 _isLoading.value = false
@@ -568,6 +600,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private fun loadFavorites() {
         val json = prefs.getString("favorites_json", null) ?: return
         _favorites.value = Post.fromJsonList(json)
+    }
+
+    // ---------- Читать позже ----------
+    /** Добавляет или убирает статью из «Читать позже» с сохранением. */
+    fun toggleReadLater(post: Post) {
+        val current = _readLater.value
+        _readLater.value = if (current.any { it.id == post.id }) {
+            current.filter { it.id != post.id }
+        } else {
+            current + post
+        }
+        prefs.edit().putString("readlater_json", Post.toJsonList(_readLater.value)).apply()
+    }
+
+    fun isReadLater(post: Post): Boolean = _readLater.value.any { it.id == post.id }
+
+    private fun loadReadLater() {
+        val json = prefs.getString("readlater_json", null) ?: return
+        _readLater.value = Post.fromJsonList(json)
     }
 
     /** Удаляет источник по URL. */
