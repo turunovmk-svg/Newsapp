@@ -57,35 +57,47 @@ object ArticleReader {
             val doc = Jsoup.parse(html)
 
             // OG-картинка или первая крупная
-            val imageUrl = doc.select("meta[property=og:image]").attr("content")
-                .ifEmpty { doc.select("meta[name=twitter:image]").attr("content") }
-                .ifEmpty {
-                    doc.select("img")
-                        .firstOrNull { img ->
-                            val w = img.attr("width").toIntOrNull() ?: 0
-                            val src = img.attr("src")
-                            src.startsWith("http") && w >= 300
-                        }?.attr("src")
-                }
-                .ifEmpty { null }
+            val ogImage: String = doc.select("meta[property=og:image]").attr("content").orEmpty()
+            val twImage: String = doc.select("meta[name=twitter:image]").attr("content").orEmpty()
+            val bigImg: String = doc.select("img")
+                .firstOrNull { img: org.jsoup.nodes.Element ->
+                    val w = img.attr("width").toIntOrNull() ?: 0
+                    val src = img.attr("src").orEmpty()
+                    src.startsWith("http") && w >= 300
+                }?.attr("src").orEmpty()
+            val imageUrl: String? = ogImage.ifEmpty { twImage }.ifEmpty { bigImg }.ifEmpty { null }
 
             // Заголовок
-            val title = doc.select("meta[property=og:title]").attr("content")
-                .ifEmpty { doc.selectFirst("h1")?.text() ?: doc.title() }
+            val ogTitle: String = doc.select("meta[property=og:title]").attr("content").orEmpty()
+            val h1Text: String = doc.selectFirst("h1")?.text().orEmpty()
+            val title: String = ogTitle.ifEmpty { h1Text }.ifEmpty { doc.title().orEmpty() }
 
             // Убираем мусор
             doc.select("script, style, nav, header, footer, aside, iframe, form, .ad, .ads, .advert, .social, .share, .comments, .related, .menu, .sidebar").remove()
 
-            // Основной текст: article → main → [itemprop=articleBody] → самый большой блок с <p>
-            var contentEl = doc.selectFirst("article")
+            // Основной текст: article → main → [itemprop=articleBody] → эвристика
+            val articleEl: org.jsoup.nodes.Element? = doc.selectFirst("article")
                 ?: doc.selectFirst("main")
                 ?: doc.selectFirst("[itemprop=articleBody]")
 
-            if (contentEl == null || contentEl.select("p").size < 2) {
-                // Эвристика: выбираем блок с максимальным суммарным текстом в <p>
-                contentEl = doc.select("div, section")
-                    .filter { it.select("p").size >= 2 }
-                    .maxByOrNull { el -> el.select("p").sumOf { it.text().length } }
+            var contentEl: org.jsoup.nodes.Element? = articleEl
+            val articleP = articleEl?.select("p")?.size ?: 0
+            if (articleP < 2) {
+                // Эвристика: блок с максимальным суммарным текстом в <p>
+                val candidates = doc.select("div, section")
+                var best: org.jsoup.nodes.Element? = null
+                var bestLen = 0
+                for (el: org.jsoup.nodes.Element in candidates) {
+                    val ps = el.select("p")
+                    if (ps.size >= 2) {
+                        val len = ps.sumOf { it.text().length }
+                        if (len > bestLen) {
+                            bestLen = len
+                            best = el
+                        }
+                    }
+                }
+                contentEl = best
             }
 
             val paragraphs = contentEl?.select("p")
@@ -93,10 +105,9 @@ object ArticleReader {
                 ?.filter { it.length > 20 }
                 ?: emptyList()
 
-            val text = if (paragraphs.isNotEmpty()) {
+            val text: String = if (paragraphs.isNotEmpty()) {
                 paragraphs.joinToString("\n\n")
             } else {
-                // fallback — весь видимый текст body
                 doc.body()?.text()?.take(6000) ?: ""
             }
 

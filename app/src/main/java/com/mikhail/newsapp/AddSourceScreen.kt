@@ -55,7 +55,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
     var sourceFolder by remember { mutableStateOf("") }
     var urlError by remember { mutableStateOf<String?>(null) }
     var isAdding by remember { mutableStateOf(false) }
-    var addedSource by remember { mutableStateOf<Boolean?>(null) } // null = не пытались, true = успех, false = ошибка
+    var addedSource by remember { mutableStateOf<Boolean?>(null) }
 
     val error by viewModel.error.collectAsState()
     val sources by viewModel.sources.collectAsState()
@@ -63,7 +63,6 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
     val folders by viewModel.folders.collectAsState()
     val context = LocalContext.current
 
-    // Предзагружаем строковые ресурсы для использования в onClick лямбдах
     val urlEmptyError = stringResource(id = R.string.url_empty_error)
     val urlFormatError = stringResource(id = R.string.url_format_error)
     val urlDuplicateError = stringResource(id = R.string.url_duplicate_error)
@@ -84,7 +83,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
 
     fun addSource(type: String, url: String) {
         isAdding = true
-        viewModel.addSource(type, url)
+        viewModel.addSource(type, url, sourceFolder)
         addedSource = true
         isAdding = false
     }
@@ -100,16 +99,14 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         item {
-            // Кнопка назад
+            // Кнопка назад + заголовок
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = UiSizes.SpacerSmall),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(
-                    onClick = onNavigateBack,
-                ) {
+                IconButton(onClick = onNavigateBack) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_back),
                         contentDescription = "Назад",
@@ -138,7 +135,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
         }
 
         item {
-            // Карточка ввода с стеклянным эффектом
+            // Карточка ввода
             GlassCard(
                 modifier = Modifier.fillMaxWidth(),
                 borderColor = CyberColors.BorderGlassBright,
@@ -161,7 +158,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
                     )
                     Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
 
-                    // Тип источника: автоопределение + ручной выбор
+                    // Тип источника: чипы
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -176,15 +173,16 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            SourceTypeChip("RSS", sourceType, CyberColors.AccentBlue) { sourceType = SourceType.RSS }
-                            SourceTypeChip("Reddit", sourceType, CyberColors.AccentBlue) { sourceType = SourceType.REDDIT }
-                            SourceTypeChip("YouTube", sourceType, CyberColors.AccentBlue) { sourceType = SourceTy) { sourceType = SourceType.TELEGRAM }
-                            SourceTypeChip("X", sourceType, CyberColors.AccentBlue) { sourceType = SourceType.TWITTER }
+                            SourceTypeChip("RSS", sourceType) { sourceType = SourceType.RSS }
+                            SourceTypeChip("Reddit", sourceType) { sourceType = SourceType.REDDIT }
+                            SourceTypeChip("YouTube", sourceType) { sourceType = SourceType.YOUTUBE }
+                            SourceTypeChip("TG", sourceType) { sourceType = SourceType.TELEGRAM }
+                            SourceTypeChip("X", sourceType) { sourceType = SourceType.TWITTER }
                         }
                     }
                     Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
 
-                    // Подсказка автоопределения типа
+                    // Подсказка автоопределения
                     if (detectedType != null) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -204,11 +202,10 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
                                 modifier = Modifier.fillMaxWidth(),
                             )
                         }
-                        Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
                     }
                     Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
 
-                    // Папка источника (необязательно)
+                    // Папка (необязательно)
                     OutlinedTextField(
                         value = sourceFolder,
                         onValueChange = { sourceFolder = it },
@@ -247,7 +244,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
                         Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
                     }
 
-                    // Основная кнопка добавления
+                    // Кнопка добавления
                     NeonButton(
                         onClick = {
                             if (sourceUrl.isBlank()) {
@@ -271,7 +268,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
                     )
                     Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
 
-                    // Сообщение об успешном добавлении
+                    // Успех
                     if (addedSource == true) {
                         Text(
                             text = sourceAddedSuccess,
@@ -283,7 +280,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
                         Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
                     }
 
-                    // Общая ошибка экрана
+                    // Общая ошибка
                     if (error != null && addedSource != true) {
                         Text(
                             text = error ?: "",
@@ -297,7 +294,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
             }
         }
 
-        // ---------- Ошибки загрузки источников ----------
+        // Ошибки загрузки источников
         if (sourceErrors.isNotEmpty()) {
             item {
                 Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
@@ -321,7 +318,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
             }
         }
 
-        // ---------- Мои источники ----------
+        // Мои источники
         if (sources.isNotEmpty()) {
             item {
                 Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
@@ -334,7 +331,6 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
             }
             items(sources.size) { i ->
                 val src = sources[i]
-                val isAdded = true
                 GlassCard(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -371,7 +367,10 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
                             )
                         }
                         IconButton(
-                            onClick = { viewModel.removeSource(src.url); addedSource = false },
+                            onClick = {
+                                viewModel.removeSource(src.url)
+                                addedSource = false
+                            },
                         ) {
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_delete),
@@ -386,8 +385,6 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
 
         item {
             Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
-
-            // Кнопка назад к ленте
             NeonButton(
                 onClick = onNavigateBack,
                 modifier = Modifier.fillMaxWidth(),
@@ -403,7 +400,6 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
 private fun SourceTypeChip(
     label: String,
     selectedType: String,
-    accentColor: androidx.compose.ui.graphics.Color,
     onClick: () -> Unit
 ) {
     val selected = selectedType == when (label) {
@@ -417,7 +413,7 @@ private fun SourceTypeChip(
         modifier = Modifier
             .clip(RoundedCornerShape(50))
             .background(
-                if (selected) accentColor else CyberColors.SurfaceElevated,
+                if (selected) CyberColors.AccentBlue else CyberColors.SurfaceElevated,
                 RoundedCornerShape(50)
             )
             .clickable(onClick = onClick)
@@ -436,11 +432,6 @@ private fun typeLabel(type: String): String = when (type) {
     SourceType.REDDIT -> "Reddit"
     SourceType.YOUTUBE -> "YouTube"
     SourceType.TELEGRAM -> "Telegram"
-    SourceType.TWITTER -> "X (Twitter)"
-    SourceType.GNEWS -> "Сайт"
-    else -> "RSS"
-}
-
     SourceType.TWITTER -> "X (Twitter)"
     SourceType.GNEWS -> "Сайт"
     else -> "RSS"
