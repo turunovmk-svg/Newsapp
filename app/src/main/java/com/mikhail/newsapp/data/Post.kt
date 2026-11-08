@@ -63,8 +63,10 @@ data class Post(
         /** Удаляет HTML-теги из текста для безопасного отображения. */
         fun stripHtml(text: String?): String? {
             if (text.isNullOrEmpty()) return text
-            return try {
-                val result = StringBuilder()
+            var result: String = text
+            // 1) Парсер: пропускаем содержимое script/style/head
+            try {
+                val sb = StringBuilder()
                 val parser = XmlPullParserFactory.newInstance().newPullParser()
                 parser.setInput(java.io.StringReader(text))
                 var eventType = parser.eventType
@@ -73,47 +75,56 @@ data class Post(
                     when (eventType) {
                         XmlPullParser.START_TAG -> {
                             val tag = parser.name?.lowercase() ?: ""
-                            if (tag == "script" || tag == "style" || tag == "head" || tag == "noscript") {
-                                skipDepth++
-                            }
+                            if (tag == "script" || tag == "style" || tag == "head" || tag == "noscript") skipDepth++
                         }
-                        XmlPullParser.TEXT -> {
-                            if (skipDepth == 0) {
-                                result.append(parser.text)
-                            }
-                        }
+                        XmlPullParser.TEXT -> if (skipDepth == 0) sb.append(parser.text)
                         XmlPullParser.END_TAG -> {
                             val tag = parser.name?.lowercase() ?: ""
-                            if (tag == "script" || tag == "style" || tag == "head" || tag == "noscript") {
-                                if (skipDepth > 0) skipDepth--
-                            }
+                            if ((tag == "script" || tag == "style" || tag == "head" || tag == "noscript") && skipDepth > 0) skipDepth--
                         }
                     }
                     eventType = parser.next()
                 }
-                // Декодируем базовые HTML-сущности и чистим мусорные строки
-                result.toString()
-                    .replace("&nbsp;", " ")
-                    .replace("&amp;", "&")
-                    .replace("&lt;", "<")
-                    .replace("&gt;", ">")
-                    .replace("&quot;", "\"")
-                    .replace("&apos;", "'")
-                    .replace("&#39;", "'")
-                    .replace("&laquo;", "«")
-                    .replace("&raquo;", "»")
-                    .replace("&mdash;", "—")
-                    .replace("&ndash;", "–")
-                    .lines()
-                    .filterNot { line ->
-                        val t = line.trim()
-                        t.isEmpty() || t == "Copy" || t == "Download Context Embed View In Channel"
-                    }
-                    .joinToString("\n")
-                    .trim()
+                result = sb.toString()
             } catch (e: Exception) {
-                text // возвращаем как есть при ошибке
+                // парсер не справился — работаем с сырым текстом дальше
             }
+            // 2) Regex-фолбэк: описание могло прийти экранированным (CDATA/entities),
+            //    тогда парсер видел его как обычный текст — чистим регулярками.
+            if (result.contains("<", true)) {
+                result = Regex("(?is)<\s*script.*?<\s*/script[^>]*>").replace(result, "")
+                result = Regex("(?is)<\s*style.*?<\s*/style[^>]*>").replace(result, "")
+                result = Regex("(?is)<[^>]+>").replace(result, " ")
+            }
+            // 3) HTML-сущности
+            result = result
+                .replace("&nbsp;", " ")
+                .replace("&amp;", "&")
+                .replace("&lt;", "<")
+                .replace("&gt;", ">")
+                .replace("&quot;", "\"")
+                .replace("&#39;", "'")
+                .replace("&apos;", "'")
+                .replace("&laquo;", "«")
+                .replace("&raquo;", "»")
+                .replace("&mdash;", "—")
+                .replace("&ndash;", "–")
+                .replace("&hellip;", "…")
+            // 4) Чистим мусорные строки (кнопки виджетов и пустое)
+            result = result
+                .lines()
+                .filterNot { line ->
+                    val t = line.trim()
+                    t.isEmpty() || t == "Copy" ||
+                        t == "Download Context Embed View In Channel" ||
+                        t.contains("telegram.org/js/", true) ||
+                        t.contains("data-telegram-post", true) ||
+                        t.startsWith("data-width", true)
+                }
+                .joinToString("\n")
+                .replace(Regex("[ \\t]{2,}"), " ")
+                .trim()
+            return result
         }
     }
 }

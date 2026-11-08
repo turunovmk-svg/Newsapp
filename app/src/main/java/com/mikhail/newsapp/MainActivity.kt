@@ -239,45 +239,71 @@ fun NewsAppNavigator() {
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = screenTitle,
-                        style = CyberTypography.TitleLarge,
-                        color = CyberColors.TextPrimary
+            Column {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = screenTitle,
+                            style = CyberTypography.TitleLarge.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                letterSpacing = (-0.2).sp
+                            ),
+                            color = CyberColors.TextPrimary
+                        )
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = CyberColors.SurfaceGlassStrong,
+                        titleContentColor = CyberColors.TextPrimary
                     )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = CyberColors.SurfaceGlassStrong,
-                    titleContentColor = CyberColors.TextPrimary
-                ),
-                navigationIcon = {
-                    if (currentRoute == "article" || currentRoute == "search") {
-                        IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_back),
-                                contentDescription = "Назад",
-                                tint = CyberColors.TextPrimary
+                )
+                // Акцентная линия под топбаром
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    CyberColors.AccentBlue.copy(alpha = 0.4f),
+                                    CyberColors.AccentBlueBright.copy(alpha = 0.55f),
+                                    CyberColors.AccentBlue.copy(alpha = 0.4f),
+                                    Color.Transparent
+                                )
                             )
-                        }
-                    }
-                }
-            )
+                        )
+                )
+            }
         },
         bottomBar = {
             NewsBottomNavBar(navController = navController, currentRoute = currentRoute)
         },
         floatingActionButton = {
             if (currentRoute == "home") {
+                var fabPressed by remember { mutableStateOf(false) }
+                val fabScale by androidx.compose.animation.core.animateFloatAsState(
+                    targetValue = if (fabPressed) 0.92f else 1f,
+                    animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.55f),
+                    label = "fabScale"
+                )
                 FloatingActionButton(
                     onClick = { navController.navigate("add_source") },
                     containerColor = CyberColors.AccentBlue,
-                    contentColor = CyberColors.TextInverse
+                    contentColor = CyberColors.TextInverse,
+                    shape = RoundedCornerShape(18.dp),
+                    elevation = FloatingActionButtonDefaults.elevation(
+                        defaultElevation = 10.dp,
+                        pressedElevation = 16.dp
+                    ),
+                    modifier = Modifier
+                        .size(58.dp)
+                        .graphicsLayer(scaleX = fabScale, scaleY = fabScale)
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_add),
                         contentDescription = "Добавить источник",
-                        tint = CyberColors.TextInverse
+                        tint = CyberColors.TextInverse,
+                        modifier = Modifier.size(26.dp)
                     )
                 }
             }
@@ -448,120 +474,92 @@ fun NewsAppNavigator() {
 
 @Composable
 fun NewsBottomNavBar(navController: NavHostController, currentRoute: String?) {
-    NavigationBar(
-        containerColor = CyberColors.SurfaceGlassStrong,
-        contentColor = CyberColors.TextPrimary
+    Surface(
+        color = CyberColors.SurfaceGlassStrong,
+        shadowElevation = 16.dp,
+        tonalElevation = 0.dp
     ) {
-        NavigationBarItem(
-            selected = currentRoute == "home",
-            onClick = {
-                navController.navigate("home") {
-                    launchSingleTop = true
-                    popUpTo("home") { inclusive = false }
+        Column {
+            // Тонкая акцентная линия сверху
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                CyberColors.AccentBlue.copy(alpha = 0.35f),
+                                CyberColors.AccentBlueBright.copy(alpha = 0.5f),
+                                CyberColors.AccentBlue.copy(alpha = 0.35f),
+                                Color.Transparent
+                            )
+                        )
+                    )
+            )
+            NavigationBar(
+                containerColor = Color.Transparent,
+                contentColor = CyberColors.TextPrimary,
+                tonalElevation = 0.dp
+            ) {
+                val items = listOf(
+                    Triple("home", "Главная", R.drawable.ic_home),
+                    Triple("favorites", "Избранное", R.drawable.ic_favorite),
+                    Triple("shorts", "Шортс", R.drawable.ic_shorts),
+                    Triple("add_source", "Добавить", R.drawable.ic_add),
+                    Triple("settings", "Настройки", R.drawable.ic_settings)
+                )
+                items.forEach { (route, label, icon) ->
+                    val selected = currentRoute == route
+                    NavigationBarItem(
+                        selected = selected,
+                        onClick = {
+                            navController.navigate(route) {
+                                launchSingleTop = true
+                                popUpTo("home") { inclusive = false }
+                            }
+                        },
+                        icon = {
+                            // Пилюля-индикатор активного таба (как топ-агрегаторы)
+                            Box(
+                                modifier = Modifier
+                                    .size(width = 48.dp, height = 30.dp)
+                                    .clip(RoundedCornerShape(50))
+                                    .background(
+                                        if (selected) CyberColors.AccentBlue.copy(alpha = 0.18f)
+                                        else Color.Transparent
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = icon),
+                                    contentDescription = label,
+                                    tint = if (selected) CyberColors.AccentBlueBright else CyberColors.TextSecondary,
+                                    modifier = Modifier.size(21.dp)
+                                )
+                            }
+                        },
+                        label = {
+                            Text(
+                                text = label,
+                                style = CyberTypography.BodySmall.copy(
+                                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
+                                ),
+                                color = if (selected) CyberColors.AccentBlueBright else CyberColors.TextSecondary,
+                                maxLines = 1
+                            )
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = CyberColors.AccentBlueBright,
+                            selectedTextColor = CyberColors.AccentBlueBright,
+                            unselectedIconColor = CyberColors.TextSecondary,
+                            unselectedTextColor = CyberColors.TextSecondary,
+                            indicatorColor = Color.Transparent
+                        )
+                    )
                 }
-            },
-            icon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_home),
-                    contentDescription = "Главная",
-                    tint = if (currentRoute == "home") CyberColors.AccentBlueBright else CyberColors.TextSecondary
-                )
-            },
-            label = {
-                Text(
-                    "Главная",
-                    color = if (currentRoute == "home") CyberColors.AccentBlueBright else CyberColors.TextSecondary
-                )
             }
-        )
-        NavigationBarItem(
-            selected = currentRoute == "favorites",
-            onClick = {
-                navController.navigate("favorites") {
-                    launchSingleTop = true
-                    popUpTo("home") { inclusive = false }
-                }
-            },
-            icon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_favorite),
-                    contentDescription = "Избранное",
-                    tint = if (currentRoute == "favorites") CyberColors.AccentBlueBright else CyberColors.TextSecondary
-                )
-            },
-            label = {
-                Text(
-                    "Избранное",
-                    color = if (currentRoute == "favorites") CyberColors.AccentBlueBright else CyberColors.TextSecondary
-                )
-            }
-        )
-        NavigationBarItem(
-            selected = currentRoute == "shorts",
-            onClick = {
-                navController.navigate("shorts") {
-                    launchSingleTop = true
-                    popUpTo("home") { inclusive = false }
-                }
-            },
-            icon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_shorts),
-                    contentDescription = "Шортс",
-                    tint = if (currentRoute == "shorts") CyberColors.AccentBlueBright else CyberColors.TextSecondary
-                )
-            },
-            label = {
-                Text(
-                    "Шортс",
-                    color = if (currentRoute == "shorts") CyberColors.AccentBlueBright else CyberColors.TextSecondary
-                )
-            }
-        )
-        NavigationBarItem(
-            selected = currentRoute == "add_source",
-            onClick = {
-                navController.navigate("add_source") {
-                    launchSingleTop = true
-                    popUpTo("home") { inclusive = false }
-                }
-            },
-            icon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_add),
-                    contentDescription = "Добавить",
-                    tint = if (currentRoute == "add_source") CyberColors.AccentBlueBright else CyberColors.TextSecondary
-                )
-            },
-            label = {
-                Text(
-                    "Добавить",
-                    color = if (currentRoute == "add_source") CyberColors.AccentBlueBright else CyberColors.TextSecondary
-                )
-            }
-        )
-        NavigationBarItem(
-            selected = currentRoute == "settings",
-            onClick = {
-                navController.navigate("settings") {
-                    launchSingleTop = true
-                    popUpTo("home") { inclusive = false }
-                }
-            },
-            icon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_settings),
-                    contentDescription = "Настройки",
-                    tint = if (currentRoute == "settings") CyberColors.AccentBlueBright else CyberColors.TextSecondary
-                )
-            },
-            label = {
-                Text(
-                    "Настройки",
-                    color = if (currentRoute == "settings") CyberColors.AccentBlueBright else CyberColors.TextSecondary
-                )
-            }
-        )
+        }
     }
 }
 

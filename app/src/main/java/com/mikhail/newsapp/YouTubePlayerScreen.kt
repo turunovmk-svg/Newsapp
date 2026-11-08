@@ -99,9 +99,9 @@ fun YouTubePlayerScreen(
             }
         }
 
-        // Плеер
+        // Плеер (скрыт полностью при ошибке)
     var playerError by remember { mutableStateOf<String?>(null) }
-    if (videoId != null) {
+    if (videoId != null && playerError == null) {
         AndroidView(
             modifier = Modifier
                 .fillMaxWidth()
@@ -126,22 +126,31 @@ fun YouTubePlayerScreen(
             onRelease = { view -> view.release() }
         )
     } else {
-        playerError = "no_video_id"
-    }
-
-    // Фолбэк: если плеер не работает — предлагаем открыть на YouTube
-    if (playerError != null) {
+        // Фолбэк: плеер не работает или не определился
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(200.dp)
-                .background(CyberColors.SurfaceElevated),
+                .height(220.dp)
+                .background(
+                    brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                        colors = listOf(
+                            CyberColors.SurfaceElevated.copy(alpha = 0.9f),
+                            CyberColors.BackgroundDeep
+                        )
+                    )
+                ),
             contentAlignment = Alignment.Center
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.padding(16.dp)
             ) {
+                Text(
+                    text = "▶",
+                    style = CyberTypography.HeadlineLarge,
+                    color = CyberColors.TextSecondary
+                )
+                Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
                 Text(
                     text = if (playerError == "no_video_id") "Не удалось определить видео"
                     else "Видео нельзя воспроизвести в приложении",

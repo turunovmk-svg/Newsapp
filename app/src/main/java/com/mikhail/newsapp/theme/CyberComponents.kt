@@ -1,5 +1,15 @@
 package com.mikhail.newsapp.theme
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -52,7 +62,8 @@ fun GlassCard(
 }
 
 /**
- * Неоновая кнопка с градиентом и свечением.
+ * Премиальная кнопка: градиент + мягкая синяя тень + блик по верхней кромке.
+ * Нажатие — лёгкое уменьшение (press-scale), отклик ощущается «физически».
  */
 @Composable
 fun NeonButton(
@@ -64,42 +75,88 @@ fun NeonButton(
     secondaryColor: Color = CyberColors.AccentBlueBright,
     enabled: Boolean = true
 ) {
-    Column(
+    var pressed by remember { mutableStateOf(false) }
+    val scale by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = if (pressed) 0.97f else 1f,
+        animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.6f),
+        label = "btnScale"
+    )
+
+    Box(
         modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(
-                enabled = enabled,
-                onClick = onClick
-            )
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .background(
-                brush = Brush.linearGradient(
-                    colors = if (enabled) {
-                        listOf(primaryColor, secondaryColor)
-                    } else {
-                        listOf(Color(0xFF333333), Color(0xFF222222))
-                    },
-                    start = Offset(x = 0f, y = 0f),
-                    end = Offset(x = 1f, y = 0f)
-                ),
-                shape = RoundedCornerShape(12.dp)
-            )
+            .graphicsLayer(scaleX = scale, scaleY = scale)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .shadow(
+                    elevation = if (enabled) 12.dp else 0.dp,
+                    shape = RoundedCornerShape(14.dp),
+                    ambientColor = primaryColor.copy(alpha = 0.5f),
+                    spotColor = primaryColor.copy(alpha = 0.6f)
+                )
+                .clip(RoundedCornerShape(14.dp))
+                .background(
+                    brush = Brush.linearGradient(
+                        colors = if (enabled) {
+                            listOf(primaryColor, secondaryColor)
+                        } else {
+                            listOf(Color(0xFF232936), Color(0xFF1A1F2B))
+                        },
+                        start = Offset(0f, 0f),
+                        end = Offset(1f, 1f)
+                    )
+                )
+                .pointerInput(enabled) {
+                    detectTapGestures(
+                        onPress = {
+                            pressed = true
+                            tryAwaitRelease()
+                            pressed = false
+                        }
+                    )
+                }
+                .clickable(
+                    enabled = enabled,
+                    onClick = onClick
+                )
+                .padding(horizontal = 20.dp, vertical = 15.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            if (icon != null) {
-                icon()
-                Spacer(modifier = Modifier.width(8.dp))
-            }
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelLarge,
-                color = if (enabled) Color(0xFFFFFFFF) else Color(0xFF888888),
-                fontWeight = FontWeight.Bold
+            // Внутренний блик по верхней кромке
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.White.copy(alpha = if (enabled) 0.25f else 0.05f),
+                                Color.Transparent
+                            )
+                        )
+                    )
             )
+            Spacer(modifier = Modifier.height(2.dp))
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (icon != null) {
+                    icon()
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 0.3.sp
+                    ),
+                    color = if (enabled) Color.White else Color(0xFF8A93A5),
+                )
+            }
         }
     }
 }
