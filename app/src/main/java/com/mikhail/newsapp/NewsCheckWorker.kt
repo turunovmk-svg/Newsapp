@@ -58,10 +58,11 @@ class NewsCheckWorker(
                         .url(url)
                         .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0")
                         .build()
-                    val xml = client.newCall(request).execute().use { resp ->
-                        if (!resp.isSuccessful) continue
-                        resp.body?.string() ?: continue
+                    val xml: String? = client.newCall(request).execute().use { resp ->
+                        if (!resp.isSuccessful) null
+                        else resp.body?.string()
                     }
+                    if (xml == null) continue
                     // самый свежий материал: first <item>..</item> или <entry>..</entry>
                     val itemRe = Regex("(?s)<(?:item|entry)[ >].*?</(?:item|entry)>")
                     val titleRe = Regex("(?s)<title[^>]*>(.*?)</title>")
