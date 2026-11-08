@@ -6,7 +6,7 @@ import android.widget.RemoteViews
 import android.widget.RemoteViewsService
 import com.mikhail.newsapp.data.Post
 
-/** Сервис提供数据 для списка новостей в виджете. */
+/** Сервис提供 данных для списка новостей в виджете. */
 class NewsWidgetRemoteViewsService : RemoteViewsService() {
     override fun onGetViewFactory(intent: Intent): RemoteViewsFactory {
         return NewsWidgetRemoteViewsFactory(applicationContext)
@@ -14,7 +14,7 @@ class NewsWidgetRemoteViewsService : RemoteViewsService() {
 }
 
 /** Фабрика элементов списка новостей для виджета. */
-class NewsWidgetRemoteViewsFactory(private val context: Context) : RemoteViewsFactory {
+inner class NewsWidgetRemoteViewsFactory(private val context: Context) : RemoteViewsService.RemoteViewsFactory {
 
     private var posts: List<Post> = emptyList()
 
@@ -36,7 +36,6 @@ class NewsWidgetRemoteViewsFactory(private val context: Context) : RemoteViewsFa
         val post = posts[position] ?: return RemoteViews(context.packageName, android.R.layout.simple_list_item_1)
         val rv = RemoteViews(context.packageName, android.R.layout.simple_list_item_1)
         rv.setTextViewText(android.R.id.text1, post.title)
-        rv.setTextColor(android.R.id.text1, 0xFFFFFFFF)
         return rv
     }
 
