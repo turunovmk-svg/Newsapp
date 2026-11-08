@@ -17,18 +17,23 @@ object SourceType {
     const val YOUTUBE = "YOUTUBE"
     const val TELEGRAM = "TELEGRAM"
     const val TWITTER = "TWITTER"
+    const val GNEWS = "GNEWS"     // сайт без собственного RSS — через Google News
 }
 
 data class Source(
-    val type: String,   // RSS / REDDIT / YOUTUBE / TELEGRAM / TWITTER
-    val url: String     // нормализованный URL ленты/фида
+    val type: String,   // RSS / REDDIT / YOUTUBE / TELEGRAM / TWITTER / GNEWS
+    val url: String,    // нормализованный URL ленты/фида
+    val label: String? = null  // человекочитаемое имя (домен для GNEWS)
 ) {
     companion object {
         fun toJsonList(sources: List<Source>): String {
             val array = JSONArray()
             sources.forEach { source ->
                 array.put(
-                    JSONObject().put("type", source.type).put("url", source.url)
+                    JSONObject()
+                        .put("type", source.type)
+                        .put("url", source.url)
+                        .put("label", source.label ?: JSONObject.NULL)
                 )
             }
             return array.toString()
@@ -41,7 +46,11 @@ data class Source(
                 for (i in 0 until array.length()) {
                     val obj = array.getJSONObject(i)
                     sources.add(
-                        Source(obj.getString("type"), obj.getString("url"))
+                        Source(
+                            obj.getString("type"),
+                            obj.getString("url"),
+                            obj.optString("label", null)
+                        )
                     )
                 }
             } catch (e: Exception) {
@@ -55,7 +64,8 @@ data class Source(
          * Возвращает null, если ссылка не похожа ни на один поддерживаемый тип.
          */
         fun detect(input: String, forcedType: String? = null): Source? {
-            var u = input.trim()
+            val originalUrl = input.trim()
+            var u = originalUrl
             if (u.isEmpty()) return null
             if (!u.startsWith("http://") && !u.startsWith("https://")) {
                 u = "https://$u"
@@ -107,12 +117,18 @@ data class Source(
                     if (handle.isEmpty()) return null
                     Source(SourceType.TWITTER, "https://rsshub.app/twitter/user/$handle")
                 }
-                // ---- Обычная RSS/Atom лента ----
+                // ---- Обычная RSS/Atom лента или сайт без RSS ----
                 else -> {
-                    if (forcedType != null && forcedType != SourceType.RSS) {
-                        Source(forcedType, u)
-                    } else {
+                    val looksLikeFeed = u.endsWith(".xml") || u.endsWith(".rss") ||
+                        u.contains("/feed") || u.contains("/rss") ||
+                        u.contains("atom") || u.contains("?format=rss")
+                    if (looksLikeFeed) {
                         Source(SourceType.RSS, u)
+                    } else {
+                        // Сайт без собственного RSS → подписка через Google News
+                        val domain = host.removePrefix("www.")
+                        val feed = "https://news.google.com/rss/search?q=site:$domain&hl=ru&gl=UA&ceid=UA:ru"
+                        Source(SourceType.GNEWS, feed, domain)
                     }
                 }
             }

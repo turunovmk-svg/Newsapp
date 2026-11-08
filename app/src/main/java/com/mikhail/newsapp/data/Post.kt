@@ -12,7 +12,9 @@ data class Post(
     val description: String?,
     val publishedAt: String?,
     val sourceUrl: String?,
-    val imageUrl: String?
+    val imageUrl: String?,
+    val siteUrl: String? = null,      // домен первоисточника (для Google News)
+    val siteName: String? = null      // название источника
 ) {
     companion object {
         fun toJsonList(posts: List<Post>): String {
@@ -26,6 +28,8 @@ data class Post(
                         .put("publishedAt", post.publishedAt)
                         .put("sourceUrl", post.sourceUrl)
                         .put("imageUrl", post.imageUrl)
+                        .put("siteUrl", post.siteUrl ?: JSONObject.NULL)
+                        .put("siteName", post.siteName ?: JSONObject.NULL)
                 )
             }
             return array.toString()
@@ -44,7 +48,9 @@ data class Post(
                             description = obj.optString("description", null),
                             publishedAt = obj.optString("publishedAt", null),
                             sourceUrl = obj.optString("sourceUrl", null),
-                            imageUrl = obj.optString("imageUrl", null)
+                            imageUrl = obj.optString("imageUrl", null),
+                            siteUrl = obj.optString("siteUrl", null),
+                            siteName = obj.optString("siteName", null)
                         )
                     )
                 }

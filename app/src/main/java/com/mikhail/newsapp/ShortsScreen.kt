@@ -153,7 +153,7 @@ fun ShortsFullScreenCard(
             )
         } ?: run {
             SourceGradientPlaceholder(
-                sourceUrl = post.sourceUrl,
+                sourceUrl = post.siteUrl ?: post.sourceUrl,
                 modifier = Modifier.fillMaxSize(),
                 cornerRadius = 0.dp,
             )
@@ -176,13 +176,15 @@ fun ShortsFullScreenCard(
         )
 
         // Источник сверху слева
-        post.sourceUrl?.let { url ->
-            val host = url
-                .removePrefix("https://")
-                .removePrefix("http://")
-                .removePrefix("www.")
-                .substringBefore('/')
-                .take(28)
+        val chipName = post.siteName
+            ?: post.siteUrl?.removePrefix("https://")?.removePrefix("www.")?.removePrefix("http://")?.substringBefore('/')
+            ?: post.sourceUrl
+                ?.removePrefix("https://")
+                ?.removePrefix("http://")
+                ?.removePrefix("www.")
+                ?.substringBefore('/')
+                ?.take(28)
+        if (chipName != null) {
             Row(
                 modifier = Modifier
                     .align(Alignment.TopStart)
@@ -199,7 +201,7 @@ fun ShortsFullScreenCard(
                 )
                 Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
                 Text(
-                    text = host,
+                    text = chipName,
                     style = CyberTypography.BodySmall,
                     color = CyberColors.TextPrimary,
                     maxLines = 1,

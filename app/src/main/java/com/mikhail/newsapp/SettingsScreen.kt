@@ -290,6 +290,7 @@ fun SettingsScreen(
                             SourceType.YOUTUBE -> "YouTube"
                             SourceType.TELEGRAM -> "Telegram"
                             SourceType.TWITTER -> "X (Twitter)"
+                            SourceType.GNEWS -> "Сайт"
                             else -> "RSS"
                         }
                         Row(
@@ -356,6 +357,16 @@ private fun SectionTitle(text: String) {
                 .height(16.dp)
                 .clip(RoundedCornerShape(2.dp))
                 .background(CyberColors.AccentBlue)
+        )
+        Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
+        Text(
+            text = text,
+            style = CyberTypography.TitleMedium,
+            color = CyberColors.TextSecondary,
+        )
+    }
+}
+      .background(CyberColors.AccentBlue)
         )
         Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
         Text(

@@ -260,7 +260,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private suspend fun fetchXml(url: String): String {
         return withContext(Dispatchers.IO) {
-            val request = Request.Builder().url(url).build()
+            val request = Request.Builder()
+                .url(url)
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36")
+                .header("Accept", "application/rss+xml, application/xml, text/xml, */*")
+                .build()
             httpClient.newCall(request).execute().use { response ->
                 val body = response.body
                 if (!response.isSuccessful || body == null) {
@@ -277,6 +281,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 "RSS" -> parseRss(xml)
                 "REDDIT" -> parseRss(xml) // Reddit .rss тоже валидный RSS
                 "TWITTER" -> parseRss(xml) // RSSHub отдаёт стандартный RSS
+                "GNEWS" -> parseRss(xml)   // Google News отдаёт стандартный RSS
                 "YOUTUBE" -> parseYouTube(xml)
                 "TELEGRAM" -> parseTelegram(xml)
                 else -> emptyList()

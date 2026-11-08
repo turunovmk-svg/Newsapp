@@ -709,20 +709,21 @@ fun FeaturedNewsCard(
                     )
                 } ?: run {
                     SourceGradientPlaceholder(
-                        sourceUrl = post.sourceUrl,
+                        sourceUrl = post.siteUrl ?: post.sourceUrl,
                         modifier = Modifier.fillMaxSize(),
                         cornerRadius = 0.dp,
                     )
                 }
 
                 // Чип источника поверх изображения
-                post.sourceUrl?.let { url ->
-                    val sourceName = url
-                        .removePrefix("https://")
-                        .removePrefix("http://")
-                        .removePrefix("www.")
-                        .substringBefore('/')
-                        .take(26)
+                val chipName = post.siteName
+                    ?: post.siteUrl?.removePrefix("https://")?.removePrefix("www.")?.removePrefix("http://")?.substringBefore('/')
+                    ?: post.sourceUrl
+                        ?.removePrefix("https://")
+                        ?.removePrefix("http://")
+                        ?.removePrefix("www.")
+                        ?.substringBefore('/')
+                if (chipName != null) {
                     Row(
                         modifier = Modifier
                             .align(Alignment.TopStart)
@@ -733,7 +734,7 @@ fun FeaturedNewsCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = sourceName,
+                            text = chipName.take(26),
                             style = CyberTypography.BodySmall,
                             color = CyberColors.TextInverse,
                         )
@@ -872,7 +873,7 @@ fun NewsCard(
             } ?: run {
                 // Градиентный плейсхолдер в цветах источника
                 SourceGradientPlaceholder(
-                    sourceUrl = post.sourceUrl,
+                    sourceUrl = post.siteUrl ?: post.sourceUrl,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(UiSizes.HomeCardMinHeight),
@@ -886,13 +887,15 @@ fun NewsCard(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                post.sourceUrl?.let { url ->
-                    val sourceName = url
-                        .removePrefix("https://")
-                        .removePrefix("http://")
-                        .removePrefix("www.")
-                        .substringBefore('/')
-                        .take(30)
+                val chipName = post.siteName
+                    ?: post.siteUrl?.removePrefix("https://")?.removePrefix("www.")?.removePrefix("http://")
+                        ?.substringBefore('/')
+                    ?: post.sourceUrl
+                        ?.removePrefix("https://")
+                        ?.removePrefix("http://")
+                        ?.removePrefix("www.")
+                        ?.substringBefore('/')
+                if (chipName != null) {
                     Row(
                         modifier = Modifier
                             .clip(RoundedCornerShape(50))
@@ -901,7 +904,7 @@ fun NewsCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = sourceName,
+                            text = chipName.take(30),
                             style = CyberTypography.BodySmall,
                             color = CyberColors.AccentBlueBright,
                         )

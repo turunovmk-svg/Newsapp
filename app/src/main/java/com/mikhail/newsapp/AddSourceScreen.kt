@@ -338,7 +338,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
                         Spacer(modifier = Modifier.width(UiSizes.SpacerMedium))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = src.url
+                                text = src.label ?: src.url
                                     .removePrefix("https://")
                                     .removePrefix("http://")
                                     .take(48),
@@ -419,5 +419,6 @@ private fun typeLabel(type: String): String = when (type) {
     SourceType.YOUTUBE -> "YouTube"
     SourceType.TELEGRAM -> "Telegram"
     SourceType.TWITTER -> "X (Twitter)"
+    SourceType.GNEWS -> "Сайт"
     else -> "RSS"
 }
