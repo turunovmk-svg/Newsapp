@@ -63,6 +63,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.pointerInput
@@ -99,6 +102,61 @@ class MainActivity : ComponentActivity() {
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
+/** Брендированный экран запуска: монограмма на градиенте. */
+@Composable
+fun NewsSplashScreen() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF0B0F18),
+                        CyberColors.BackgroundDeep
+                    )
+                )
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            // Монограмма в градиентном круге
+            Box(
+                modifier = Modifier
+                    .size(96.dp)
+                    .clip(CircleShape)
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                CyberColors.AccentBlue,
+                                CyberColors.AccentBlueBright
+                            )
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "N",
+                    color = CyberColors.TextInverse,
+                    fontSize = 44.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
+            Text(
+                text = "NewsApp",
+                style = CyberTypography.HeadlineMedium,
+                color = CyberColors.TextPrimary
+            )
+            Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
+            Text(
+                text = "Ваши ленты. Один экран.",
+                style = CyberTypography.BodyMedium,
+                color = CyberColors.TextSecondary
+            )
+        }
+    }
+}
+
 @Composable
 fun NewsAppNavigator() {
     val viewModel: MainViewModel = viewModel<MainViewModel>()
@@ -106,6 +164,18 @@ fun NewsAppNavigator() {
     var selectedPost by remember { mutableStateOf<Post?>(null) }
     var videoPost by remember { mutableStateOf<Post?>(null) }
     var viewerImageUrl by remember { mutableStateOf<String?>(null) }
+
+    // Splash — брендированный старт
+    var showSplash by remember { mutableStateOf(true) }
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(700)
+        showSplash = false
+    }
+    if (showSplash) {
+        NewsSplashScreen()
+        return
+    }
+
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 

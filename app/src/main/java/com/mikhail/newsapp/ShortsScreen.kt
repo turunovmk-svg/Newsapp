@@ -64,9 +64,27 @@ fun ShortsScreen(
     val posts by viewModel.posts.collectAsState()
     val isRefreshing by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
-    val shortPosts = posts.take(20)
+    val selectedFolder by viewModel.selectedFolder.collectAsState()
+    val sources by viewModel.sources.collectAsState()
     val currentIndexState by viewModel.currentShortsIndex.collectAsState()
     val ctx = LocalContext.current
+
+    // Фильтр по выбранной папке (как на Главной)
+    val folderUrls = remember(selectedFolder, sources) {
+        if (selectedFolder.isBlank()) null
+        else sources.filter { it.folder == selectedFolder }.map { it.url }.toSet()
+    }
+    val allPosts = if (folderUrls == null) posts else {
+        posts.filter { post ->
+            // GNEWS-источники матчим по домену из siteUrl
+            val rawUrl = post.siteUrl ?: post.sourceUrl ?: ""
+            folderUrls.any { src ->
+                val srcDomain = src.removePrefix("https://").removePrefix("http://").removePrefix("www.").substringBefore('/')
+                rawUrl.contains(srcDomain, ignoreCase = true)
+            }
+        }
+    }
+    val shortPosts = allPosts.take(20)
 
     if (shortPosts.isEmpty() && error == null && !isRefreshing) {
         EmptyShortsState(onAddSource = onAddSource, modifier = modifier)
