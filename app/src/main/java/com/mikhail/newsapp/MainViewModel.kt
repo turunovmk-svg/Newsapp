@@ -588,7 +588,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                             // <link> — для GNEWS это редирект Google, для обычных RSS — прямая ссылка на статью
                             currentOriginalUrl = parser.nextText()
                             currentLink = currentOriginalUrl
-                        }
                         } else if (inItem && (tag == "enclosure" || tag == "content" || tag == "thumbnail"
                                 || tag == "media:content" || tag == "media:thumbnail" || tag == "itunes:image")) {
                             val imgUrl = parser.getAttributeValue(null, "url")
