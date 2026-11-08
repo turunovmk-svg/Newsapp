@@ -233,8 +233,7 @@ fun NewsSplashScreen() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
 fun NewsAppNavigator() {
     val viewModel: MainViewModel = viewModel<MainViewModel>()
