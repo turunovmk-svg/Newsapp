@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.app.Activity
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -34,6 +35,7 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -43,6 +45,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import com.mikhail.newsapp.theme.CyberTheme
@@ -98,17 +101,11 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalActivity
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
-import androidx.compose.material3.ExperimentalMaterial3WindowSizeClassApi
-import android.content.res.Configuration
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -263,10 +260,10 @@ fun NewsAppNavigator() {
 
     // Адаптивность: телефон vs планшет, портрет vs ландшафт
     val configuration = LocalConfiguration.current
-    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
     val activity = LocalContext.current as? Activity
-    val windowSizeClass = activity?.let { calculateWindowSizeClass(it) }
-    val isTablet = windowSizeClass?.widthSizeClass == WindowWidthSizeClass.Expanded
+    val windowSizeClass = activity?.let { androidx.compose.material3.windowsizeclass.calculateWindowSizeClass(it) }
+    val isTablet = windowSizeClass?.widthSizeClass == androidx.compose.material3.windowsizeclass.WindowWidthSizeClass.Expanded
 
     val screenTitle = when (currentRoute) {
         "home" -> "Главная"
@@ -381,7 +378,10 @@ fun NewsAppNavigator() {
                         .widthIn(max = if (isTablet || isLandscape) 900.dp else 10000.dp)
                 ) {
                     Column(
-                        modifier = Modifier.fillMaxSize(),              HomeScreen(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        HomeScreen(
                             viewModel = viewModel,
                             scrollToTopTrigger = homeScrollTrigger,
                             onAddSource = { navController.navigate("add_source") },
@@ -462,12 +462,24 @@ fun NewsAppNavigator() {
                 AddSourceScreen(viewModel = viewModel, onNavigateBack = { navController.navigate("home") }, modifier = Modifier.padding(paddingValues))
             }
             composable("settings") {
-                SettingsScreen(
-                    viewModel = viewModel,
-                    onNavigateBack = { navController.navigate("home") },
-                    onOpenStats = { navController.navigate("stats") },
-                    modifier = Modifier.padding(paddingValues)
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .widthIn(max = if (isTablet || isLandscape) 900.dp else 10000.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        SettingsScreen(
+                            viewModel = viewModel,
+                            onNavigateBack = { navController.navigate("home") },
+                            onOpenStats = { navController.navigate("stats") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
             }
             composable("favorites") {
                 Box(
@@ -951,7 +963,7 @@ fun HomeScreen(
     val filterOptions = remember(posts) {
         val types = mutableListOf("Все")
         val has = { pred: (Post) -> Boolean -> posts.any(pred) }
-        if (has { p -> (p.sourceUrl"В "").contains("youtube.com") || (p.sourceUrl ?: "").contains("youtu.be") }) types.add("YouTube")
+        if (has { p -> (p.sourceUrl ?: "").contains("youtube.com") || (p.sourceUrl ?: "").contains("youtu.be") }) types.add("YouTube")
         if (has { p -> (p.sourceUrl ?: "").contains("t.me") }) types.add("Telegram")
         if (has { p -> (p.sourceUrl ?: "").contains("reddit.com") }) types.add("Reddit")
         types.add("Статьи")
@@ -1061,11 +1073,9 @@ fun HomeScreen(
                     )
                 }
             }
-            "grid" -> {
-                val gridColumns = if (isTablet || isLandscape) 4 else 2
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(gridColumns),
-                    modifier = Modifier.fillMaxSize(),
+            "grid" -> LazyVerticalGrid(
+                columns = GridCells.Fixed(if (isTablet || isLandscape) 4 else 2),
+                modifier = Modifier.fillMaxSize(),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(
                     horizontal = UiSizes.SpacerSmall,
                     vertical = UiSizes.SpacerSmall
@@ -1079,7 +1089,6 @@ fun HomeScreen(
                         onClick = { onArticleClick(post) }
                     )
                 }
-            }
             }
             else -> {
                 // Автоотметка прочитанным при прокрутке мимо (как в Reeder)
@@ -1545,7 +1554,8 @@ fun NewsCard(
             // Изображение или типографическая заглушка
             if (post.imageUrl != null) {
                 Box(
-                    modifier = Modiглу                       .fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
                         .height(UiSizes.HomeCardMaxHeight)
                         .clip(RoundedCornerShape(UiSizes.CardCornerRadius))
                 ) {
@@ -1810,14 +1820,6 @@ fun SearchScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = UiSizes.CardPadding, vertical = UiSizes.SpacerXSmall)
-                    )
-                }
-            }
-        }
-    }
-}
-// Rebuild fix
- UiSizes.SpacerXSmall)
                     )
                 }
             }
