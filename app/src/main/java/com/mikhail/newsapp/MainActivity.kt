@@ -55,6 +55,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -72,7 +73,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.AnnotatedStringBuilder
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -108,6 +108,26 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+}
+
+/** Подсвечивает вхождения запроса в тексте (жёлтый маркер). */
+private fun highlightText(text: String, query: String, markColor: Color): AnnotatedString {
+    if (query.isBlank() || text.isEmpty()) return AnnotatedString(text)
+    val lowerText = text.lowercase()
+    val lowerQuery = query.lowercase()
+    return androidx.compose.ui.text.buildAnnotatedString {
+        var pos = 0
+        var start = lowerText.indexOf(lowerQuery)
+        while (start >= 0) {
+            if (start > pos) append(text.substring(pos, start))
+            withStyle(SpanStyle(background = markColor.copy(alpha = 0.35f), fontWeight = FontWeight.Bold)) {
+                append(text.substring(start, (start + query.length).coerceAtMost(text.length)))
+            }
+            pos = (start + query.length).coerceAtMost(text.length)
+            start = lowerText.indexOf(lowerQuery, pos)
+        }
+        if (pos < text.length) append(text.substring(pos))
     }
 }
 

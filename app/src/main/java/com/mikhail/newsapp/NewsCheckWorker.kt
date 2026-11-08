@@ -20,6 +20,7 @@ import okhttp3.Request
  * Достаёт самый свежий материал каждого источника и сравнивает
  * с сохранённым ранее. При появлении нового — показывает уведомление.
  */
+@OptIn(ExperimentalStdlibApi::class)
 class NewsCheckWorker(
     context: Context,
     params: WorkerParameters
