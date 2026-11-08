@@ -150,6 +150,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _darkTheme.value = prefs.getBoolean("dark_theme", true)
         _viewMode.value = prefs.getString("view_mode", "cards") ?: "cards"
         _sortMode.value = prefs.getString("sort_mode", "date") ?: "date"
+        _notifEnabled.value = prefs.getBoolean(NewsCheckWorker.KEY_ENABLED, false)
+        _notifIntervalHours.value = prefs.getInt(NewsCheckWorker.KEY_INTERVAL_HOURS, 3)
     }
 
     fun setFontScale(scale: Float) {
@@ -177,6 +179,57 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun setSortMode(mode: String) {
         _sortMode.value = mode
         prefs.edit().putString("sort_mode", mode).apply()
+    }
+
+    // ---------- Уведомления ----------
+    private val _notifEnabled = MutableStateFlow(false)
+    val notifEnabled: StateFlow<Boolean> = _notifEnabled.asStateFlow()
+
+    private val _notifIntervalHours = MutableStateFlow(3)
+    val notifIntervalHours: StateFlow<Int> = _notifIntervalHours.asStateFlow()
+
+    /** Включает/выключает фоновые уведомления (пересоздаёт worker). */
+    fun setNotificationsEnabled(context: Context, enabled: Boolean) {
+        _notifEnabled.value = enabled
+        prefs.edit().putBoolean("notif_enabled", enabled).apply()
+        scheduleNewsCheck(context, enabled)
+    }
+
+    fun setNotifIntervalHours(context: Context, hours: Int) {
+        _notifIntervalHours.value = hours
+        prefs.edit().putInt("notif_interval_hours", hours).apply()
+        if (_notifEnabled.value) {
+            scheduleNewsCheck(context, true)
+        }
+    }
+
+    private fun scheduleNewsCheck(context: Context, enabled: Boolean) {
+        try {
+            val wm = androidx.work.WorkManager.getInstance(context)
+            if (enabled) {
+                val request = androidx.work.PeriodicWorkRequestBuilder<NewsCheckWorker>(
+                    _notifIntervalHours.value.toLong(), java.util.concurrent.TimeUnit.HOURS,
+                    15, java.util.concurrent.TimeUnit.MINUTES
+                )
+                    .setConstraints(
+                        androidx.work.Constraints.Builder()
+                            .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
+                            .build()
+                    )
+                    .build()
+                wm.enqueueUniquePeriodicWork(
+                    NewsCheckWorker.WORK_NAME,
+                    androidx.work.ExistingPeriodicWorkPolicy.UPDATE,
+                    request
+                )
+                // первый запуск вручную для immediateness
+                wm.enqueue(androidx.work.OneTimeWorkRequestBuilder<NewsCheckWorker>().build())
+            } else {
+                wm.cancelUniqueWork(NewsCheckWorker.WORK_NAME)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
 

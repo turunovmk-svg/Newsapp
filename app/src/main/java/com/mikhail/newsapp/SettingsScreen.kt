@@ -1,5 +1,7 @@
 package com.mikhail.newsapp
 
+import android.os.Build
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -51,6 +53,14 @@ fun SettingsScreen(
     val sources by viewModel.sources.collectAsState()
     val fontScale by viewModel.fontScale.collectAsState()
     val darkTheme by viewModel.darkTheme.collectAsState()
+    val notifEnabled by viewModel.notifEnabled.collectAsState()
+    val notifIntervalHours by viewModel.notifIntervalHours.collectAsState()
+
+    val permissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        viewModel.setNotificationsEnabled(context, granted)
+    }
 
     val importLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
         contract = androidx.activity.result.contract.ActivityResultContracts.OpenDocument()
@@ -260,6 +270,90 @@ fun SettingsScreen(
                             text = stringResource(id = R.string.export_opml),
                             primaryColor = CyberColors.AccentBlueBright,
                         )
+                    }
+                }
+            }
+        }
+
+        // ---------- Уведомления ----------
+        item { SectionTitle("Уведомления") }
+        item {
+            GlassCard {
+                Column(modifier = Modifier.padding(UiSizes.CardPadding)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Уведомления о новых статьях",
+                                style = CyberTypography.TitleMedium,
+                                color = CyberColors.TextPrimary
+                            )
+                            Text(
+                                text = "Фоновая проверка лент и пуш при обновлениях",
+                                style = CyberTypography.BodySmall,
+                                color = CyberColors.TextSecondary
+                            )
+                        }
+                        Switch(
+                            checked = notifEnabled,
+                            onCheckedChange = { enabled ->
+                                if (enabled && Build.VERSION.SDK_INT >= 33 &&
+                                    ContextCompat.checkSelfPermission(
+                                        context,
+                                        android.Manifest.permission.POST_NOTIFICATIONS
+                                    ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+                                ) {
+                                    permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+                                } else {
+                                    viewModel.setNotificationsEnabled(context, enabled)
+                                }
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = CyberColors.TextInverse,
+                                checkedTrackColor = CyberColors.AccentBlue,
+                                uncheckedThumbColor = CyberColors.TextSecondary,
+                                uncheckedTrackColor = CyberColors.SurfaceElevated
+                            )
+                        )
+                    }
+                    if (notifEnabled) {
+                        Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
+                        Text(
+                            text = "Проверять каждые:",
+                            style = CyberTypography.BodySmall,
+                            color = CyberColors.TextSecondary
+                        )
+                        Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(UiSizes.SpacerSmall)
+                        ) {
+                            listOf(1, 3, 6, 12).forEach { h ->
+                                val selected = notifIntervalHours == h
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(50))
+                                        .background(
+                                            if (selected) CyberColors.AccentBlue
+                                            else CyberColors.SurfaceElevated.copy(alpha = 0.6f),
+                                            RoundedCornerShape(50)
+                                        )
+                                        .clickable { viewModel.setNotifIntervalHours(context, h) }
+                                        .padding(vertical = UiSizes.SpacerSmall),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "$h ч",
+                                        style = CyberTypography.BodySmall,
+                                        color = if (selected) CyberColors.TextInverse else CyberColors.TextSecondary
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
