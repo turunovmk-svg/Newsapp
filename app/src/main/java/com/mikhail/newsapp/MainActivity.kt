@@ -102,6 +102,18 @@ class MainActivity : ComponentActivity() {
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
+/** Русская плюрализация для «новость/новости/новостей». */
+private fun pluralNew(n: Int): String {
+    val mod100 = n % 100
+    val mod10 = n % 10
+    return when {
+        mod100 in 11..14 -> "новостей"
+        mod10 == 1 -> "новая статья"
+        mod10 in 2..4 -> "новые статьи"
+        else -> "новостей"
+    }
+}
+
 /** Брендированный экран запуска: монограмма на градиенте. */
 @Composable
 fun NewsSplashScreen() {
@@ -556,6 +568,49 @@ fun HomeScreen(
     // Поисковое поле
     var searchQuery by remember { mutableStateOf("") }
     var filterType by remember { mutableStateOf("Все") }
+
+    // ---------- Баннер новых статей при обновлении ----------
+    var knownIds by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var feedInitialized by remember { mutableStateOf(false) }
+    var bannerNewCount by remember { mutableStateOf(0) }
+    val showNewBanner = bannerNewCount > 0
+    LaunchedEffect(posts) {
+        val current = posts.map { it.id }.toSet()
+        if (!feedInitialized) {
+            if (current.isNotEmpty()) {
+                knownIds = current
+                feedInitialized = true
+            }
+        } else if (current != knownIds) {
+            val fresh = current - knownIds
+            if (fresh.isNotEmpty()) {
+                bannerNewCount = fresh.size
+            }
+            knownIds = current
+        }
+    }
+    // Баннер скрываем при смене фильтра/поиска (пользователь взаимодействует)
+    LaunchedEffect(searchQuery, filterType) { bannerNewCount = 0 }
+
+    if (showNewBanner) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = UiSizes.ScreenPadding, vertical = UiSizes.SpacerXSmall)
+                .clip(RoundedCornerShape(50))
+                .background(CyberColors.AccentBlue)
+                .clickable { bannerNewCount = 0 }
+                .padding(horizontal = UiSizes.CardPadding, vertical = UiSizes.SpacerSmall),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "↑ +$bannerNewCount " + pluralNew(bannerNewCount),
+                style = CyberTypography.BodyMedium,
+                color = CyberColors.TextInverse,
+            )
+        }
+    }
     val folders by viewModel.folders.collectAsState()
     val selectedFolder by viewModel.selectedFolder.collectAsState()
     val viewMode by viewModel.viewMode.collectAsState()
