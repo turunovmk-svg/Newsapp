@@ -1,6 +1,7 @@
 package com.mikhail.newsapp
 
 import android.app.Application
+import android.os.Build
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.lifecycle.AndroidViewModel
@@ -140,6 +141,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _sortMode.value = prefs.getString("sort_mode", "date") ?: "date"
         _notifEnabled.value = prefs.getBoolean(NewsCheckWorker.KEY_ENABLED, false)
         _notifIntervalHours.value = prefs.getInt(NewsCheckWorker.KEY_INTERVAL_HOURS, 3)
+        _notifDisabledSources.value = prefs.getStringSet("notif_disabled_sources", emptySet()) ?: emptySet()
+        _quietStart.value = prefs.getInt("quiet_start", -1)
+        _quietEnd.value = prefs.getInt("quiet_end", -1)
+        _notifSound.value = prefs.getBoolean("notif_sound", true)
     }
 
     fun setFontScale(scale: Float) {
@@ -183,6 +188,51 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _notifIntervalHours = MutableStateFlow(3)
     val notifIntervalHours: StateFlow<Int> = _notifIntervalHours.asStateFlow()
+
+    // ---------- Продвинутые настройки уведомлений ----------
+    /** Источники, для которых уведомления ОТКЛЮЧЕНЫ (url). */
+    private val _notifDisabledSources = MutableStateFlow<Set<String>>(emptySet())
+    val notifDisabledSources: StateFlow<Set<String>> = _notifDisabledSources.asStateFlow()
+
+    /** Тихие часы: минуты от начала суток. -1 = выключено. */
+    private val _quietStart = MutableStateFlow(-1)
+    val quietStart: StateFlow<Int> = _quietStart.asStateFlow()
+
+    private val _quietEnd = MutableStateFlow(-1)
+    val quietEnd: StateFlow<Int> = _quietEnd.asStateFlow()
+
+    /** Звук уведомлений. */
+    private val _notifSound = MutableStateFlow(true)
+    val notifSound: StateFlow<Boolean> = _notifSound.asStateFlow()
+
+    fun toggleSourceNotify(url: String) {
+        val cur = _notifDisabledSources.value
+        _notifDisabledSources.value = if (url in cur) cur - url else cur + url
+        prefs.edit().putStringSet("notif_disabled_sources", _notifDisabledSources.value).apply()
+    }
+
+    fun setQuietHours(startMinutes: Int, endMinutes: Int) {
+        _quietStart.value = startMinutes
+        _quietEnd.value = endMinutes
+        prefs.edit()
+            .putInt("quiet_start", startMinutes)
+            .putInt("quiet_end", endMinutes)
+            .apply()
+    }
+
+    fun setNotifSound(enabled: Boolean) {
+        _notifSound.value = enabled
+        prefs.edit().putBoolean("notif_sound", enabled).apply()
+        // пересоздаём канал с новой важностью
+        val ctx = getApplication<Application>()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val nm = ctx.getSystemService(android.app.NotificationManager::class.java)
+            nm?.deleteNotificationChannel(NewsCheckWorker.CHANNEL_ID)
+        }
+        if (_notifEnabled.value) {
+            scheduleNewsCheck(ctx, true)
+        }
+    }
 
         init {
         loadSources()
@@ -287,6 +337,41 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         saveSources(updated)
         clearError()
         loadPosts()
+        // Апгрейд: для GNEWS пробуем найти скрытый RSS у самого сайта
+        if (detected.type == SourceType.GNEWS) {
+            viewModelScope.launch { probeHiddenRss(trimmedUrl, folder.trim()) }
+        }
+    }
+
+    /**
+     * Для сайта без своего RSS ищем скрытый фид: /feed/, /rss.xml, /atom.xml и т.п.
+     * Если нашли — заменяем Google-News-подписку на прямой RSS (статьи короче и надёжнее).
+     */
+    private suspend fun probeHiddenRss(gnewsUrl: String, folder: String) {
+        val domain = gnewsUrl
+            .substringAfter("site:")
+            .substringBefore('&')
+            .removePrefix("www.")
+        if (domain.isEmpty()) return
+        val paths = listOf("/feed/", "/feed", "/rss.xml", "/rss", "/atom.xml", "/index.rss", "/feeds/posts/default")
+        for (path in paths) {
+            try {
+                val feedUrl = "https://$domain$path"
+                val xml = fetchXml(feedUrl)
+                if (xml.contains("<rss", true) || xml.contains("<feed", true)) {
+                    val parsed = parseFeed(SourceType.RSS, xml)
+                    if (parsed.size >= 3) {
+                        val upgraded = Source(SourceType.RSS, feedUrl, domain, folder)
+                        val updated = _sources.value.map { if (it.url == gnewsUrl) upgraded else it }
+                        saveSources(updated)
+                        loadPosts()
+                        return
+                    }
+                }
+            } catch (e: Exception) {
+                // путь не подошёл — пробуем следующий
+            }
+        }
     }
 
     /** Меняет папку источника. */

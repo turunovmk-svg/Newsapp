@@ -45,13 +45,29 @@ class NewsCheckWorker(
             val sources = Source.fromJsonList(prefs.getString("sources_json", null) ?: "")
             if (sources.isEmpty()) return@withContext Result.success()
 
+            // Источники с отключёнными уведомлениями
+            val disabledSources = prefs.getStringSet("notif_disabled_sources", emptySet()) ?: emptySet()
+            val activeSources = sources.filter { it.url !in disabledSources }
+            if (activeSources.isEmpty()) return@withContext Result.success()
+
+            // Тихие часы
+            val quietStart = prefs.getInt("quiet_start", -1)
+            val quietEnd = prefs.getInt("quiet_end", -1)
+            val notifSound = prefs.getBoolean("notif_sound", true)
+            val now = java.util.Calendar.getInstance()
+            val nowMinutes = now.get(java.util.Calendar.HOUR_OF_DAY) * 60 + now.get(java.util.Calendar.MINUTE)
+            val inQuietHours = if (quietStart >= 0 && quietEnd >= 0) {
+                if (quietStart <= quietEnd) nowMinutes in quietStart until quietEnd
+                else nowMinutes >= quietStart || nowMinutes < quietEnd
+            } else false
+
             val lastSeen = prefs.getStringSet("last_seen_set", emptySet()) ?: emptySet()
             val isFirstRun = lastSeen.isEmpty()
             val newTitles = mutableListOf<String>()
             val newCount = mutableListOf<Int>()
             val allMarkers = mutableSetOf<String>()
 
-            for (source in sources) {
+            for (source in activeSources) {
                 try {
                     val url = source.url
                     val request = Request.Builder()
@@ -90,8 +106,8 @@ class NewsCheckWorker(
             prefs.edit().putStringSet("last_seen_set", allMarkers).apply()
 
             val totalNew = newCount.sum()
-            if (totalNew > 0) {
-                showNotification(newTitles, totalNew)
+            if (totalNew > 0 && !inQuietHours) {
+                showNotification(newTitles, totalNew, notifSound)
             }
             Result.success()
         } catch (e: Exception) {
@@ -100,14 +116,14 @@ class NewsCheckWorker(
         }
     }
 
-    private fun showNotification(titles: List<String>, count: Int) {
+    private fun showNotification(titles: List<String>, count: Int, withSound: Boolean = true) {
         val nm = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "Новые статьи",
-                NotificationManager.IMPORTANCE_DEFAULT
-            ).apply { description = "Уведомления о свежих материалах в лентах" }
+            val importance = if (withSound) NotificationManager.IMPORTANCE_DEFAULT else NotificationManager.IMPORTANCE_LOW
+            val channel = NotificationChannel(CHANNEL_ID, "Новые статьи", importance).apply {
+                description = "Уведомления о свежих материалах в лентах"
+                if (!withSound) setSound(null, null)
+            }
             nm.createNotificationChannel(channel)
         }
 

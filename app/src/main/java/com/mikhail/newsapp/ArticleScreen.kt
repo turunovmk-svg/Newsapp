@@ -296,7 +296,24 @@ fun ArticleScreen(
                     .fillMaxWidth()
                     .padding(horizontal = UiSizes.ArticlePadding)
             ) {
-                val displayText = fullContent ?: post.description?.let { Post.stripHtml(it) }
+                val rawText = fullContent ?: post.description?.let { Post.stripHtml(it) }
+                val displayText = rawText
+                    ?.let { Post.stripHtml(it) }
+                    ?.lines()
+                    ?.filterNot { line ->
+                        val t = line.trim()
+                        t.isEmpty() ||
+                            t == "Copy" ||
+                            t.contains("Download Context Embed", true) ||
+                            t.contains("telegram.org/js/", true) ||
+                            t.contains("data-telegram-post", true) ||
+                            t.startsWith("data-width", true) ||
+                            t.matches(Regex("""^<?/?script.*$""", RegexOption.IGNORE_CASE)) ||
+                            t.matches(Regex("""^src=.*$""", RegexOption.IGNORE_CASE)) ||
+                            t.matches(Regex("""^data-.*=.*$""", RegexOption.IGNORE_CASE)) ||
+                            t == "...>" || t == "</script>"
+                    }
+                    ?.joinToString("\n")?.trim()
                 if (!displayText.isNullOrEmpty()) {
                     Text(
                         text = displayText,

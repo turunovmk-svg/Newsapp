@@ -57,6 +57,10 @@ fun SettingsScreen(
     val readingFont by viewModel.readingFont.collectAsState()
     val notifEnabled by viewModel.notifEnabled.collectAsState()
     val notifIntervalHours by viewModel.notifIntervalHours.collectAsState()
+    val notifSound by viewModel.notifSound.collectAsState()
+    val quietStart by viewModel.quietStart.collectAsState()
+    val quietEnd by viewModel.quietEnd.collectAsState()
+    val notifDisabledSources by viewModel.notifDisabledSources.collectAsState()
 
     val permissionLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
         contract = androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
@@ -412,6 +416,74 @@ fun SettingsScreen(
                                 }
                             }
                         }
+
+                        Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
+
+                        // Звук уведомлений
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Звук уведомлений",
+                                style = CyberTypography.BodyMedium,
+                                color = CyberColors.TextPrimary
+                            )
+                            Switch(
+                                checked = notifSound,
+                                onCheckedChange = { viewModel.setNotifSound(it) },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = CyberColors.TextInverse,
+                                    checkedTrackColor = CyberColors.AccentBlue,
+                                    uncheckedThumbColor = CyberColors.TextSecondary,
+                                    uncheckedTrackColor = CyberColors.SurfaceElevated
+                                )
+                            )
+                        }
+
+                        // Тихие часы
+                        Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
+                        Text(
+                            text = "Тихие часы: " + if (quietStart >= 0) formatMinutes(quietStart) + " – " + formatMinutes(quietEnd) else "выключены",
+                            style = CyberTypography.BodySmall,
+                            color = CyberColors.TextSecondary
+                        )
+                        Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(UiSizes.SpacerSmall)
+                        ) {
+                            listOf(
+                                "23–7" to (23 * 60 to 7 * 60),
+                                "22–8" to (22 * 60 to 8 * 60),
+                                "0–8" to (0 to 8 * 60)
+                            ).forEach { (label, range) ->
+                                val selected = quietStart >= 0 && quietStart == range.first && quietEnd == range.second
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(50))
+                                        .background(
+                                            if (selected) CyberColors.AccentBlue
+                                            else CyberColors.SurfaceElevated.copy(alpha = 0.6f),
+                                            RoundedCornerShape(50)
+                                        )
+                                        .clickable {
+                                            if (selected) viewModel.setQuietHours(-1, -1)
+                                            else viewModel.setQuietHours(range.first, range.second)
+                                        }
+                                        .padding(vertical = UiSizes.SpacerSmall),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = label,
+                                        style = CyberTypography.BodySmall,
+                                        color = if (selected) CyberColors.TextInverse else CyberColors.TextSecondary
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -472,6 +544,21 @@ fun SettingsScreen(
                             maxLines = 2,
                         )
                     }
+                    // Переключатель уведомлений для источника
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(RoundedCornerShape(50))
+                            .clickable { viewModel.toggleSourceNotify(source.url) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_check),
+                            contentDescription = if (source.url in notifDisabledSources) "Включить уведомления" else "Отключить уведомления",
+                            tint = if (source.url in notifDisabledSources) CyberColors.TextMuted else CyberColors.AccentBlueBright,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                     IconButton(
                         onClick = { viewModel.removeSource(source.url) }
                     ) {
@@ -497,6 +584,13 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
         }
     }
+}
+
+/** Форматирует минуты от начала суток в «ЧЧ:ММ». */
+private fun formatMinutes(minutes: Int): String {
+    val h = (minutes / 60) % 24
+    val m = minutes % 60
+    return String.format("%02d:%02d", h, m)
 }
 
 @Composable

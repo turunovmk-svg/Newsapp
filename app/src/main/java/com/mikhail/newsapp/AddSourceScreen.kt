@@ -158,31 +158,7 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
                     )
                     Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
 
-                    // Тип источника: чипы
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = stringResource(id = R.string.source_type_label),
-                            style = CyberTypography.BodySmall,
-                            color = CyberColors.TextSecondary,
-                        )
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            SourceTypeChip("RSS", sourceType) { sourceType = SourceType.RSS }
-                            SourceTypeChip("Reddit", sourceType) { sourceType = SourceType.REDDIT }
-                            SourceTypeChip("YouTube", sourceType) { sourceType = SourceType.YOUTUBE }
-                            SourceTypeChip("TG", sourceType) { sourceType = SourceType.TELEGRAM }
-                            SourceTypeChip("X", sourceType) { sourceType = SourceType.TWITTER }
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
-
-                    // Подсказка автоопределения
+                    // Тип определяется автоматически — ручной выбор убран
                     if (detectedType != null) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -392,38 +368,6 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
                 enabled = !isAdding,
             )
         }
-    }
-}
-
-/** Круглый чип выбора типа источника. */
-@Composable
-private fun SourceTypeChip(
-    label: String,
-    selectedType: String,
-    onClick: () -> Unit
-) {
-    val selected = selectedType == when (label) {
-        "Reddit" -> SourceType.REDDIT
-        "YouTube" -> SourceType.YOUTUBE
-        "TG" -> SourceType.TELEGRAM
-        "X" -> SourceType.TWITTER
-        else -> SourceType.RSS
-    }
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .background(
-                if (selected) CyberColors.AccentBlue else CyberColors.SurfaceElevated,
-                RoundedCornerShape(50)
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 6.dp)
-    ) {
-        Text(
-            text = label,
-            style = CyberTypography.BodySmall,
-            color = if (selected) CyberColors.TextInverse else CyberColors.TextSecondary,
-        )
     }
 }
 

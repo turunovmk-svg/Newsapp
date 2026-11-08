@@ -69,6 +69,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -289,25 +292,30 @@ fun NewsAppNavigator() {
                     animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.55f),
                     label = "fabScale"
                 )
-                FloatingActionButton(
-                    onClick = { navController.navigate("add_source") },
-                    containerColor = CyberColors.AccentBlue,
-                    contentColor = CyberColors.TextInverse,
-                    shape = RoundedCornerShape(18.dp),
-                    elevation = FloatingActionButtonDefaults.elevation(
-                        defaultElevation = 10.dp,
-                        pressedElevation = 16.dp
-                    ),
+                Box(
                     modifier = Modifier
-                        .size(58.dp)
-                        .graphicsLayer(scaleX = fabScale, scaleY = fabScale)
+                        .padding(end = UiSizes.SpacerSmall, bottom = UiSizes.SpacerSmall)
                 ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_add),
-                        contentDescription = "Добавить источник",
-                        tint = CyberColors.TextInverse,
-                        modifier = Modifier.size(26.dp)
-                    )
+                    FloatingActionButton(
+                        onClick = { navController.navigate("add_source") },
+                        containerColor = CyberColors.AccentBlue,
+                        contentColor = CyberColors.TextInverse,
+                        shape = CircleShape,
+                        elevation = FloatingActionButtonDefaults.elevation(
+                            defaultElevation = 8.dp,
+                            pressedElevation = 14.dp
+                        ),
+                        modifier = Modifier
+                            .size(56.dp)
+                            .graphicsLayer(scaleX = fabScale, scaleY = fabScale)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_add),
+                            contentDescription = "Добавить источник",
+                            tint = CyberColors.TextInverse,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 }
             }
         },
@@ -1158,7 +1166,7 @@ fun SwipeableNewsCard(
     modifier: Modifier = Modifier
 ) {
     var offsetX by remember { mutableStateOf(0f) }
-    val animSpec = androidx.compose.animation.core.tween<Float>(200)
+    val animSpec = androidx.compose.animation.core.tween<Float>(180)
     val animatedOffset by androidx.compose.animation.core.animateFloatAsState(
         targetValue = offsetX,
         animationSpec = animSpec,
@@ -1166,6 +1174,7 @@ fun SwipeableNewsCard(
     )
     val animatedOffsetDp = with(LocalDensity.current) { animatedOffset.toDp() }
     val haptic = LocalHapticFeedback.current
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
 
     Box(
         modifier = modifier
@@ -1186,51 +1195,29 @@ fun SwipeableNewsCard(
                     }
                 )
             )
-            .pointerInput(post.id) {
-                // Жест активируется только при явно горизонтальном драге —
-                // вертикальные драйги проходят в LazyColumn (скролл работает).
-                awaitEachGesture {
-                    val down = awaitFirstDown(requireUnconsumed = false)
-                    var totalX = 0f
-                    var totalY = 0f
-                    var armed = false
-                    var finished = false
-                    var lastX = down.position.x
-                    var lastY = down.position.y
-                    drag(down.id) { change ->
-                        val px = change.position.x
-                        val py = change.position.y
-                        totalX += px - lastX
-                        totalY += py - lastY
-                        lastX = px
-                        lastY = py
-                        if (!armed && !finished &&
-                            abs(totalX) > 40f && abs(totalX) > abs(totalY)
-                        ) {
-                            armed = true
-                        }
-                        if (armed) {
-                            change.consume()
-                            offsetX = totalX.coerceIn(-300f, 300f)
-                        }
-                    }
-                    // жест завершён — обрабатываем действие
-                    if (armed && !finished) {
-                        finished = true
-                        val actionX = offsetX
-                        offsetX = 0f
-                        if (actionX > 120f) {
+            // Системный draggable: сам определяет направление (горизонталь/вертикаль),
+            // длинное нажатие без движения не смещает карточку, отмена всегда возвращает.
+            .draggable(
+                orientation = androidx.compose.foundation.gestures.Orientation.Horizontal,
+                state = rememberDraggableState { delta ->
+                    offsetX = (offsetX + delta).coerceIn(-260f, 260f)
+                },
+                onDragStopped = {
+                    val actionX = offsetX
+                    // ВСЕГДА плавно возвращаем на место
+                    offsetX = 0f
+                    when {
+                        actionX > 90f -> {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             onFavoriteClick()
-                        } else if (actionX < -120f) {
+                        }
+                        actionX < -90f -> {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             onReadClick()
                         }
-                    } else if (!armed) {
-                        offsetX = 0f
                     }
                 }
-            }
+            )
     ) {
         NewsCard(
             post = post,
