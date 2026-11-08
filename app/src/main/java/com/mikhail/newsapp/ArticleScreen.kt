@@ -67,7 +67,9 @@ fun ArticleScreen(
     onImageClick: (String) -> Unit = {},
     onPrevious: (() -> Unit)? = null,
     onNext: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isTablet: Boolean = false,
+    isLandscape: Boolean = false
 ) {
     val context = LocalContext.current
     val fontScale by viewModel.fontScale.collectAsState()
@@ -167,6 +169,7 @@ fun ArticleScreen(
         state = listState,
         modifier = modifier
             .fillMaxSize()
+            .then(if (isTablet || isLandscape) Modifier.widthIn(max = UiSizes.ArticleContentMaxWidth) else Modifier)
             .pointerInput(onPrevious, onNext) {
                 var accumulatedX = 0f
                 detectDragGestures(

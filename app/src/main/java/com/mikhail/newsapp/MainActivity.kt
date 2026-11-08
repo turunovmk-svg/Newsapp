@@ -98,10 +98,15 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalActivity
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import android.content.res.Configuration
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -253,6 +258,12 @@ fun NewsAppNavigator() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    // Адаптивность: телефон vs планшет, портрет vs ландшафт
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val windowSizeClass = calculateWindowSizeClass(LocalActivity.current)
+    val isTablet = windowSizeClass.widthSizeClass == WindowWidthSizeClass.Expanded
+
     val screenTitle = when (currentRoute) {
         "home" -> "Главная"
         "favorites" -> "Избранное"
@@ -359,54 +370,92 @@ fun NewsAppNavigator() {
             startDestination = "home"
         ) {
             composable("home") {
-                HomeScreen(
-                    viewModel = viewModel,
-                    scrollToTopTrigger = homeScrollTrigger,
-                    onAddSource = { navController.navigate("add_source") },
-                    onArticleClick = { post ->
-                        if (isYouTubePost(post)) {
-                            videoPost = post
-                            navController.navigate("video") { launchSingleTop = true }
-                        } else {
-                            selectedPost = post
-                            navController.navigate("article") { launchSingleTop = true }
-                        }
-                    },
-                    onSearchClick = { navController.navigate("search") },
-                    modifier = Modifier.padding(paddingValues)
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .widthIn(max = if (isTablet || isLandscape) 900.dp else 10000.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        HomeScreen(
+                            viewModel = viewModel,
+                            scrollToTopTrigger = homeScrollTrigger,
+                            onAddSource = { navController.navigate("add_source") },
+                            onArticleClick = { post ->
+                                if (isYouTubePost(post)) {
+                                    videoPost = post
+                                    navController.navigate("video") { launchSingleTop = true }
+                                } else {
+                                    selectedPost = post
+                                    navController.navigate("article") { launchSingleTop = true }
+                                }
+                            },
+                            onSearchClick = { navController.navigate("search") },
+                            modifier = Modifier.fillMaxWidth(),
+                            isTablet = isTablet,
+                            isLandscape = isLandscape
+                        )
+                    }
+                }
             }
             composable("search") {
-                SearchScreen(
-                    viewModel = viewModel,
-                    onNavigateBack = { navController.popBackStack() },
-                    onArticleClick = { post ->
-                        if (isYouTubePost(post)) {
-                            videoPost = post
-                            navController.navigate("video") { launchSingleTop = true }
-                        } else {
-                            selectedPost = post
-                            navController.navigate("article") { launchSingleTop = true }
-                        }
-                    },
-                    modifier = Modifier.padding(paddingValues)
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .widthIn(max = if (isTablet || isLandscape) 900.dp else 10000.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        SearchScreen(
+                            viewModel = viewModel,
+                            onNavigateBack = { navController.popBackStack() },
+                            onArticleClick = { post ->
+                                if (isYouTubePost(post)) {
+                                    videoPost = post
+                                    navController.navigate("video") { launchSingleTop = true }
+                                } else {
+                                    selectedPost = post
+                                    navController.navigate("article") { launchSingleTop = true }
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
             }
             composable("shorts") {
-                ShortsScreen(
-                    viewModel = viewModel,
-                    onAddSource = { navController.navigate("add_source") },
-                    onArticleClick = { post ->
-                        if (isYouTubePost(post)) {
-                            videoPost = post
-                            navController.navigate("video") { launchSingleTop = true }
-                        } else {
-                            selectedPost = post
-                            navController.navigate("article") { launchSingleTop = true }
-                        }
-                    },
-                    modifier = Modifier.padding(paddingValues)
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .widthIn(max = if (isTablet || isLandscape) 900.dp else 10000.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        ShortsScreen(
+                            viewModel = viewModel,
+                            onAddSource = { navController.navigate("add_source") },
+                            onArticleClick = { post ->
+                                if (isYouTubePost(post)) {
+                                    videoPost = post
+                                    navController.navigate("video") { launchSingleTop = true }
+                                } else {
+                                    selectedPost = post
+                                    navController.navigate("article") { launchSingleTop = true }
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
             }
             composable("add_source") {
                 AddSourceScreen(viewModel = viewModel, onNavigateBack = { navController.navigate("home") }, modifier = Modifier.padding(paddingValues))
@@ -420,27 +469,51 @@ fun NewsAppNavigator() {
                 )
             }
             composable("favorites") {
-                FavoritesScreen(
-                    viewModel = viewModel,
-                    onArticleClick = { post ->
-                        if (isYouTubePost(post)) {
-                            videoPost = post
-                            navController.navigate("video") { launchSingleTop = true }
-                        } else {
-                            selectedPost = post
-                            navController.navigate("article") { launchSingleTop = true }
-                        }
-                    },
-                    modifier = Modifier.padding(paddingValues)
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .widthIn(max = if (isTablet || isLandscape) 900.dp else 10000.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        FavoritesScreen(
+                            viewModel = viewModel,
+                            onArticleClick = { post ->
+                                if (isYouTubePost(post)) {
+                                    videoPost = post
+                                    navController.navigate("video") { launchSingleTop = true }
+                                } else {
+                                    selectedPost = post
+                                    navController.navigate("article") { launchSingleTop = true }
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
             }
             composable("stats") {
-                val posts by viewModel.posts.collectAsState()
-                StatsScreen(
-                    posts = posts,
-                    onNavigateBack = { navController.popBackStack() },
-                    modifier = Modifier.padding(paddingValues)
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .widthIn(max = if (isTablet || isLandscape) 900.dp else 10000.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        val posts by viewModel.posts.collectAsState()
+                        StatsScreen(
+                            posts = posts,
+                            onNavigateBack = { navController.popBackStack() },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
             }
             composable("image") {
                 val url = viewerImageUrl
@@ -500,6 +573,8 @@ fun NewsAppNavigator() {
                                 selectedPost = posts[nextIndex]
                             }
                         } else null,
+                        isTablet = isTablet,
+                        isLandscape = isLandscape
                     )
                 } else {
                     Text(
@@ -623,7 +698,9 @@ fun HomeScreen(
     onAddSource: () -> Unit,
     onArticleClick: (Post) -> Unit,
     onSearchClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isTablet: Boolean = false,
+    isLandscape: Boolean = false
 ) {
     val posts by viewModel.posts.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -983,9 +1060,11 @@ fun HomeScreen(
                     )
                 }
             }
-            "grid" -> LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                modifier = Modifier.fillMaxSize(),
+            "grid" -> {
+                val gridColumns = if (isTablet || isLandscape) 4 else 2
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(gridColumns),
+                    modifier = Modifier.fillMaxSize(),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(
                     horizontal = UiSizes.SpacerSmall,
                     vertical = UiSizes.SpacerSmall
@@ -999,6 +1078,7 @@ fun HomeScreen(
                         onClick = { onArticleClick(post) }
                     )
                 }
+            }
             }
             else -> {
                 // Автоотметка прочитанным при прокрутке мимо (как в Reeder)
