@@ -98,12 +98,9 @@ fun FavoritesScreen(
                         isFavorite = viewModel.isFavorite(post),
                         isRead = viewModel.isRead(post),
                         isReadLater = viewModel.isReadLater(post),
-                        onClick = { onArticleClick(post) },
-                        onRemove = {
-                            if (tab == 0) viewModel.toggleFavorite(post)
-                            else viewModel.toggleReadLater(post)
-                        },
-                        onShare = {
+                        onFavoriteClick = { viewModel.toggleFavorite(post) },
+                        onReadLaterClick = { viewModel.toggleReadLater(post) },
+                        onShareClick = {
                             post.sourceUrl?.let { url ->
                                 val intent = Intent(Intent.ACTION_SEND).apply {
                                     type = "text/plain"
@@ -111,15 +108,14 @@ fun FavoritesScreen(
                                 }
                                 ctx.startActivity(Intent.createChooser(intent, "Поделиться"))
                             }
-                        }
+                        },
+                        onClick = { onArticleClick(post) }
                     )
                 }
             }
         }
     }
 }
-
-@Composable
 
 /** Компактная карточка для списков (избранное / читать позже). */
 @Composable
