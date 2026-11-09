@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import coil.size.Size
 import com.mikhail.newsapp.data.Post
 import com.mikhail.newsapp.theme.CyberColors
 import com.mikhail.newsapp.theme.CyberTypography
@@ -315,10 +316,14 @@ fun ArticleScreen(
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
                             .data(imageUrl)
+                            .size(Size.ORIGINAL)
+                            .crossfade(200)
                             .build(),
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.Crop,
+                        placeholder = painterResource(id = R.drawable.ic_image_placeholder),
+                        error = painterResource(id = R.drawable.ic_image_error)
                     )
                     Box(
                         modifier = Modifier

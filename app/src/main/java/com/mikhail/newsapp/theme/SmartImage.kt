@@ -62,7 +62,7 @@ fun SmartNewsImage(
         AsyncImage(
             model = ImageRequest.Builder(context)
                 .data(imageUrl)
-                .size(Size.ORIGINAL)
+                .size(Size.REQUESTED)
                 .crossfade(120)
                 .build(),
             contentDescription = null,
@@ -83,7 +83,7 @@ fun SmartNewsImage(
         AsyncImage(
             model = ImageRequest.Builder(context)
                 .data(imageUrl)
-                .size(Size.ORIGINAL)
+                .size(Size.REQUESTED)
                 .crossfade(120)
                 .build(),
             contentDescription = null,

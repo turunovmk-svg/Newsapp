@@ -349,14 +349,14 @@ fun NewsAppNavigator() {
                             pressedElevation = 14.dp
                         ),
                         modifier = Modifier
-                            .size(56.dp)
+                            .size(64.dp)
                             .graphicsLayer(scaleX = fabScale, scaleY = fabScale)
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Add,
                             contentDescription = "Добавить источник",
                             tint = Color.White,
-                            modifier = Modifier.size(26.dp)
+                            modifier = Modifier.size(28.dp)
                         )
                     }
                 }
