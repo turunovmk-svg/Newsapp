@@ -176,11 +176,26 @@ fun ArticleScreen(
         fontFamily = if (readingFont == "serif") FontFamily.Serif else FontFamily.SansSerif
     )
 
-    // Цвет фона чтения в зависимости темы
+    // Цвет фона и текста чтения в зависимости темы чтения
     val readingBackground = when (readingTheme) {
         "sepia" -> Color(0xFFF5E6D3)
         "dark" -> CyberColors.BackgroundDeep
         else -> Color(0xFFFFFFFF)
+    }
+    val readingTextPrimary = when (readingTheme) {
+        "sepia" -> Color(0xFF3E2723)
+        "dark" -> CyberColors.TextPrimary
+        else -> CyberColors.LightTextPrimary
+    }
+    val readingTextSecondary = when (readingTheme) {
+        "sepia" -> Color(0xFF5D4037)
+        "dark" -> CyberColors.TextSecondary
+        else -> CyberColors.LightTextSecondary
+    }
+    val readingTextMuted = when (readingTheme) {
+        "sepia" -> Color(0xFF8D6E63)
+        "dark" -> CyberColors.TextMuted
+        else -> CyberColors.LightTextMuted
     }
 
     LazyColumn(
@@ -331,14 +346,14 @@ fun ArticleScreen(
                 Text(
                     text = translatedTitle ?: post.title,
                     style = CyberTypography.HeadlineLarge,
-                    color = CyberColors.TextPrimary,
+                    color = readingTextPrimary,
                 )
                 post.publishedAt?.let { date ->
                     Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
                     Text(
                         text = date,
                         style = CyberTypography.BodySmall,
-                        color = CyberColors.TextSecondary,
+                        color = readingTextSecondary,
                     )
                 }
                 Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
@@ -381,14 +396,14 @@ fun ArticleScreen(
                     Text(
                         text = displayText,
                         style = bodyStyle,
-                        color = CyberColors.TextPrimary,
+                        color = readingTextPrimary,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 } else {
                     Text(
                         text = stringResource(id = R.string.article_no_content),
                         style = CyberTypography.BodyMedium,
-                        color = CyberColors.TextSecondary,
+                        color = readingTextSecondary,
                     )
                 }
                 // Статус догрузки полного текста
@@ -405,7 +420,7 @@ fun ArticleScreen(
                     Text(
                         text = "Не удалось загрузить полный текст — открыть оригинал",
                         style = CyberTypography.BodySmall,
-                        color = CyberColors.TextSecondary,
+                        color = readingTextSecondary,
                     )
                 }
                 if (fullContent != null) {

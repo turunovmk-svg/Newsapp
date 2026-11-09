@@ -239,26 +239,29 @@ fun ShortsFullScreenCard(
             }
         }
 
-        // Вертикальная панель действий справа — над текстовым блоком (низ экрана)
-        Column(
+        // Вертикальная панель действий справа внизу экрана
+        Box(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = UiSizes.SpacerSmall, bottom = 250.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(UiSizes.SpacerMedium)
+                .padding(end = UiSizes.SpacerSmall, bottom = 250.dp)
         ) {
-            ShortsActionButton(
-                icon = R.drawable.ic_favorite,
-                label = if (isFavorite) "В избранном" else "В избранное",
-                tint = if (isFavorite) CyberColors.AccentBlueBright else CyberColors.TextPrimary,
-                onClick = onFavoriteClick
-            )
-            ShortsActionButton(
-                icon = R.drawable.ic_share,
-                label = "Поделиться",
-                tint = CyberColors.TextPrimary,
-                onClick = onShareClick
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(UiSizes.SpacerMedium)
+            ) {
+                ShortsActionButton(
+                    icon = R.drawable.ic_favorite,
+                    label = if (isFavorite) "В избранном" else "В избранное",
+                    tint = if (isFavorite) CyberColors.AccentBlueBright else CyberColors.TextPrimary,
+                    onClick = onFavoriteClick
+                )
+                ShortsActionButton(
+                    icon = R.drawable.ic_share,
+                    label = "Поделиться",
+                    tint = CyberColors.TextPrimary,
+                    onClick = onShareClick
+                )
+            }
         }
 
         // Текстовая часть снизу слева
