@@ -361,14 +361,14 @@ fun ArticleScreen(
         }
 
         item {
-            // Фото статьи
+            // Фото статьи + подпись под ним (как в референсе чтения)
             post.imageUrl?.let { imageUrl ->
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = UiSizes.ArticlePadding)
                         .height(UiSizes.ArticleImageMaxHeight)
-                        .clip(RoundedCornerShape(UiSizes.ArticleCornerRadius))
+                        .clip(RoundedCornerShape(UiSizes.RefCardRadius))
                         .clickable { onImageClick(imageUrl) }
                 ) {
                     AsyncImage(
@@ -382,20 +382,16 @@ fun ArticleScreen(
                         placeholder = painterResource(id = R.drawable.ic_image_placeholder),
                         error = painterResource(id = R.drawable.ic_image_error)
                     )
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                brush = Brush.verticalGradient(
-                                    colors = listOf(
-                                        Color.Transparent,
-                                        CyberColors.BackgroundDeep.copy(alpha = 0.25f)
-                                    )
-                                )
-                            )
-                    )
                 }
-                Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
+                Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
+                Text(
+                    text = listOfNotNull(post.siteName, post.publishedAt?.take(17))
+                        .joinToString("  ·  "),
+                    style = CyberTypography.BodySmall,
+                    color = readingTextMuted,
+                    modifier = Modifier.padding(horizontal = UiSizes.ArticlePadding)
+                )
+                Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
             }
         }
 
@@ -408,9 +404,30 @@ fun ArticleScreen(
             ) {
                 Text(
                     text = translatedTitle ?: post.title,
-                    style = CyberTypography.HeadlineLarge,
+                    style = CyberTypography.HeadlineLarge.copy(
+                        fontSize = 26.sp,
+                        lineHeight = 32.sp,
+                        fontWeight = FontWeight.Bold
+                    ),
                     color = readingTextPrimary,
                 )
+                Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
+                // Лид — крупный анонс (как в референсе чтения)
+                post.description?.let { desc ->
+                    val lead = Post.stripHtml(desc)
+                    if (!lead.isNullOrBlank()) {
+                        Text(
+                            text = lead,
+                            style = CyberTypography.BodyLarge.copy(
+                                fontSize = 17.sp,
+                                lineHeight = 26.sp,
+                                fontWeight = FontWeight.Medium
+                            ),
+                            color = readingTextSecondary,
+                        )
+                        Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
+                    }
+                }
                 post.publishedAt?.let { date ->
                     Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
                     Text(
@@ -423,7 +440,8 @@ fun ArticleScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(1.dp)
+                        .height(2.dp)
+                        .clip(RoundedCornerShape(2.dp))
                         .background(CyberColors.Divider)
                 )
             }

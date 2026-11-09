@@ -743,26 +743,3 @@ private fun SectionTitle(text: String) {
     return
 }
 
-@Composable
-private fun SectionTitleOld(text: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = UiSizes.SpacerSmall),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .width(4.dp)
-                .height(16.dp)
-                .clip(RoundedCornerShape(2.dp))
-                .background(CyberColors.AccentBlue)
-        )
-        Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
-        Text(
-            text = text,
-            style = CyberTypography.TitleMedium,
-            color = CyberColors.TextSecondary,
-        )
-    }
-}
