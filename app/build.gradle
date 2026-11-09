@@ -34,7 +34,11 @@ android {
             minifyEnabled false
         }
         debug {
-            // debug остаётся с авто-ключом
+            // debug тоже подписываем релизным ключом (если он есть),
+            // чтобы APK ставился поверх предыдущих версий без удаления
+            if (signingConfigs.findByName("release") != null) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 
