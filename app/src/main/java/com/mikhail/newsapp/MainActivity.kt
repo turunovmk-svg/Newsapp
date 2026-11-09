@@ -126,6 +126,8 @@ import coil.request.ImageRequest
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Системная заставка (Splash Screen API)
+        androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen()
         super.onCreate(savedInstanceState)
         setContent {
             val settingsViewModel: MainViewModel = viewModel()
@@ -175,73 +177,6 @@ private fun pluralNew(n: Int): String {
     }
 }
 
-/** Брендированный экран запуска: монограмма на градиенте. */
-@Composable
-fun NewsSplashScreen() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF0B0F18),
-                        CyberColors.BackgroundDeep
-                    )
-                )
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            // Монограмма в градиентном круге с мягкой пульсацией (pattern interrupt —
-            // внимание приковано к бренду в первые 700мс)
-            val pulse = androidx.compose.animation.core.rememberInfiniteTransition(label = "pulse")
-            val pulseScale by pulse.animateFloat(
-                initialValue = 1f,
-                targetValue = 1.06f,
-                animationSpec = androidx.compose.animation.core.infiniteRepeatable(
-                    animation = androidx.compose.animation.core.tween(900, easing = androidx.compose.animation.core.FastOutSlowInEasing),
-                    repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
-                ),
-                label = "pulseScale"
-            )
-            Box(
-                modifier = Modifier
-                    .size(96.dp)
-                    .graphicsLayer(scaleX = pulseScale, scaleY = pulseScale)
-                    .clip(CircleShape)
-                    .background(
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                CyberColors.AccentBlue,
-                                CyberColors.AccentBlueBright
-                            )
-                        )
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "N",
-                    color = CyberColors.TextInverse,
-                    fontSize = 44.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-            Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
-            Text(
-                text = "NewsApp",
-                style = CyberTypography.HeadlineMedium,
-                color = CyberColors.TextPrimary
-            )
-            Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
-            Text(
-                text = stringResource(id = R.string.splash_tagline),
-                style = CyberTypography.BodyMedium,
-                color = CyberColors.TextSecondary
-            )
-        }
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
 fun NewsAppNavigator() {
@@ -251,17 +186,6 @@ fun NewsAppNavigator() {
     var videoPost by remember { mutableStateOf<Post?>(null) }
     var viewerImageUrl by remember { mutableStateOf<String?>(null) }
     var homeScrollTrigger by remember { mutableStateOf(0) }
-
-    // Splash — брендированный старт
-    var showSplash by remember { mutableStateOf(true) }
-    LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(700)
-        showSplash = false
-    }
-    if (showSplash) {
-        NewsSplashScreen()
-        return
-    }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
