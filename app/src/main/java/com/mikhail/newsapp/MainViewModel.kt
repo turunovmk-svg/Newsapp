@@ -934,4 +934,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun clearCachedFullText(postId: String) {
         prefs.edit().remove("fulltext_$postId").apply()
     }
+
+    /** Очищает кэш постов (офлайн-копии). */
+    fun clearCache() {
+        prefs.edit().remove("posts_json").apply()
+        _posts.value = emptyList()
+    }
 }

@@ -328,6 +328,27 @@ fun SettingsScreen(
                             color = CyberColors.TextPrimary
                         )
                     }
+                    Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { viewModel.clearCache() }
+                            .padding(vertical = UiSizes.SpacerSmall),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_delete),
+                            contentDescription = "Очистить кэш",
+                            tint = CyberColors.Error,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(UiSizes.SpacerMedium))
+                        Text(
+                            text = "Очистить кэш постов",
+                            style = CyberTypography.BodyMedium,
+                            color = CyberColors.TextPrimary
+                        )
+                    }
                 }
             }
         }
