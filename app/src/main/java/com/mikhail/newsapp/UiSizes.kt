@@ -72,4 +72,15 @@ object UiSizes {
     val ArticlePadding = 20.dp
     val ArticleImageMaxHeight = 300.dp
     val ArticleCornerRadius = 12.dp
+
+    // ---------- Референс-дизайн (по макетам Discover / Search / Add feed) ----------
+    val RefCardRadius = 18.dp
+    val RefChipRadius = 50.dp
+    val RefIconCircle = 40.dp
+    val RefLogoCircle = 44.dp
+    val RefMetaText = 12.dp          // условный токен (sp отдельно)
+    val RefCardImageHeight = 180.dp
+    val RefFeaturedImageHeight = 220.dp
+    val RefSectionSpacing = 8.dp
+    val RefRowSpacing = 14.dp
 }
