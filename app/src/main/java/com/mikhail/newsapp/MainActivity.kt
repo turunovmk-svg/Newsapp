@@ -1141,22 +1141,21 @@ fun HomeScreen(
                                     top = UiSizes.SpacerMedium,
                                     bottom = UiSizes.SpacerXSmall
                                 ),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .width(4.dp)
-                                        .height(18.dp)
-                                        .clip(RoundedCornerShape(2.dp))
-                                        .background(CyberColors.AccentBlue)
-                                    )
-                                Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
-                                Text(
-                                    text = stringResource(id = R.string.section_more_news, sortedPosts.size - 1),
-                                    style = CyberTypography.TitleMedium,
-                                    color = CyberColors.TextSecondary
-                                )
-                            }
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .width(4.dp)
+                                    .height(18.dp)
+                                    .clip(RoundedCornerShape(2.dp))
+                                    .background(CyberColors.AccentBlue)
+                            )
+                            Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
+                            Text(
+                                text = stringResource(id = R.string.section_more_news, sortedPosts.size - 1),
+                                style = CyberTypography.TitleMedium,
+                                color = CyberColors.TextSecondary
+                            )
                         }
                     }
                 }
@@ -1242,6 +1241,8 @@ fun HomeScreen(
         }
     }
 }
+}
+
 
 /** Компактная карточка для сетки (2 колонки). */
 @Composable
@@ -1831,4 +1832,3 @@ fun SearchScreen(
         }
     }
 }
-// Rebuild fix

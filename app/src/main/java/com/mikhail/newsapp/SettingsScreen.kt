@@ -44,7 +44,6 @@ import com.mikhail.newsapp.theme.CyberTypography
 import com.mikhail.newsapp.theme.GlassCard
 import com.mikhail.newsapp.theme.NeonButton
 import com.mikhail.newsapp.UiSizes
-import com.mikhail.newsapp.BuildConfig
 
 @Composable
 fun SettingsScreen(
