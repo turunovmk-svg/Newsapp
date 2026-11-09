@@ -626,27 +626,9 @@ fun NewsBottomNavBar(
 ) {
     Surface(
         color = CyberColors.SurfaceGlassStrong,
-        shadowElevation = 16.dp,
+        shadowElevation = 12.dp,
         tonalElevation = 0.dp
     ) {
-        Column {
-            // Тонкая акцентная линия сверху
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                CyberColors.AccentBlue.copy(alpha = 0.35f),
-                                CyberColors.AccentBlueBright.copy(alpha = 0.5f),
-                                CyberColors.AccentBlue.copy(alpha = 0.35f),
-                                Color.Transparent
-                            )
-                        )
-                    )
-            )
             NavigationBar(
                 containerColor = Color.Transparent,
                 contentColor = CyberColors.TextPrimary,
@@ -677,10 +659,10 @@ fun NewsBottomNavBar(
                             // Пилюля-индикатор активного таба (как топ-агрегаторы)
                             Box(
                                 modifier = Modifier
-                                    .size(width = 48.dp, height = 30.dp)
+                                    .size(width = 52.dp, height = 32.dp)
                                     .clip(RoundedCornerShape(50))
                                     .background(
-                                        if (selected) CyberColors.AccentBlue.copy(alpha = 0.18f)
+                                        if (selected) CyberColors.AccentBlue.copy(alpha = 0.24f)
                                         else Color.Transparent
                                     ),
                                 contentAlignment = Alignment.Center
@@ -697,7 +679,9 @@ fun NewsBottomNavBar(
                             Text(
                                 text = label,
                                 style = CyberTypography.BodySmall.copy(
-                                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
+                                    fontSize = 11.sp,
+                                    lineHeight = 13.sp,
+                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
                                 ),
                                 color = if (selected) CyberColors.AccentBlueBright else CyberColors.TextSecondary,
                                 maxLines = 1
@@ -713,7 +697,6 @@ fun NewsBottomNavBar(
                     )
                 }
             }
-        }
     }
 }
 
