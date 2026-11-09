@@ -33,6 +33,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import com.mikhail.newsapp.data.Post
 import com.mikhail.newsapp.theme.CyberColors
 import com.mikhail.newsapp.theme.RefEmptyState
@@ -60,6 +62,22 @@ fun FavoritesScreen(
             .fillMaxSize()
             .background(CyberColors.BackgroundDeep)
     ) {
+        // Крупный заголовок экрана (как в референсе)
+        Text(
+            text = if (tab == 0) "Избранное" else "Читать позже",
+            style = CyberTypography.HeadlineMedium.copy(
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Bold
+            ),
+            color = CyberColors.TextPrimary,
+            modifier = Modifier.padding(
+                start = UiSizes.ScreenPadding,
+                end = UiSizes.ScreenPadding,
+                top = UiSizes.SpacerSmall,
+                bottom = UiSizes.SpacerSmall
+            )
+        )
+
         // Табы — в стиле референса (подчёркивание активного)
         Row(
             modifier = Modifier

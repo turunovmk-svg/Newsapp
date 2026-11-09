@@ -192,20 +192,21 @@ fun ArticleScreen(
         "dark" -> CyberColors.BackgroundDeep
         else -> if (darkTheme) CyberColors.BackgroundDeep else Color(0xFFFFFFFF)
     }
+    // Текст ВСЕГДА контрастный фону: при тёмном фоне — светлый, при светлом — тёмный
     val readingTextPrimary = when (readingTheme) {
         "sepia" -> Color(0xFF3E2723)
         "dark" -> CyberColors.TextPrimary
-        else -> CyberColors.LightTextPrimary
+        else -> if (darkTheme) CyberColors.TextPrimary else CyberColors.LightTextPrimary
     }
     val readingTextSecondary = when (readingTheme) {
         "sepia" -> Color(0xFF5D4037)
         "dark" -> CyberColors.TextSecondary
-        else -> CyberColors.LightTextSecondary
+        else -> if (darkTheme) CyberColors.TextSecondary else CyberColors.LightTextSecondary
     }
     val readingTextMuted = when (readingTheme) {
         "sepia" -> Color(0xFF8D6E63)
         "dark" -> CyberColors.TextMuted
-        else -> CyberColors.LightTextMuted
+        else -> if (darkTheme) CyberColors.TextMuted else CyberColors.LightTextMuted
     }
 
     LazyColumn(

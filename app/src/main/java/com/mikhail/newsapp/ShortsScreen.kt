@@ -248,13 +248,15 @@ fun ShortsFullScreenCard(
             }
         }
 
-        // Вертикальная панель действий справа внизу экрана
+        // Вертикальная панель действий СПРАВА ВНИЗУ (weight-колонка = всегда у нижней кромки)
         Column(
             modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = UiSizes.SpacerSmall, bottom = 200.dp),
-            horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.spacedBy(UiSizes.SpacerMedium)
+                .fillMaxSize()
+                .padding(
+                    end = UiSizes.SpacerSmall,
+                    bottom = UiSizes.BottomNavHeight + UiSizes.SpacerMedium
+                ),
+            verticalArrangement = Arrangement.Bottom
         ) {
             ShortsActionButton(
                 icon = R.drawable.ic_favorite,
@@ -278,7 +280,7 @@ fun ShortsFullScreenCard(
                 .padding(
                     start = UiSizes.ScreenPadding,
                     end = 72.dp,
-                    bottom = UiSizes.SpacerLarge
+                    bottom = UiSizes.BottomNavHeight + UiSizes.SpacerLarge
                 )
         ) {
             // Акцентная линия над заголовком (как в референсе Shorts)
