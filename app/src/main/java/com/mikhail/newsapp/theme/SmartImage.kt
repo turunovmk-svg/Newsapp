@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import coil.size.Size
 
 /**
  * Адаптивная картинка новости.
@@ -62,7 +61,6 @@ fun SmartNewsImage(
         AsyncImage(
             model = ImageRequest.Builder(context)
                 .data(imageUrl)
-                .size(Size.REQUESTED)
                 .crossfade(120)
                 .build(),
             contentDescription = null,
@@ -83,7 +81,6 @@ fun SmartNewsImage(
         AsyncImage(
             model = ImageRequest.Builder(context)
                 .data(imageUrl)
-                .size(Size.REQUESTED)
                 .crossfade(120)
                 .build(),
             contentDescription = null,

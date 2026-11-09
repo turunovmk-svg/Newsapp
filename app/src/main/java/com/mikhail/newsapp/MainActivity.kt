@@ -1173,7 +1173,8 @@ fun HomeScreen(
                             }
                         }
                         is Post -> {
-                            val post = item as Post
+                            val post = item
+                            val ctx = LocalContext.current
                             SwipeableNewsCard(
                                 post = post,
                                 isFavorite = viewModel.isFavorite(post),

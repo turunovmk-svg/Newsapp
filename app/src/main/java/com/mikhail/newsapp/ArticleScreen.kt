@@ -46,16 +46,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import coil.size.Size
 import com.mikhail.newsapp.data.Post
 import com.mikhail.newsapp.theme.CyberColors
 import com.mikhail.newsapp.theme.CyberTypography
@@ -459,7 +454,7 @@ fun ArticleScreen(
                     ?.joinToString("\n")?.trim()
                 if (!displayText.isNullOrEmpty()) {
                     Text(
-                        text = highlightArticleText(displayText, articleSearchQuery),
+                        text = displayText,
                         style = bodyStyle,
                         color = readingTextPrimary,
                         modifier = Modifier.fillMaxWidth(),
@@ -614,28 +609,7 @@ fun ArticleScreen(
     }
 }
 
-/** Подсвечивает вхождения запроса в тексте (жёлтый фон). */
-private fun highlightArticleText(text: String, query: String): AnnotatedString {
-    if (query.isBlank() || text.isEmpty()) return AnnotatedString(text)
-    val lowerText = text.lowercase()
-    val lowerQuery = query.lowercase()
-    return buildAnnotatedString {
-        var pos = 0
-        var start = lowerText.indexOf(lowerQuery)
-        while (start >= 0) {
-            if (start > pos) append(text.substring(pos, start))
-            pushStyle(SpanStyle(
-                background = CyberColors.AccentBlue.copy(alpha = 0.35f),
-                fontWeight = FontWeight.Bold
-            ))
-            append(text.substring(start, (start + query.length).coerceAtMost(text.length)))
-            popStyle()
-            pos = (start + query.length).coerceAtMost(text.length)
-            start = lowerText.indexOf(lowerQuery, pos)
-        }
-        if (pos < text.length) append(text.substring(pos))
-    }
-}
+
 
 
 /** Режим чтения без отвлекающих элементов: только текст статьи, без навигации и кнопок. */
