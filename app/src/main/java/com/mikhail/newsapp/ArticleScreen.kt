@@ -77,6 +77,7 @@ fun ArticleScreen(
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     val readingFont by viewModel.readingFont.collectAsState()
     val readingTheme by viewModel.readingTheme.collectAsState()
+    val darkTheme by viewModel.darkTheme.collectAsState()
     val isReadLater = viewModel.isReadLater(post)
 
     // ---------- Позиция прокрутки (сохраняется между открытиями) ----------
@@ -176,11 +177,11 @@ fun ArticleScreen(
         fontFamily = if (readingFont == "serif") FontFamily.Serif else FontFamily.SansSerif
     )
 
-    // Цвет фона и текста чтения в зависимости темы чтения
+    // Цвет фона и текста чтения в зависимости темы чтения и темной темы приложения
     val readingBackground = when (readingTheme) {
         "sepia" -> Color(0xFFF5E6D3)
         "dark" -> CyberColors.BackgroundDeep
-        else -> Color(0xFFFFFFFF)
+        else -> if (darkTheme) CyberColors.BackgroundDeep else Color(0xFFFFFFFF)
     }
     val readingTextPrimary = when (readingTheme) {
         "sepia" -> Color(0xFF3E2723)
