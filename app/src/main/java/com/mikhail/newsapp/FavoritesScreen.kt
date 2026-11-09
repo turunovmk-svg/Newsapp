@@ -35,6 +35,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.mikhail.newsapp.data.Post
 import com.mikhail.newsapp.theme.CyberColors
+import com.mikhail.newsapp.theme.RefEmptyState
+import com.mikhail.newsapp.theme.RefUnderlinedTabs
+import androidx.compose.foundation.layout.widthIn
 import com.mikhail.newsapp.theme.CyberTypography
 import com.mikhail.newsapp.theme.NeonButton
 import com.mikhail.newsapp.theme.SourceGradientPlaceholder
@@ -57,41 +60,28 @@ fun FavoritesScreen(
             .fillMaxSize()
             .background(CyberColors.BackgroundDeep)
     ) {
-        // Табы
+        // Табы — в стиле референса (подчёркивание активного)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = UiSizes.ScreenPadding, vertical = UiSizes.SpacerSmall),
-            horizontalArrangement = Arrangement.spacedBy(UiSizes.SpacerSmall)
+                .padding(horizontal = UiSizes.ScreenPadding, vertical = UiSizes.SpacerSmall)
         ) {
-            TabChip("Избранное (${favorites.size})", tab == 0) { tab = 0 }
-            TabChip("Читать позже (${readLater.size})", tab == 1) { tab = 1 }
+            RefUnderlinedTabs(
+                tabs = listOf("Избранное (${favorites.size})", "Читать позже (${readLater.size})"),
+                selectedIndex = tab,
+                onSelect = { tab = it },
+                modifier = Modifier.widthIn(max = 360.dp)
+            )
         }
 
         if (currentList.isEmpty()) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(text = if (tab == 0) "♥" else "🔖", style = CyberTypography.HeadlineLarge)
-                Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
-                Text(
-                    text = if (tab == 0) stringResource(id = R.string.favorites_empty)
-                    else "Очередь чтения пуста",
-                    style = CyberTypography.TitleMedium,
-                    color = CyberColors.TextSecondary,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
-                Text(
-                    text = if (tab == 0) stringResource(id = R.string.favorites_empty_hint)
-                    else stringResource(id = R.string.readlater_empty_hint),
-                    style = CyberTypography.BodySmall,
-                    color = CyberColors.TextMuted,
-                    textAlign = TextAlign.Center
-                )
-            }
+            RefEmptyState(
+                iconRes = if (tab == 0) R.drawable.ic_favorite else R.drawable.ic_bookmark,
+                title = if (tab == 0) stringResource(id = R.string.favorites_empty)
+                else "Очередь чтения пуста",
+                hint = if (tab == 0) stringResource(id = R.string.favorites_empty_hint)
+                else stringResource(id = R.string.readlater_empty_hint),
+            )
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -103,9 +93,11 @@ fun FavoritesScreen(
             ) {
                 items(items = currentList, key = { it.id }) { post ->
                     val ctx = androidx.compose.ui.platform.LocalContext.current
-                    CompactNewsCard(
+                    NewsCard(
                         post = post,
+                        isFavorite = viewModel.isFavorite(post),
                         isRead = viewModel.isRead(post),
+                        isReadLater = viewModel.isReadLater(post),
                         onClick = { onArticleClick(post) },
                         onRemove = {
                             if (tab == 0) viewModel.toggleFavorite(post)
@@ -128,24 +120,6 @@ fun FavoritesScreen(
 }
 
 @Composable
-private fun TabChip(text: String, selected: Boolean, onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .background(
-                if (selected) CyberColors.AccentBlue else CyberColors.SurfaceElevated.copy(alpha = 0.6f),
-                RoundedCornerShape(50)
-            )
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-    ) {
-        Text(
-            text = text,
-            style = CyberTypography.BodySmall,
-            color = if (selected) CyberColors.TextInverse else CyberColors.TextSecondary
-        )
-    }
-}
 
 /** Компактная карточка для списков (избранное / читать позже). */
 @Composable
