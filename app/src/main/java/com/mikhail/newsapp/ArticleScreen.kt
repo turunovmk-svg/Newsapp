@@ -42,7 +42,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -142,6 +146,7 @@ fun ArticleScreen(
     var fullContent by remember { mutableStateOf<String?>(null) }
     var isLoadingFullText by remember { mutableStateOf(false) }
     var fullTextFailed by remember { mutableStateOf(false) }
+    var articleSearchQuery by remember { mutableStateOf("") }
 
     // Помечаем прочитанным при открытии
     LaunchedEffect(post.id) {
@@ -304,6 +309,37 @@ fun ArticleScreen(
                     color = CyberColors.AccentBlue,
                     modifier = Modifier.clickable { viewModel.setFontScale((fontScale + 0.1f).coerceIn(0.8f, 2.0f)) }
                 )
+                Spacer(modifier = Modifier.width(UiSizes.SpacerMedium))
+                OutlinedTextField(
+                    value = articleSearchQuery,
+                    onValueChange = { articleSearchQuery = it },
+                    label = { Text("Поиск в статье") },
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_search),
+                            contentDescription = "Поиск",
+                            tint = CyberColors.TextSecondary
+                        )
+                    },
+                    modifier = Modifier
+                        .width(200.dp)
+                        .fillMaxWidth(),
+                    singleLine = true,
+                )
+                Spacer(modifier = Modifier.width(UiSizes.SpacerMedium))
+                IconButton(
+                    onClick = {
+                        // Открыть режим чтения - показываем как отдельный экран
+                        // Здесь можно добавить навигацию на ReaderModeScreen
+                    },
+                    modifier = Modifier.size(44.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_bookmark),
+                        contentDescription = "Режим чтения",
+                        tint = CyberColors.TextPrimary
+                    )
+                }
             }
         }
 
@@ -420,7 +456,7 @@ fun ArticleScreen(
                     ?.joinToString("\n")?.trim()
                 if (!displayText.isNullOrEmpty()) {
                     Text(
-                        text = displayText,
+                        text = highlightArticleText(displayText, articleSearchQuery),
                         style = bodyStyle,
                         color = readingTextPrimary,
                         modifier = Modifier.fillMaxWidth(),
@@ -574,3 +610,105 @@ fun ArticleScreen(
         }
     }
 }
+
+/** Подсвечивает вхождения запроса в тексте (жёлтый фон). */
+private fun highlightArticleText(text: String, query: String): AnnotatedString {
+    if (query.isBlank() || text.isEmpty()) return AnnotatedString(text)
+    val lowerText = text.lowercase()
+    val lowerQuery = query.lowercase()
+    return buildAnnotatedString {
+        var pos = 0
+        var start = lowerText.indexOf(lowerQuery)
+        while (start >= 0) {
+            if (start > pos) append(text.substring(pos, start))
+            addSpan(
+                text = text.substring(start, (start + query.length).coerceAtMost(text.length)),
+                style = SpanStyle(
+                    background = CyberColors.AccentBlue.copy(alpha = 0.35f),
+                    fontWeight = FontWeight.Bold
+                )
+            )
+            pos = (start + query.length).coerceAtMost(text.length)
+            start = lowerText.indexOf(lowerQuery, pos)
+        }
+        if (pos < text.length) append(text.substring(pos))
+    }
+}
+
+
+/** Режим чтения без отвлекающих элементов: только текст статьи, без навигации и кнопок. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ReaderModeScreen(
+    post: Post,
+    viewModel: MainViewModel,
+    onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val fontScale by viewModel.fontScale.collectAsState()
+    val readingFont by viewModel.readingFont.collectAsState()
+    val readingTheme by viewModel.readingTheme.collectAsState()
+    val darkTheme by viewModel.darkTheme.collectAsState()
+
+    val readingBackground = when (readingTheme) {
+        "sepia" -> Color(0xFFF5E6D3)
+        "dark" -> CyberColors.BackgroundDeep
+        else -> if (darkTheme) CyberColors.BackgroundDeep else Color(0xFFFFFFFF)
+    }
+    val readingTextPrimary = when (readingTheme) {
+        "sepia" -> Color(0xFF3E2723)
+        "dark" -> CyberColors.TextPrimary
+        else -> CyberColors.LightTextPrimary
+    }
+
+    val bodyStyle = CyberTypography.BodyLarge.copy(
+        fontSize = (17 * fontScale).sp,
+        lineHeight = (27 * fontScale).sp,
+        fontFamily = if (readingFont == "serif") FontFamily.Serif else FontFamily.SansSerif
+    )
+
+    val rawText = post.description?.let { Post.stripHtml(it) } ?: ""
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(readingBackground)
+            .padding(UiSizes.ArticlePadding),
+        verticalArrangement = Arrangement.spacedBy(UiSizes.SpacerMedium)
+    ) {
+        // Заголовок
+        Text(
+            text = post.title,
+            style = CyberTypography.HeadlineLarge.copy(
+                fontSize = (24 * fontScale).sp
+            ),
+            color = readingTextPrimary,
+            maxLines = 3,
+        )
+
+        // Дата
+        post.publishedAt?.let { date ->
+            Text(
+                text = date,
+                style = CyberTypography.BodySmall,
+                color = readingTextPrimary.copy(alpha = 0.7f),
+            )
+        }
+
+        Divider(
+            modifier = Modifier.fillMaxWidth(),
+            color = readingTextPrimary.copy(alpha = 0.2f)
+        )
+
+        // Текст статьи
+        Text(
+            text = rawText,
+            style = bodyStyle,
+            color = readingTextPrimary,
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        )
+    }
+}
+
