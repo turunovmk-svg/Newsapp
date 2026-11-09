@@ -122,7 +122,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             val settingsViewModel: MainViewModel = viewModel()
             val darkThemeEnabled by settingsViewModel.darkTheme.collectAsState()
-            CyberTheme(darkTheme = darkThemeEnabled) {
+            val themeMode by settingsViewModel.themeMode.collectAsState()
+            CyberTheme(darkTheme = darkThemeEnabled, themeMode = themeMode) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = if (darkThemeEnabled) CyberColors.BackgroundDeep else Color(0xFFF7F8FA)

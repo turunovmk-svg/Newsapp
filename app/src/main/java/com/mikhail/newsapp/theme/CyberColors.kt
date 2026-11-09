@@ -29,7 +29,7 @@ object CyberColors {
     internal val DarkGlassOverlay = Color(0xFF1A1F2B)
     internal val DarkGlowBlue = Color(0xFF3478F6)
 
-    // ---------- Светлая тема (PRISM) ----------
+    // ---------- Светлая тема (PRISM / GLASS HARMONY) ----------
     internal val LightBackground = Color(0xFFF4F6FA)
     internal val LightSurfaceElevated = Color(0xFFFFFFFF)
     internal val LightSurfaceGlass = Color(0xFFFFFFFF)
@@ -45,16 +45,37 @@ object CyberColors {
     internal val LightGlassOverlay = Color(0xFFFFFFFF)
     internal val LightGlowBlue = Color(0xFF3478F6)
 
-    // ---------- Акценты (едины в обеих темах) ----------
-    val AccentBlue = Color(0xFF3478F6)
-    val AccentBlueBright = Color(0xFF4B91FF)
-    val AccentBlueDim = Color(0xFF1E5AD9)
+    // ---------- Неоновая тема (NEON GLASS) ----------
+    internal val NeonBackground = Color(0xFF0B0718)
+    internal val NeonSurfaceElevated = Color(0xFF171233)
+    internal val NeonSurfaceGlass = Color(0xFF1E1740)
+    internal val NeonSurfaceGlassLight = Color(0xFF2A1F52)
+    internal val NeonSurfaceGlassStrong = Color(0xFF120C28)
+    internal val NeonTextPrimary = Color(0xFFF6F2FF)
+    internal val NeonTextSecondary = Color(0xFFC5B8E8)
+    internal val NeonTextMuted = Color(0xFF8B7BB0)
+    internal val NeonTextInverse = Color(0xFF0B0718)
+    internal val NeonBorderGlass = Color(0xFF3D2E6B)
+    internal val NeonBorderGlassBright = Color(0xFFB44BFF)
+    internal val NeonDivider = Color(0xFF2A1F52)
+    internal val NeonGlassOverlay = Color(0xFF1E1740)
+    internal val NeonGlowBlue = Color(0xFF8A3BFF)
+
+    // ---------- Акценты (зависят от темы) ----------
+    var AccentBlue: Color = Color(0xFF3478F6)
+        private set
+    var AccentBlueBright: Color = Color(0xFF4B91FF)
+        private set
+    var AccentBlueDim: Color = Color(0xFF1E5AD9)
+        private set
     val Error = Color(0xFFE5484D)
     val Success = Color(0xFF12A150)
     val Warning = Color(0xFFF5A524)
 
     // ---------- Тематические (переключаются) ----------
     var IsDark: Boolean = true
+        private set
+    var ThemeMode: String = "obsidian"
         private set
 
     var BackgroundDeep: Color = DarkBackground
@@ -88,38 +109,85 @@ object CyberColors {
 
     /** Переключает палитру. Вызывается из CyberTheme до отрисовки контента. */
     fun setTheme(dark: Boolean) {
-        IsDark = dark
-        if (dark) {
-            BackgroundDeep = DarkBackground
-            SurfaceElevated = DarkSurfaceElevated
-            SurfaceGlass = DarkSurfaceGlass
-            SurfaceGlassLight = DarkSurfaceGlassLight
-            SurfaceGlassStrong = DarkSurfaceGlassStrong
-            TextPrimary = DarkTextPrimary
-            TextSecondary = DarkTextSecondary
-            TextMuted = DarkTextMuted
-            TextInverse = DarkTextInverse
-            BorderGlass = DarkBorderGlass
-            BorderGlassBright = DarkBorderGlassBright
-            Divider = DarkDivider
-            GlassOverlay = DarkGlassOverlay
-            GlowBlue = DarkGlowBlue
-        } else {
-            BackgroundDeep = LightBackground
-            SurfaceElevated = LightSurfaceElevated
-            SurfaceGlass = LightSurfaceGlass
-            SurfaceGlassLight = LightSurfaceGlassLight
-            SurfaceGlassStrong = LightSurfaceGlassStrong
-            TextPrimary = LightTextPrimary
-            TextSecondary = LightTextSecondary
-            TextMuted = LightTextMuted
-            TextInverse = LightTextInverse
-            BorderGlass = LightBorderGlass
-            BorderGlassBright = LightBorderGlassBright
-            Divider = LightDivider
-            GlassOverlay = LightGlassOverlay
-            GlowBlue = LightGlowBlue
+        setThemeMode(if (dark) "obsidian" else "harmony")
+    }
+
+    /**
+     * Переключает полную тему оформления:
+     * "obsidian" — OBSIDIAN PRO (тёмный графит + электрический синий),
+     * "neon"     — NEON GLASS (тёмный сине-фиолетовый + неоновое свечение),
+     * "harmony"  — GLASS HARMONY (светлое стекло + холодный голубой).
+     */
+    fun setThemeMode(mode: String) {
+        ThemeMode = mode
+        when (mode) {
+            "neon" -> applyNeon()
+            "harmony" -> applyLight()
+            else -> applyDark()  // obsidian по умолчанию
         }
+    }
+
+    private fun applyDark() {
+        IsDark = true
+        BackgroundDeep = DarkBackground
+        SurfaceElevated = DarkSurfaceElevated
+        SurfaceGlass = DarkSurfaceGlass
+        SurfaceGlassLight = DarkSurfaceGlassLight
+        SurfaceGlassStrong = DarkSurfaceGlassStrong
+        TextPrimary = DarkTextPrimary
+        TextSecondary = DarkTextSecondary
+        TextMuted = DarkTextMuted
+        TextInverse = DarkTextInverse
+        BorderGlass = DarkBorderGlass
+        BorderGlassBright = DarkBorderGlassBright
+        Divider = DarkDivider
+        GlassOverlay = DarkGlassOverlay
+        GlowBlue = DarkGlowBlue
+        AccentBlue = Color(0xFF3478F6)
+        AccentBlueBright = Color(0xFF4B91FF)
+        AccentBlueDim = Color(0xFF1E5AD9)
+    }
+
+    private fun applyNeon() {
+        IsDark = true
+        BackgroundDeep = NeonBackground
+        SurfaceElevated = NeonSurfaceElevated
+        SurfaceGlass = NeonSurfaceGlass
+        SurfaceGlassLight = NeonSurfaceGlassLight
+        SurfaceGlassStrong = NeonSurfaceGlassStrong
+        TextPrimary = NeonTextPrimary
+        TextSecondary = NeonTextSecondary
+        TextMuted = NeonTextMuted
+        TextInverse = NeonTextInverse
+        BorderGlass = NeonBorderGlass
+        BorderGlassBright = NeonBorderGlassBright
+        Divider = NeonDivider
+        GlassOverlay = NeonGlassOverlay
+        GlowBlue = NeonGlowBlue
+        AccentBlue = Color(0xFF8A3BFF)
+        AccentBlueBright = Color(0xFFB44BFF)
+        AccentBlueDim = Color(0xFF6A1FD0)
+    }
+
+    private fun applyLight() {
+        IsDark = false
+        BackgroundDeep = LightBackground
+        SurfaceElevated = LightSurfaceElevated
+        SurfaceGlass = LightSurfaceGlass
+        SurfaceGlassLight = LightSurfaceGlassLight
+        SurfaceGlassStrong = LightSurfaceGlassStrong
+        TextPrimary = LightTextPrimary
+        TextSecondary = LightTextSecondary
+        TextMuted = LightTextMuted
+        TextInverse = LightTextInverse
+        BorderGlass = LightBorderGlass
+        BorderGlassBright = LightBorderGlassBright
+        Divider = LightDivider
+        GlassOverlay = LightGlassOverlay
+        GlowBlue = LightGlowBlue
+        AccentBlue = Color(0xFF3478F6)
+        AccentBlueBright = Color(0xFF4B91FF)
+        AccentBlueDim = Color(0xFF1E5AD9)
     }
 }
 
@@ -161,6 +229,46 @@ fun CyberDarkColorScheme(): ColorScheme = ColorScheme(
     surfaceContainerHighest = CyberColors.DarkSurfaceGlassLight,
     surfaceContainerLow = CyberColors.DarkBackground,
     surfaceContainerLowest = CyberColors.DarkBackground,
+)
+
+/** Неоновая схема NEON GLASS. */
+fun CyberNeonColorScheme(): ColorScheme = ColorScheme(
+    primary = CyberColors.AccentBlue,
+    onPrimary = Color(0xFFFFFFFF),
+    primaryContainer = CyberColors.AccentBlue.copy(alpha = 0.18f),
+    onPrimaryContainer = CyberColors.NeonTextPrimary,
+    secondary = CyberColors.AccentBlueBright,
+    onSecondary = Color(0xFFFFFFFF),
+    secondaryContainer = CyberColors.AccentBlueBright.copy(alpha = 0.18f),
+    onSecondaryContainer = CyberColors.NeonTextPrimary,
+    tertiary = Color(0xFF00E5FF),
+    onTertiary = Color(0xFF06021A),
+    tertiaryContainer = Color(0xFF00E5FF).copy(alpha = 0.15f),
+    onTertiaryContainer = CyberColors.NeonTextPrimary,
+    background = CyberColors.NeonBackground,
+    onBackground = CyberColors.NeonTextPrimary,
+    surface = CyberColors.NeonSurfaceGlass,
+    onSurface = CyberColors.NeonTextPrimary,
+    surfaceVariant = CyberColors.NeonSurfaceElevated,
+    onSurfaceVariant = CyberColors.NeonTextSecondary,
+    surfaceTint = CyberColors.AccentBlue,
+    inverseSurface = CyberColors.NeonSurfaceElevated,
+    inverseOnSurface = CyberColors.NeonTextPrimary,
+    inversePrimary = CyberColors.AccentBlueBright,
+    error = CyberColors.Error,
+    onError = Color(0xFFFFFFFF),
+    errorContainer = CyberColors.Error.copy(alpha = 0.15f),
+    onErrorContainer = Color(0xFFFFFFFF),
+    outline = CyberColors.NeonBorderGlass,
+    outlineVariant = CyberColors.NeonBorderGlass.copy(alpha = 0.4f),
+    scrim = Color(0xFF000000).copy(alpha = 0.6f),
+    surfaceBright = CyberColors.NeonSurfaceElevated,
+    surfaceDim = CyberColors.NeonBackground,
+    surfaceContainer = CyberColors.NeonSurfaceGlass,
+    surfaceContainerHigh = CyberColors.NeonSurfaceElevated,
+    surfaceContainerHighest = CyberColors.NeonSurfaceGlassLight,
+    surfaceContainerLow = CyberColors.NeonBackground,
+    surfaceContainerLowest = CyberColors.NeonBackground,
 )
 
 /** Светлая схема PRISM. */

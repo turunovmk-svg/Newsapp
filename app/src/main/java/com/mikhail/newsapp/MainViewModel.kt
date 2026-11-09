@@ -103,6 +103,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _darkTheme = MutableStateFlow(true)
     val darkTheme: StateFlow<Boolean> = _darkTheme.asStateFlow()
 
+    // ---------- Режим оформления: obsidian / neon / harmony ----------
+    private val _themeMode = MutableStateFlow("obsidian")
+    val themeMode: StateFlow<String> = _themeMode.asStateFlow()
+    fun setThemeMode(mode: String) {
+        _themeMode.value = mode
+        _darkTheme.value = mode != "harmony"
+        prefs.edit().putString("theme_mode", mode).apply()
+    }
+
 
 
     // ---------- Кэш постов (офлайн) ----------
@@ -149,6 +158,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private fun loadSettings() {
         _fontScale.value = prefs.getFloat("font_scale", 1.0f)
         _darkTheme.value = prefs.getBoolean("dark_theme", true)
+        _themeMode.value = prefs.getString("theme_mode", null)
+            ?: if (_darkTheme.value) "obsidian" else "harmony"
         _viewMode.value = prefs.getString("view_mode", "cards") ?: "cards"
         _sortMode.value = prefs.getString("sort_mode", "date") ?: "date"
         _notifEnabled.value = prefs.getBoolean(NewsCheckWorker.KEY_ENABLED, false)
@@ -166,7 +177,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setDarkTheme(enabled: Boolean) {
         _darkTheme.value = enabled
+        // Старый переключатель сохраняем для совместимости: светлый → harmony, тёмный → obsidian
+        _themeMode.value = if (enabled) "obsidian" else "harmony"
         prefs.edit().putBoolean("dark_theme", enabled).apply()
+        prefs.edit().putString("theme_mode", _themeMode.value).apply()
     }
 
     // ---------- Режим отображения ленты и сортировка ----------

@@ -56,6 +56,7 @@ fun SettingsScreen(
     val sources by viewModel.sources.collectAsState()
     val fontScale by viewModel.fontScale.collectAsState()
     val darkTheme by viewModel.darkTheme.collectAsState()
+    val themeMode by viewModel.themeMode.collectAsState()
     val readingFont by viewModel.readingFont.collectAsState()
     val readingTheme by viewModel.readingTheme.collectAsState()
     val notifEnabled by viewModel.notifEnabled.collectAsState()
@@ -227,35 +228,74 @@ fun SettingsScreen(
                     }
                     Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
 
-                    // Тема приложения
+                    // Тема приложения — 3 концепции
+                    Text(
+                        text = "Тема приложения",
+                        style = CyberTypography.TitleMedium,
+                        color = CyberColors.TextPrimary
+                    )
+                    Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
+                    Text(
+                        text = when (themeMode) {
+                            "neon" -> "NEON GLASS — яркий и футуристичный"
+                            "harmony" -> "GLASS HARMONY — светлый и уютный"
+                            else -> "OBSIDIAN PRO — премиальный минимализм"
+                        },
+                        style = CyberTypography.BodySmall,
+                        color = CyberColors.TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        horizontalArrangement = Arrangement.spacedBy(UiSizes.SpacerSmall)
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Тема приложения",
-                                style = CyberTypography.TitleMedium,
-                                color = CyberColors.TextPrimary
-                            )
-                            Text(
-                                text = if (darkTheme) "Тёмная (OBSIDIAN — графит и электрический синий)"
-                                else "Светлая",
-                                style = CyberTypography.BodySmall,
-                                color = CyberColors.TextSecondary
-                            )
+                        listOf(
+                            Triple("obsidian", "Obsidian", androidx.compose.ui.graphics.Color(0xFF090B10)),
+                            Triple("neon", "Neon Glass", androidx.compose.ui.graphics.Color(0xFF1E1740)),
+                            Triple("harmony", "Glass Harmony", androidx.compose.ui.graphics.Color(0xFFF4F6FA)),
+                        ).forEach { (mode, label, swatch) ->
+                            val selected = themeMode == mode
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(12))
+                                    .background(
+                                        if (selected) CyberColors.AccentBlue
+                                        else CyberColors.SurfaceElevated.copy(alpha = 0.6f)
+                                    )
+                                    .clickable { viewModel.setThemeMode(mode) }
+                                    .padding(vertical = UiSizes.SpacerSmall, horizontal = UiSizes.SpacerXSmall),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                // Образец темы: кружок с градиентом + точка
+                                Box(
+                                    modifier = Modifier
+                                        .size(36.dp)
+                                        .clip(RoundedCornerShape(50))
+                                        .background(swatch),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(12.dp)
+                                            .clip(RoundedCornerShape(50))
+                                            .background(
+                                                if (mode == "harmony") androidx.compose.ui.graphics.Color(0xFF3478F6)
+                                                else androidx.compose.ui.graphics.Color(0xFF8A3BFF).takeIf { mode == "neon" }
+                                                    ?: androidx.compose.ui.graphics.Color(0xFF4B91FF)
+                                            )
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(UiSizes.SpacerXSmall))
+                                Text(
+                                    text = label,
+                                    style = CyberTypography.BodySmall,
+                                    color = if (selected) CyberColors.TextInverse else CyberColors.TextSecondary,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                    maxLines = 2,
+                                )
+                            }
                         }
-                        Switch(
-                            checked = darkTheme,
-                            onCheckedChange = { viewModel.setDarkTheme(it) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = CyberColors.TextInverse,
-                                checkedTrackColor = CyberColors.AccentBlue,
-                                uncheckedThumbColor = CyberColors.TextSecondary,
-                                uncheckedTrackColor = CyberColors.SurfaceElevated
-                            )
-                        )
                     }
                 }
             }

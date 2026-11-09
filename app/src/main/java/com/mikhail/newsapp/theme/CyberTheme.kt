@@ -12,12 +12,22 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun CyberTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    themeMode: String? = null,
     content: @Composable () -> Unit
 ) {
-    // Переключаем адаптивную палитру ДО отрисовки контента
-    CyberColors.setTheme(darkTheme)
+    // Переключаем адаптивную палитру ДО отрисовки контента.
+    // Если передан themeMode — используем его, иначе флаг darkTheme.
+    if (themeMode != null) {
+        CyberColors.setThemeMode(themeMode)
+    } else {
+        CyberColors.setTheme(darkTheme)
+    }
 
-    val colorScheme = if (darkTheme) CyberDarkColorScheme() else CyberLightColorScheme()
+    val colorScheme = when (CyberColors.ThemeMode) {
+        "neon" -> CyberNeonColorScheme()
+        "harmony" -> CyberLightColorScheme()
+        else -> CyberDarkColorScheme()
+    }
 
     val shapes = Shapes(
         small = RoundedCornerShape(8.dp),

@@ -82,6 +82,13 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
     }
 
     fun addSource(type: String, url: String) {
+        // Проверяем дубликат по НОРМАЛИЗОВАННОМУ URL (после detect)
+        val normalized = Source.detect(url, type)?.url?.trim()
+        if (normalized != null && viewModel.sources.value.any { it.url == normalized }) {
+            urlError = urlDuplicateError
+            isAdding = false
+            return
+        }
         isAdding = true
         viewModel.addSource(type, url, sourceFolder)
         addedSource = true
@@ -209,6 +216,57 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
                         Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
                     }
 
+                    Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
+
+                    // Популярные источники — тап подставляет ссылку
+                    Text(
+                        text = "Популярные источники",
+                        style = CyberTypography.BodySmall,
+                        color = CyberColors.TextSecondary
+                    )
+                    Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
+                    val popular = listOf(
+                        "BBC News" to "https://feeds.bbci.co.uk/news/rss.xml",
+                        "Reuters" to "https://www.reutersagency.com/feed/",
+                        "Meduza" to "https://meduza.io/rss/all",
+                        "Хабр" to "https://habr.com/ru/rss/all/",
+                        "r/worldnews" to "https://www.reddit.com/r/worldnews/",
+                        "TechCrunch" to "https://techcrunch.com/feed/",
+                        "The Verge" to "https://www.theverge.com/rss/index.xml",
+                    )
+                    popular.forEach { (name, url) ->
+                        val isAdded = viewModel.sources.value.any { it.url == Source.detect(url)?.url?.trim() }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(50))
+                                .clickable { if (!isAdded) { sourceUrl = url; urlError = null } }
+                                .padding(vertical = UiSizes.SpacerXSmall, horizontal = UiSizes.SpacerSmall),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .clip(RoundedCornerShape(50))
+                                    .background(if (isAdded) CyberColors.Success else CyberColors.AccentBlue)
+                            )
+                            Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
+                            Text(
+                                text = name,
+                                style = CyberTypography.BodySmall,
+                                color = if (isAdded) CyberColors.TextMuted else CyberColors.TextPrimary,
+                                modifier = Modifier.weight(1f)
+                            )
+                            if (isAdded) {
+                                Text(
+                                    text = "добавлен",
+                                    style = CyberTypography.BodySmall,
+                                    color = CyberColors.TextMuted
+                                )
+                            }
+                        }
+                    }
+
                     // Подсказка по формату
                     if (sourceUrl.isNotEmpty() && !urlValid && urlError == null) {
                         Text(
@@ -229,7 +287,8 @@ fun AddSourceScreen(viewModel: MainViewModel, onNavigateBack: () -> Unit, modifi
                                 urlError = urlFormatError
                             } else {
                                 val current = viewModel.sources.value
-                                if (current.any { it.url == sourceUrl }) {
+                                val normalized = Source.detect(sourceUrl, sourceType)?.url?.trim()
+                                if (normalized != null && current.any { it.url == normalized }) {
                                     urlError = urlDuplicateError
                                 } else {
                                     urlError = null
