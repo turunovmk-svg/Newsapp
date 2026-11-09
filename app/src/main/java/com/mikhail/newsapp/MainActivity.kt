@@ -317,7 +317,7 @@ fun NewsAppNavigator() {
             NewsBottomNavBar(
                 navController = navController,
                 currentRoute = currentRoute,
-                onTabRepeat = { route ->
+                onTabRepeat = remember(homeScrollTrigger) { route ->
                     when (route) {
                         "shorts" -> viewModel.setCurrentShortsIndex(0)
                         "home" -> homeScrollTrigger = homeScrollTrigger + 1
