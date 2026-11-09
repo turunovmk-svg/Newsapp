@@ -11,6 +11,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.platform.LocalDensity
@@ -54,6 +55,9 @@ import com.mikhail.newsapp.theme.GlassCard
 import com.mikhail.newsapp.theme.CyberTypography
 import com.mikhail.newsapp.theme.NeonButton
 import com.mikhail.newsapp.theme.RefMetaLine
+import com.mikhail.newsapp.theme.RefChip
+import com.mikhail.newsapp.theme.RefSectionHeader
+import com.mikhail.newsapp.theme.RefEmptyState
 import com.mikhail.newsapp.theme.SourceGradientPlaceholder
 import com.mikhail.newsapp.theme.SmartNewsImage
 import androidx.compose.material3.Surface
@@ -1718,6 +1722,7 @@ fun NewsCard(
     }
 }
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun SearchScreen(
     viewModel: MainViewModel,
@@ -1727,19 +1732,33 @@ fun SearchScreen(
 ) {
     val posts by viewModel.posts.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
+    val ctx = LocalContext.current
+
+    val popularQueries = listOf(
+        "Украина", "Технологии", "Космос", "Экономика",
+        "Спорт", "Наука", "ИИ", "Политика"
+    )
+    val categories = listOf(
+        Triple("Мир", 0xFF3478F6, "М"),
+        Triple("Политика", 0xFFE5484D, "П"),
+        Triple("Экономика", 0xFF12A150, "Э"),
+        Triple("Технологии", 0xFF8A3BFF, "Т"),
+        Triple("Наука", 0xFF00B8D9, "Н"),
+        Triple("Спорт", 0xFFF5A524, "С"),
+        Triple("Здоровье", 0xFFFF6B6B, "З"),
+        Triple("Культура", 0xFFB44BFF, "К"),
+    )
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(UiSizes.ScreenPadding),
+            .padding(horizontal = UiSizes.ScreenPadding),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(
-                onClick = onNavigateBack,
-            ) {
+            IconButton(onClick = onNavigateBack) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_back),
                     contentDescription = "Назад",
@@ -1748,7 +1767,7 @@ fun SearchScreen(
             }
             Spacer(modifier = Modifier.width(UiSizes.SpacerMedium))
             Text(
-                text = "Поиск",
+                text = "Поиск новостей",
                 style = CyberTypography.HeadlineMedium,
                 color = CyberColors.TextPrimary
             )
@@ -1780,7 +1799,71 @@ fun SearchScreen(
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
         )
-        Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
+
+        if (searchQuery.isBlank()) {
+            Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
+
+            // Популярные запросы — чипсы
+            RefSectionHeader(title = "Популярные запросы")
+            SearchPopularChips(
+                labels = popularQueries,
+                onSelect = { searchQuery = it }
+            )
+            Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
+
+            // Категории — цветные круги
+            RefSectionHeader(title = "Категории")
+            Column(verticalArrangement = Arrangement.spacedBy(UiSizes.SpacerSmall)) {
+                categories.forEach { (label, colorHex, letter) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(CyberColors.SurfaceElevated.copy(alpha = 0.5f))
+                            .clickable { searchQuery = label }
+                            .padding(horizontal = UiSizes.SpacerMedium, vertical = UiSizes.SpacerSmall),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(50))
+                                .background(Color(colorHex)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = letter,
+                                style = CyberTypography.BodyMedium,
+                                color = Color.White
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(UiSizes.SpacerMedium))
+                        Text(
+                            text = label,
+                            style = CyberTypography.BodyLarge,
+                            color = CyberColors.TextPrimary,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text(
+                            text = "›",
+                            style = CyberTypography.TitleMedium,
+                            color = CyberColors.TextMuted
+                        )
+                    }
+                }
+            }
+        } else {
+            Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
+            Text(
+                text = "Найдено: ${posts.count { post ->
+                    post.title.contains(searchQuery, ignoreCase = true) ||
+                        (post.description ?: "").contains(searchQuery, ignoreCase = true)
+                }} из ${posts.size}",
+                style = CyberTypography.BodySmall,
+                color = CyberColors.TextSecondary,
+            )
+            Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
+        }
 
         val filteredPosts = if (searchQuery.isNotBlank()) {
             posts.filter { post ->
@@ -1788,26 +1871,17 @@ fun SearchScreen(
                     || (post.description ?: "").contains(searchQuery, ignoreCase = true)
             }
         } else {
-            posts
+            emptyList()
         }
 
-        // Счётчик результатов
-        Text(
-            text = if (searchQuery.isBlank()) "Все новости (${posts.size})"
-            else "Найдено: ${filteredPosts.size} из ${posts.size}",
-            style = CyberTypography.BodySmall,
-            color = CyberColors.TextSecondary,
-        )
-        Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
-
         if (searchQuery.isNotBlank() && filteredPosts.isEmpty()) {
-            Text(
-                text = stringResource(id = R.string.no_search_results, searchQuery),
-                style = CyberTypography.TitleMedium,
-                color = CyberColors.TextSecondary,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            RefEmptyState(
+                iconRes = R.drawable.ic_search,
+                title = "Ничего не найдено",
+                hint = "Попробуйте другой запрос или выберите категорию выше",
+                modifier = Modifier.weight(1f)
             )
-        } else {
+        } else if (filteredPosts.isNotEmpty()) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
             ) {
@@ -1815,7 +1889,6 @@ fun SearchScreen(
                     items = filteredPosts,
                     key = { it.id }
                 ) { post ->
-                    val ctx = LocalContext.current
                     NewsCard(
                         post = post,
                         isFavorite = viewModel.isFavorite(post),
@@ -1840,6 +1913,24 @@ fun SearchScreen(
                     )
                 }
             }
+        }
+    }
+}
+
+/** Чипсы популярных запросов переносом по строкам. */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+fun SearchPopularChips(
+    labels: List<String>,
+    onSelect: (String) -> Unit
+) {
+    androidx.compose.foundation.layout.FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(UiSizes.SpacerSmall),
+        verticalArrangement = Arrangement.spacedBy(UiSizes.SpacerSmall)
+    ) {
+        labels.forEach { label ->
+            RefChip(label = label, selected = false, onClick = { onSelect(label) })
         }
     }
 }
