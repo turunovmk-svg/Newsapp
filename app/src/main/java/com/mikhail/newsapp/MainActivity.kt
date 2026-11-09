@@ -1096,23 +1096,11 @@ fun HomeScreen(
                 }
             }
             else -> {
-                // Группировка по датам
-                val groupedItems = mutableListOf<Any>()
-                var currentDate: String? = null
-                sortedPosts.forEach { post ->
-                    val date = post.publishedAt?.take(10) ?: "Без даты"
-                    if (date != currentDate) {
-                        currentDate = date
-                        groupedItems.add(date)
-                    }
-                    groupedItems.add(post)
-                }
-
                 // Автоотметка прочитанным при прокрутке мимо (как в Reeder)
-                LaunchedEffect(feedListState.firstVisibleItemIndex, groupedItems.size) {
+                LaunchedEffect(feedListState.firstVisibleItemIndex, sortedPosts.size) {
                     val passed = feedListState.firstVisibleItemIndex - 2 // featured + header
                     if (passed > 0) {
-                        groupedItems.filterIsInstance<Post>().take(passed).forEach { viewModel.markAsRead(it) }
+                        sortedPosts.take(passed).forEach { viewModel.markAsRead(it) }
                     }
                 }
                 LazyColumn(
@@ -1142,63 +1130,63 @@ fun HomeScreen(
                         )
                     }
                 }
-                items(groupedItems) { item ->
-                    when (item) {
-                        is String -> {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(
-                                        start = UiSizes.ScreenPadding,
-                                        end = UiSizes.ScreenPadding,
-                                        top = UiSizes.SpacerMedium,
-                                        bottom = UiSizes.SpacerXSmall
-                                    ),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .width(4.dp)
-                                            .height(18.dp)
-                                            .clip(RoundedCornerShape(2.dp))
-                                            .background(CyberColors.AccentBlue)
+                if (sortedPosts.size > 1) {
+                    item(key = "section_header") {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(
+                                    start = UiSizes.ScreenPadding,
+                                    end = UiSizes.ScreenPadding,
+                                    top = UiSizes.SpacerMedium,
+                                    bottom = UiSizes.SpacerXSmall
+                                ),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .width(4.dp)
+                                        .height(18.dp)
+                                        .clip(RoundedCornerShape(2.dp))
+                                        .background(CyberColors.AccentBlue)
                                     )
-                                    Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
-                                    Text(
-                                        text = item,
-                                        style = CyberTypography.TitleMedium,
-                                        color = CyberColors.TextSecondary
-                                    )
-                                }
+                                Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
+                                Text(
+                                    text = stringResource(id = R.string.section_more_news, sortedPosts.size - 1),
+                                    style = CyberTypography.TitleMedium,
+                                    color = CyberColors.TextSecondary
+                                )
                             }
                         }
-                        is Post -> {
-                            val post = item
-                            val ctx = LocalContext.current
-                            SwipeableNewsCard(
-                                post = post,
-                                isFavorite = viewModel.isFavorite(post),
-                                isRead = viewModel.isRead(post),
-                                isReadLater = viewModel.isReadLater(post),
-                                onFavoriteClick = { viewModel.toggleFavorite(post) },
-                                onReadClick = { viewModel.markAsRead(post) },
-                                onReadLaterClick = { viewModel.toggleReadLater(post) },
-                                onShareClick = {
-                                    post.sourceUrl?.let { url ->
-                                        val intent = Intent(Intent.ACTION_SEND).apply {
-                                            type = "text/plain"
-                                            putExtra(Intent.EXTRA_TEXT, "$url")
-                                        }
-                                        ctx.startActivity(Intent.createChooser(intent, "Поделиться"))
-                                    }
-                                },
-                                onClick = { onArticleClick(post) },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = UiSizes.CardPadding, vertical = UiSizes.SpacerXSmall)
-                            )
-                        }
                     }
+                }
+                items(
+                    items = sortedPosts.drop(1),
+                    key = { it.id }
+                ) { post ->
+                    val ctx = LocalContext.current
+                    SwipeableNewsCard(
+                        post = post,
+                        isFavorite = viewModel.isFavorite(post),
+                        isRead = viewModel.isRead(post),
+                        isReadLater = viewModel.isReadLater(post),
+                        onFavoriteClick = { viewModel.toggleFavorite(post) },
+                        onReadClick = { viewModel.markAsRead(post) },
+                        onReadLaterClick = { viewModel.toggleReadLater(post) },
+                        onShareClick = {
+                            post.sourceUrl?.let { url ->
+                                val intent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, "$url")
+                                }
+                                ctx.startActivity(Intent.createChooser(intent, "Поделиться"))
+                            }
+                        },
+                        onClick = { onArticleClick(post) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = UiSizes.CardPadding, vertical = UiSizes.SpacerXSmall)
+                    )
                 }
             }
         }
