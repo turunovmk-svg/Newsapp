@@ -39,6 +39,7 @@ import com.mikhail.newsapp.data.Post
 import com.mikhail.newsapp.theme.CyberColors
 import com.mikhail.newsapp.theme.RefEmptyState
 import com.mikhail.newsapp.theme.RefUnderlinedTabs
+import com.mikhail.newsapp.theme.RefChip
 import androidx.compose.foundation.layout.widthIn
 import com.mikhail.newsapp.theme.CyberTypography
 import com.mikhail.newsapp.theme.NeonButton
@@ -78,17 +79,22 @@ fun FavoritesScreen(
             )
         )
 
-        // Табы — в стиле референса (подчёркивание активного)
+        // Табы-пилюли (как Все/Статьи/Видео на референсе)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = UiSizes.ScreenPadding, vertical = UiSizes.SpacerSmall)
+                .padding(horizontal = UiSizes.ScreenPadding, vertical = UiSizes.SpacerSmall),
+            horizontalArrangement = Arrangement.spacedBy(UiSizes.SpacerSmall)
         ) {
-            RefUnderlinedTabs(
-                tabs = listOf("Избранное (${favorites.size})", "Читать позже (${readLater.size})"),
-                selectedIndex = tab,
-                onSelect = { tab = it },
-                modifier = Modifier.widthIn(max = 360.dp)
+            RefChip(
+                label = "Избранное (${favorites.size})",
+                selected = tab == 0,
+                onClick = { tab = 0 }
+            )
+            RefChip(
+                label = "Читать позже (${readLater.size})",
+                selected = tab == 1,
+                onClick = { tab = 1 }
             )
         }
 
