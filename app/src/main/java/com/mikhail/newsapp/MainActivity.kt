@@ -1444,7 +1444,7 @@ fun FeaturedNewsCard(
         ) {
             Text(
                 text = post.title,
-                style = CyberTypography.HeadlineSmall.copy(
+                style = CyberTypography.TitleLarge.copy(
                     fontSize = 20.sp,
                     lineHeight = 25.sp,
                     fontWeight = FontWeight.Bold
