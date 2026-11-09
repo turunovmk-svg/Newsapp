@@ -53,6 +53,18 @@ jobs:
         name: newsapp-debug-apk
         path: app/build/outputs/apk/debug/*.apk
 
+    - name: Create GitHub Release (прямые APK для установки в 2 тапа)
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: build-${{ github.run_number }}
+        name: NewsApp 1.0.${{ github.run_number }}
+        prerelease: false
+        files: |
+          app/build/outputs/apk/debug/*.apk
+          app/build/outputs/apk/release/*.apk
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Upload Release APK
       uses: actions/upload-artifact@v4
       with:
