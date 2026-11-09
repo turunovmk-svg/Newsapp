@@ -43,6 +43,9 @@ import com.mikhail.newsapp.theme.CyberColors
 import com.mikhail.newsapp.theme.CyberTypography
 import com.mikhail.newsapp.theme.GlassCard
 import com.mikhail.newsapp.theme.NeonButton
+import com.mikhail.newsapp.theme.RefSettingRow
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import com.mikhail.newsapp.UiSizes
 
 @Composable
@@ -306,88 +309,29 @@ fun SettingsScreen(
         item {
             GlassCard {
                 Column(modifier = Modifier.padding(UiSizes.CardPadding)) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onOpenStats() }
-                            .padding(vertical = UiSizes.SpacerSmall),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_view_cards),
-                            contentDescription = null,
-                            tint = CyberColors.AccentBlue,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(UiSizes.SpacerMedium))
-                        Text(
-                            text = "Статистика чтения",
-                            style = CyberTypography.BodyMedium,
-                            color = CyberColors.TextPrimary
-                        )
-                    }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { viewModel.markAllRead() }
-                            .padding(vertical = UiSizes.SpacerSmall),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_check),
-                            contentDescription = null,
-                            tint = CyberColors.AccentBlue,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(UiSizes.SpacerMedium))
-                        Text(
-                            text = "Отметить всё прочитанным",
-                            style = CyberTypography.BodyMedium,
-                            color = CyberColors.TextPrimary
-                        )
-                    }
+                    RefSettingRow(
+                        iconRes = R.drawable.ic_view_cards,
+                        title = "Статистика чтения",
+                        onClick = { onOpenStats() }
+                    )
+                    RefSettingRow(
+                        iconRes = R.drawable.ic_check,
+                        title = "Отметить всё прочитанным",
+                        onClick = { viewModel.markAllRead() }
+                    )
                     Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { viewModel.loadPosts() }
-                            .padding(vertical = UiSizes.SpacerSmall),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_back),
-                            contentDescription = null,
-                            tint = CyberColors.AccentBlue,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(UiSizes.SpacerMedium))
-                        Text(
-                            text = "Обновить все ленты",
-                            style = CyberTypography.BodyMedium,
-                            color = CyberColors.TextPrimary
-                        )
-                    }
+                    RefSettingRow(
+                        iconRes = R.drawable.ic_back,
+                        title = "Обновить все ленты",
+                        onClick = { viewModel.loadPosts() }
+                    )
                     Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { viewModel.clearCache() }
-                            .padding(vertical = UiSizes.SpacerSmall),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_delete),
-                            contentDescription = "Очистить кэш",
-                            tint = CyberColors.Error,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(UiSizes.SpacerMedium))
-                        Text(
-                            text = "Очистить кэш постов",
-                            style = CyberTypography.BodyMedium,
-                            color = CyberColors.TextPrimary
-                        )
-                    }
+                    RefSettingRow(
+                        iconRes = R.drawable.ic_delete,
+                        title = "Очистить кэш постов",
+                        iconTint = CyberColors.Error,
+                        onClick = { viewModel.clearCache() }
+                    )
                 }
             }
         }
@@ -786,6 +730,21 @@ private fun formatMinutes(minutes: Int): String {
 
 @Composable
 private fun SectionTitle(text: String) {
+    Text(
+        text = text.uppercase(),
+        style = CyberTypography.BodySmall.copy(
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.8.sp
+        ),
+        color = CyberColors.TextMuted,
+        modifier = Modifier.padding(top = UiSizes.SpacerMedium, bottom = UiSizes.SpacerSmall)
+    )
+    return
+}
+
+@Composable
+private fun SectionTitleOld(text: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
