@@ -78,9 +78,8 @@ object UiSizes {
     val RefChipRadius = 50.dp
     val RefIconCircle = 40.dp
     val RefLogoCircle = 44.dp
-    val RefMetaText = 12.dp          // условный токен (sp отдельно)
-    val RefCardImageHeight = 180.dp
-    val RefFeaturedImageHeight = 220.dp
+    val RefCardImageHeight = 200.dp
+    val RefFeaturedImageHeight = 300.dp
     val RefSectionSpacing = 8.dp
     val RefRowSpacing = 14.dp
 }

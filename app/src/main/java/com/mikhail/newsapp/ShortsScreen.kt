@@ -256,6 +256,7 @@ fun ShortsFullScreenCard(
                     end = UiSizes.SpacerSmall,
                     bottom = UiSizes.BottomNavHeight + UiSizes.SpacerMedium
                 ),
+            horizontalAlignment = Alignment.End,
             verticalArrangement = Arrangement.Bottom
         ) {
             ShortsActionButton(

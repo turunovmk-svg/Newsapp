@@ -1172,7 +1172,7 @@ fun HomeScreen(
                         onClick = { onArticleClick(post) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = UiSizes.CardPadding, vertical = UiSizes.SpacerXSmall)
+                            .padding(horizontal = UiSizes.ScreenPadding, vertical = UiSizes.SpacerSmall)
                     )
                 }
             }
@@ -1618,8 +1618,8 @@ fun NewsCard(
             Text(
                 text = highlightText(post.title, highlightQuery, CyberColors.Warning),
                 style = CyberTypography.TitleLarge.copy(
-                    fontSize = 18.sp,
-                    lineHeight = 23.sp,
+                    fontSize = 20.sp,
+                    lineHeight = 25.sp,
                     fontWeight = FontWeight.Bold
                 ),
                 color = if (isRead) CyberColors.TextSecondary else CyberColors.TextPrimary,
@@ -1884,7 +1884,7 @@ fun SearchScreen(
                         onClick = { onArticleClick(post) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = UiSizes.CardPadding, vertical = UiSizes.SpacerXSmall)
+                            .padding(horizontal = UiSizes.ScreenPadding, vertical = UiSizes.SpacerSmall)
                     )
                 }
             }
