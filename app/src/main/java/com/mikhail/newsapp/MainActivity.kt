@@ -551,77 +551,77 @@ fun NewsBottomNavBar(
 ) {
     Surface(
         color = CyberColors.SurfaceGlassStrong,
-        shadowElevation = 12.dp,
-        tonalElevation = 0.dp
+        shadowElevation = 8.dp,
+        tonalElevation = 2.dp
     ) {
-            NavigationBar(
-                containerColor = Color.Transparent,
-                contentColor = CyberColors.TextPrimary,
-                tonalElevation = 0.dp
-            ) {
-                val items = listOf(
-                    Triple("home", "Главная", R.drawable.ic_home),
-                    Triple("favorites", "Избранное", R.drawable.ic_favorite),
-                    Triple("shorts", "Шортс", R.drawable.ic_shorts),
-                    Triple("add_source", "Добавить", R.drawable.ic_add),
-                    Triple("settings", "Настройки", R.drawable.ic_settings)
-                )
-                items.forEach { (route, label, icon) ->
-                    val selected = currentRoute == route
-                    NavigationBarItem(
-                        selected = selected,
-                        onClick = {
-                            // Тап по уже активному табу — возврат в начало (как в топ-лентах)
-                            if (selected) {
-                                onTabRepeat(route)
-                            }
-                            navController.navigate(route) {
-                                launchSingleTop = true
-                                popUpTo("home") { inclusive = false }
-                            }
-                        },
-                        icon = {
-                            // Пилюля-индикатор активного таба (как топ-агрегаторы)
-                            Box(
-                                modifier = Modifier
-                                    .size(width = 52.dp, height = 32.dp)
-                                    .clip(RoundedCornerShape(50))
-                                    .background(
-                                        if (selected) CyberColors.AccentBlue.copy(alpha = 0.24f)
-                                        else Color.Transparent
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = icon),
-                                    contentDescription = label,
-                                    tint = if (selected) CyberColors.AccentBlueBright else CyberColors.TextSecondary,
-                                    modifier = Modifier.size(21.dp)
-                                )
-                            }
-                        },
-                        label = {
-                            Text(
-                                text = label,
-                                style = CyberTypography.BodySmall.copy(
-                                    fontSize = 11.sp,
-                                    lineHeight = 13.sp,
-                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+        NavigationBar(
+            containerColor = Color.Transparent,
+            contentColor = CyberColors.TextPrimary,
+            tonalElevation = 0.dp
+        ) {
+            val items = listOf(
+                Triple("home", "Главная", R.drawable.ic_home),
+                Triple("favorites", "Избранное", R.drawable.ic_favorite),
+                Triple("shorts", "Шортс", R.drawable.ic_shorts),
+                Triple("add_source", "Добавить", R.drawable.ic_add),
+                Triple("settings", "Настройки", R.drawable.ic_settings)
+            )
+            items.forEach { (route, label, icon) ->
+                val selected = currentRoute == route
+                NavigationBarItem(
+                    selected = selected,
+                    onClick = {
+                        // Тап по уже активному табу — возврат в начало (как в топ-лентах)
+                        if (selected) {
+                            onTabRepeat(route)
+                        }
+                        navController.navigate(route) {
+                            launchSingleTop = true
+                            popUpTo("home") { inclusive = false }
+                        }
+                    },
+                    icon = {
+                        // Пилюля-индикатор активного таба (как топовые приложения)
+                        Box(
+                            modifier = Modifier
+                                .size(width = 52.dp, height = 32.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(
+                                    if (selected) CyberColors.AccentBlue.copy(alpha = 0.95f)
+                                    else Color.Transparent
                                 ),
-                                color = if (selected) CyberColors.AccentBlueBright else CyberColors.TextSecondary,
-                                maxLines = 1
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(id = icon),
+                                contentDescription = label,
+                                tint = if (selected) Color.White else CyberColors.TextSecondary,
+                                modifier = Modifier.size(22.dp)
                             )
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = CyberColors.AccentBlueBright,
-                            selectedTextColor = CyberColors.AccentBlueBright,
-                            unselectedIconColor = CyberColors.TextSecondary,
-                            unselectedTextColor = CyberColors.TextSecondary,
-                            indicatorColor = Color.Transparent
+                        }
+                    },
+                    label = {
+                        Text(
+                            text = label,
+                            style = CyberTypography.BodySmall.copy(
+                                fontSize = 11.sp,
+                                lineHeight = 13.sp,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                            ),
+                            color = if (selected) CyberColors.AccentBlueBright else CyberColors.TextSecondary,
+                            maxLines = 1
                         )
+                    },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = CyberColors.AccentBlueBright,
+                        selectedTextColor = CyberColors.AccentBlueBright,
+                        unselectedIconColor = CyberColors.TextSecondary,
+                        unselectedTextColor = CyberColors.TextSecondary,
+                        indicatorColor = Color.Transparent
                     )
-                }
+                )
             }
+        }
     }
 }
 
