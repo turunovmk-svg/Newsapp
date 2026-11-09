@@ -284,6 +284,26 @@ fun ArticleScreen(
                         )
                     }
                 }
+                Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
+                Text(
+                    text = "А−",
+                    style = CyberTypography.BodyMedium,
+                    color = CyberColors.AccentBlue,
+                    modifier = Modifier.clickable { viewModel.setFontScale((fontScale - 0.1f).coerceIn(0.8f, 2.0f)) }
+                )
+                Spacer(modifier = Modifier.width(UiSizes.SpacerXSmall))
+                Text(
+                    text = "${(fontScale * 100).roundToInt()}%",
+                    style = CyberTypography.BodyMedium,
+                    color = CyberColors.TextPrimary
+                )
+                Spacer(modifier = Modifier.width(UiSizes.SpacerXSmall))
+                Text(
+                    text = "А+",
+                    style = CyberTypography.BodyMedium,
+                    color = CyberColors.AccentBlue,
+                    modifier = Modifier.clickable { viewModel.setFontScale((fontScale + 0.1f).coerceIn(0.8f, 2.0f)) }
+                )
             }
         }
 

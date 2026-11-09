@@ -44,6 +44,7 @@ import com.mikhail.newsapp.theme.CyberTypography
 import com.mikhail.newsapp.theme.GlassCard
 import com.mikhail.newsapp.theme.NeonButton
 import com.mikhail.newsapp.UiSizes
+import com.mikhail.newsapp.BuildConfig
 
 @Composable
 fun SettingsScreen(
@@ -550,6 +551,24 @@ fun SettingsScreen(
             )
         }
 
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = UiSizes.ScreenPadding),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Версия приложения",
+                    style = CyberTypography.BodyMedium,
+                    color = CyberColors.TextSecondary
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    text = BuildConfig.VERSION_NAME,
+                    style = CyberTypography.BodyMedium,
+                    color = CyberColors.TextPrimary
+                )
+            }
+        }
         item {
             Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
             NeonButton(
