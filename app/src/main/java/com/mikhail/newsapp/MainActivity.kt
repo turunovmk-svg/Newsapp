@@ -53,6 +53,7 @@ import com.mikhail.newsapp.theme.CyberColors
 import com.mikhail.newsapp.theme.GlassCard
 import com.mikhail.newsapp.theme.CyberTypography
 import com.mikhail.newsapp.theme.NeonButton
+import com.mikhail.newsapp.theme.RefMetaLine
 import com.mikhail.newsapp.theme.SourceGradientPlaceholder
 import com.mikhail.newsapp.theme.SmartNewsImage
 import androidx.compose.material3.Surface
@@ -66,7 +67,9 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.Button
 import androidx.compose.material3.IconButton
@@ -92,6 +95,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -1541,168 +1545,174 @@ fun NewsCard(
     onClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    GlassCard(
+    val chipName = post.siteName
+        ?: post.siteUrl?.removePrefix("https://")?.removePrefix("www.")?.removePrefix("http://")
+            ?.substringBefore('/')
+        ?: post.sourceUrl
+            ?.removePrefix("https://")
+            ?.removePrefix("http://")
+            ?.removePrefix("www.")
+            ?.substringBefore('/')
+
+    Column(
         modifier = modifier
-            .clip(RoundedCornerShape(UiSizes.CardCornerRadius))
-            .clickable(onClick = onClick),
-        borderColor = if (isFavorite) CyberColors.AccentBlueBright else CyberColors.BorderGlass,
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(UiSizes.RefCardRadius))
+            .background(CyberColors.SurfaceElevated)
+            .clickable(onClick = onClick)
     ) {
-        // Тонкая акцентная линия сверху — визуальный якорь карточки
+        // Изображение с градиентом, чипом источника и временем
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(2.dp)
-                .background(
-                    if (isFavorite) CyberColors.AccentBlueBright
-                    else CyberColors.AccentBlue.copy(alpha = 0.5f)
-                )
-        )
-        Column(modifier = Modifier.padding(UiSizes.CardPadding)) {
-            // Изображение или типографическая заглушка
+                .height(UiSizes.RefCardImageHeight)
+        ) {
             if (post.imageUrl != null) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(UiSizes.HomeCardMaxHeight)
-                        .clip(RoundedCornerShape(UiSizes.CardCornerRadius))
-                ) {
-                    SmartNewsImage(
-                        imageUrl = post.imageUrl,
-                        modifier = Modifier.fillMaxSize(),
-                        cornerRadius = UiSizes.CardCornerRadius,
-                        blurRadius = 20.dp
-                    )
-                    // Градиентная подложка снизу изображения
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                brush = Brush.verticalGradient(
-                                    colors = listOf(
-                                        Color.Transparent,
-                                        CyberColors.BackgroundDeep.copy(alpha = 0.45f)
-                                    ),
-                                    startY = 200f
-                                )
-                            )
-                    )
-                }
+                SmartNewsImage(
+                    imageUrl = post.imageUrl,
+                    modifier = Modifier.fillMaxSize(),
+                    cornerRadius = 0.dp,
+                    blurRadius = 20.dp
+                )
             } else {
-                // Градиентный плейсхолдер в цветах источника
                 SourceGradientPlaceholder(
                     sourceUrl = post.siteUrl ?: post.sourceUrl,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(UiSizes.HomeCardMinHeight),
-                    cornerRadius = UiSizes.CardCornerRadius,
+                    modifier = Modifier.fillMaxSize(),
+                    cornerRadius = 0.dp,
                 )
             }
-            Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
-
-            // Источник (чип) и время
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                val chipName = post.siteName
-                    ?: post.siteUrl?.removePrefix("https://")?.removePrefix("www.")?.removePrefix("http://")
-                        ?.substringBefore('/')
-                    ?: post.sourceUrl
-                        ?.removePrefix("https://")
-                        ?.removePrefix("http://")
-                        ?.removePrefix("www.")
-                        ?.substringBefore('/')
-                if (chipName != null) {
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(50))
-                            .background(CyberColors.AccentBlue.copy(alpha = 0.12f))
-                            .padding(horizontal = UiSizes.SpacerSmall, vertical = UiSizes.SpacerXSmall),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = chipName.take(30),
-                            style = CyberTypography.BodySmall,
-                            color = CyberColors.AccentBlueBright,
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(
+                                Color.Transparent,
+                                Color.Transparent,
+                                CyberColors.BackgroundDeep.copy(alpha = 0.45f)
+                            )
                         )
-                    }
-                }
-                Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
-                post.publishedAt?.let { date ->
+                    )
+            )
+            // Чип источника поверх фото (стекло)
+            if (chipName != null) {
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(UiSizes.SpacerSmall)
+                        .clip(RoundedCornerShape(UiSizes.RefChipRadius))
+                        .background(CyberColors.BackgroundDeep.copy(alpha = 0.55f))
+                        .padding(horizontal = 10.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
-                        text = date,
-                        style = CyberTypography.BodySmall,
-                        color = CyberColors.TextSecondary,
+                        text = chipName.take(28),
+                        style = CyberTypography.BodySmall.copy(fontSize = 11.sp),
+                        color = CyberColors.TextPrimary,
                         maxLines = 1
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
-
-            // Заголовок — крупный редакционный (с подсветкой поиска)
+            // Время поверх фото справа внизу
+            post.publishedAt?.let { date ->
+                Text(
+                    text = date.take(17),
+                    style = CyberTypography.BodySmall.copy(fontSize = 11.sp),
+                    color = CyberColors.TextSecondary,
+                    maxLines = 1,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(UiSizes.SpacerSmall)
+                )
+            }
+            // Заголовок поверх фото
             Text(
                 text = highlightText(post.title, highlightQuery, CyberColors.Warning),
-                style = CyberTypography.HeadlineMedium,
+                style = CyberTypography.TitleLarge.copy(
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                ),
                 color = if (isRead) CyberColors.TextSecondary else CyberColors.TextPrimary,
-                maxLines = 2,
-                modifier = Modifier.fillMaxWidth()
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(horizontal = UiSizes.SpacerSmall)
+                    .padding(bottom = UiSizes.SpacerMedium)
+                    .fillMaxWidth()
             )
-            Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
+        }
 
-            // Описание (с очисткой HTML-тегов)
+        // Мета-строка и описание
+        Column(modifier = Modifier.padding(UiSizes.SpacerMedium)) {
+            RefMetaLine(sourceName = chipName, timeText = null)
             post.description?.let { desc ->
                 val cleanDesc = Post.stripHtml(desc)
                 if (cleanDesc?.isNotEmpty() == true) {
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = highlightText(cleanDesc ?: "", highlightQuery, CyberColors.Warning),
                         style = CyberTypography.BodyMedium,
                         color = CyberColors.TextSecondary,
-                        maxLines = 3,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.fillMaxWidth()
                     )
-                    Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
                 }
             }
+        }
 
-            // Разделитель и действия
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    .background(CyberColors.Divider)
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+        // Действия
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = UiSizes.SpacerSmall)
+                .padding(bottom = UiSizes.SpacerSmall),
+            horizontalArrangement = Arrangement.spacedBy(UiSizes.SpacerSmall),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            FilledTonalIconButton(
+                onClick = onFavoriteClick,
+                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                    containerColor = if (isFavorite) CyberColors.AccentBlue else CyberColors.SurfaceGlass,
+                    contentColor = if (isFavorite) CyberColors.TextInverse else CyberColors.TextSecondary
+                ),
+                modifier = Modifier.size(36.dp)
             ) {
-                IconButton(
-                    onClick = onFavoriteClick,
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_favorite),
-                        contentDescription = if (isFavorite) "Убрать из избранного" else "Добавить в избранное",
-                        tint = if (isFavorite) CyberColors.AccentBlueBright else CyberColors.TextSecondary
-                    )
-                }
-                IconButton(
-                    onClick = onReadLaterClick,
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_bookmark),
-                        contentDescription = if (isReadLater) "Убрать из 'Читать позже'" else "Читать позже",
-                        tint = if (isReadLater) CyberColors.AccentBlueBright else CyberColors.TextMuted
-                    )
-                }
-                IconButton(
-                    onClick = onShareClick,
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_share),
-                        contentDescription = "Поделиться",
-                        tint = CyberColors.TextSecondary
-                    )
-                }
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_favorite),
+                    contentDescription = "Избранное",
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+            FilledTonalIconButton(
+                onClick = onReadLaterClick,
+                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                    containerColor = if (isReadLater) CyberColors.AccentBlue else CyberColors.SurfaceGlass,
+                    contentColor = if (isReadLater) CyberColors.TextInverse else CyberColors.TextSecondary
+                ),
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_bookmark),
+                    contentDescription = "Читать позже",
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+            Spacer(modifier = Modifier.weight(1f))
+            FilledTonalIconButton(
+                onClick = onShareClick,
+                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                    containerColor = CyberColors.SurfaceGlass,
+                    contentColor = CyberColors.TextSecondary
+                ),
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_share),
+                    contentDescription = "Поделиться",
+                    modifier = Modifier.size(18.dp)
+                )
             }
         }
     }
