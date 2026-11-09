@@ -387,10 +387,10 @@ fun NewsAppNavigator() {
                             onArticleClick = { post ->
                                 if (isYouTubePost(post)) {
                                     videoPost = post
-                                    navController.navigate("video") { launchSingleTop = true }
+                                    navController.navigate("video?videoId=${post.id}") { launchSingleTop = true }
                                 } else {
                                     selectedPost = post
-                                    navController.navigate("article") { launchSingleTop = true }
+                                    navController.navigate("article?postId=${post.id}") { launchSingleTop = true }
                                 }
                             },
                             onSearchClick = { navController.navigate("search") },
@@ -418,10 +418,10 @@ fun NewsAppNavigator() {
                             onArticleClick = { post ->
                                 if (isYouTubePost(post)) {
                                     videoPost = post
-                                    navController.navigate("video") { launchSingleTop = true }
+                                    navController.navigate("video?videoId=${post.id}") { launchSingleTop = true }
                                 } else {
                                     selectedPost = post
-                                    navController.navigate("article") { launchSingleTop = true }
+                                    navController.navigate("article?postId=${post.id}") { launchSingleTop = true }
                                 }
                             },
                             modifier = Modifier.fillMaxWidth()
@@ -446,10 +446,10 @@ fun NewsAppNavigator() {
                             onArticleClick = { post ->
                                 if (isYouTubePost(post)) {
                                     videoPost = post
-                                    navController.navigate("video") { launchSingleTop = true }
+                                    navController.navigate("video?videoId=${post.id}") { launchSingleTop = true }
                                 } else {
                                     selectedPost = post
-                                    navController.navigate("article") { launchSingleTop = true }
+                                    navController.navigate("article?postId=${post.id}") { launchSingleTop = true }
                                 }
                             },
                             modifier = Modifier.fillMaxWidth()
@@ -496,10 +496,10 @@ fun NewsAppNavigator() {
                             onArticleClick = { post ->
                                 if (isYouTubePost(post)) {
                                     videoPost = post
-                                    navController.navigate("video") { launchSingleTop = true }
+                                    navController.navigate("video?videoId=${post.id}") { launchSingleTop = true }
                                 } else {
                                     selectedPost = post
-                                    navController.navigate("article") { launchSingleTop = true }
+                                    navController.navigate("article?postId=${post.id}") { launchSingleTop = true }
                                 }
                             },
                             modifier = Modifier.fillMaxWidth()
@@ -537,9 +537,13 @@ fun NewsAppNavigator() {
                     )
                 }
             }
-            composable("video") {
-                val post = videoPost
+            composable("video") { backStackEntry ->
+                val viewModel: MainViewModel = viewModel<MainViewModel>()
+                val posts by viewModel.posts.collectAsState()
+                val videoId = backStackEntry.arguments?.getString("videoId") ?: null
+                val post = posts.firstOrNull { it.id == videoId } ?: videoPost
                 if (post != null) {
+                    videoPost = post
                     YouTubePlayerScreen(
                         post = post,
                         onNavigateBack = { navController.popBackStack() },
@@ -556,11 +560,13 @@ fun NewsAppNavigator() {
                     )
                 }
             }
-            composable("article") {
+            composable("article") { backStackEntry ->
                 val viewModel: MainViewModel = viewModel<MainViewModel>()
                 val posts by viewModel.posts.collectAsState()
-                val post = selectedPost
+                val postId = backStackEntry.arguments?.getString("postId") ?: null
+                val post = posts.firstOrNull { it.id == postId } ?: selectedPost
                 if (post != null) {
+                    selectedPost = post
                     val currentIndex = posts.indexOfFirst { it.id == post.id }
                     val hasPrevious = currentIndex > 0
                     val hasNext = currentIndex < posts.size - 1
