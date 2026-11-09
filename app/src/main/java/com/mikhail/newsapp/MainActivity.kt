@@ -1173,7 +1173,7 @@ fun HomeScreen(
                             }
                         }
                         is Post -> {
-                            val post = item
+                            val post = item as Post
                             SwipeableNewsCard(
                                 post = post,
                                 isFavorite = viewModel.isFavorite(post),

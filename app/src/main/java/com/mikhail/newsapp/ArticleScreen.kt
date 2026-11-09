@@ -26,7 +26,7 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.text.addSpan
+
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.DisposableEffect
@@ -376,7 +376,6 @@ fun ArticleScreen(
                     AsyncImage(
                         model = ImageRequest.Builder(LocalContext.current)
                             .data(imageUrl)
-                            .size(Size.ORIGINAL)
                             .crossfade(200)
                             .build(),
                         contentDescription = null,
@@ -625,13 +624,12 @@ private fun highlightArticleText(text: String, query: String): AnnotatedString {
         var start = lowerText.indexOf(lowerQuery)
         while (start >= 0) {
             if (start > pos) append(text.substring(pos, start))
-            addSpan(
-                text = text.substring(start, (start + query.length).coerceAtMost(text.length)),
-                style = SpanStyle(
-                    background = CyberColors.AccentBlue.copy(alpha = 0.35f),
-                    fontWeight = FontWeight.Bold
-                )
-            )
+            pushStyle(SpanStyle(
+                background = CyberColors.AccentBlue.copy(alpha = 0.35f),
+                fontWeight = FontWeight.Bold
+            ))
+            append(text.substring(start, (start + query.length).coerceAtMost(text.length)))
+            popStyle()
             pos = (start + query.length).coerceAtMost(text.length)
             start = lowerText.indexOf(lowerQuery, pos)
         }
