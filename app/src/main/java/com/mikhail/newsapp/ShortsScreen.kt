@@ -40,6 +40,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -279,9 +281,22 @@ fun ShortsFullScreenCard(
                     bottom = UiSizes.SpacerLarge
                 )
         ) {
+            // Акцентная линия над заголовком (как в референсе Shorts)
+            Box(
+                modifier = Modifier
+                    .width(32.dp)
+                    .height(3.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(CyberColors.AccentBlue)
+            )
+            Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
             Text(
                 text = post.title,
-                style = CyberTypography.HeadlineMedium,
+                style = CyberTypography.HeadlineMedium.copy(
+                    fontSize = 22.sp,
+                    lineHeight = 27.sp,
+                    fontWeight = FontWeight.Bold
+                ),
                 color = if (isRead) CyberColors.TextSecondary else CyberColors.TextPrimary,
                 maxLines = 3,
             )
