@@ -227,7 +227,7 @@ fun SettingsScreen(
                     }
                     Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
 
-                    // Тёмная тема
+                    // Тема приложения
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -235,13 +235,13 @@ fun SettingsScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Тёмная тема",
+                                text = "Тема приложения",
                                 style = CyberTypography.TitleMedium,
                                 color = CyberColors.TextPrimary
                             )
                             Text(
-                                text = if (darkTheme) "OBSIDIAN — графит и электрический синий"
-                                else "Светлая тема",
+                                text = if (darkTheme) "Тёмная (OBSIDIAN — графит и электрический синий)"
+                                else "Светлая",
                                 style = CyberTypography.BodySmall,
                                 color = CyberColors.TextSecondary
                             )
