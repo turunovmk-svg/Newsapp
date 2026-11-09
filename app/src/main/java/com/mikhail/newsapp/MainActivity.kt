@@ -452,7 +452,7 @@ fun NewsAppNavigator() {
                                     navController.navigate("article?postId=${post.id}") { launchSingleTop = true }
                                 }
                             },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxSize()
                         )
                     }
                 }

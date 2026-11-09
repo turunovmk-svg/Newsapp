@@ -86,7 +86,8 @@ data class Source(
                     val path = u.substringAfter(host, "").trimEnd('/')
                     if (path.isEmpty()) return null
                     // r/xxx, user/xxx, domain/xxx,comments — все отдают .rss
-                    Source(SourceType.REDDIT, "https://www.reddit.com$path.rss")
+                    val feedPath = if (path.endsWith(".rss")) path else "$path/.rss"
+                    Source(SourceType.REDDIT, "https://www.reddit.com$feedPath")
                 }
                 // ---- YouTube ----
                 host == "youtube.com" || host == "m.youtube.com" || host == "youtu.be" || host == "music.youtube.com" -> {

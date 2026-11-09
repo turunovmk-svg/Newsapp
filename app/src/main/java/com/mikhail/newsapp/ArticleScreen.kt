@@ -165,11 +165,13 @@ fun ArticleScreen(
             } else {
                 isLoadingFullText = true
                 val result = ArticleReader.fetch(originalLink)
-                if (result != null) {
+                if (result != null && result.text.isNotBlank()) {
                     fullContent = result.text
                     fullTextFailed = false
                     viewModel.cacheFullText(post.id, result.text)
                 } else {
+                    // Пустой результат — покажем описание из RSS
+                    fullContent = null
                     fullTextFailed = true
                 }
                 isLoadingFullText = false
@@ -434,7 +436,7 @@ fun ArticleScreen(
                     .fillMaxWidth()
                     .padding(horizontal = UiSizes.ArticlePadding)
             ) {
-                val rawText = fullContent ?: post.description?.let { Post.stripHtml(it) }
+                val rawText = if (!fullContent.isNullOrBlank()) fullContent else post.description
                 val effectiveText = if (showTranslation && translatedText != null) translatedText else rawText
                 val displayText = effectiveText
                     ?.let { Post.stripHtml(it) }
@@ -484,7 +486,7 @@ fun ArticleScreen(
                         color = readingTextSecondary,
                     )
                 }
-                if (fullContent != null) {
+                if (!fullContent.isNullOrBlank()) {
                     Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
                     Text(
                         text = "Загружен полный текст с сайта",

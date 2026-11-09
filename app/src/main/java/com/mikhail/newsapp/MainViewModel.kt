@@ -24,6 +24,11 @@ import okhttp3.Request
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 
+companion object {
+    private const val USER_AGENT =
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
+}
+
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val prefs: SharedPreferences =
@@ -32,6 +37,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         .connectTimeout(10_000, java.util.concurrent.TimeUnit.MILLISECONDS)
         .readTimeout(10_000, java.util.concurrent.TimeUnit.MILLISECONDS)
         .writeTimeout(10_000, java.util.concurrent.TimeUnit.MILLISECONDS)
+        .addInterceptor { chain ->
+            val request = chain.request().newBuilder()
+                .header("User-Agent", USER_AGENT)
+                .build()
+            chain.proceed(request)
+        }
         .build()
 
     private val _posts = MutableStateFlow<List<Post>>(emptyList())
@@ -310,7 +321,27 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     /** Загружает сохранённые источники из SharedPreferences. */
     fun loadSources() {
         val json = prefs.getString("sources_json", null) ?: return
-        _sources.value = Source.fromJsonList(json)
+        val loaded = Source.fromJsonList(json)
+        // Миграция: старые Reddit-ссылки вида /r/xxx.rss → /r/xxx/.rss (Reddit это сменил)
+        var changed = false
+        val migrated = loaded.map { source ->
+            if (source.type == com.mikhail.newsapp.data.SourceType.REDDIT &&
+                source.url.contains("reddit.com") &&
+                source.url.endsWith(".rss") &&
+                !source.url.endsWith("/.rss")
+            ) {
+                changed = true
+                val newUrl = source.url.removeSuffix(".rss") + "/.rss"
+                com.mikhail.newsapp.data.Source(source.type, newUrl, source.label, source.folder)
+            } else {
+                source
+            }
+        }
+        if (changed) {
+            saveSources(migrated)
+        } else {
+            _sources.value = loaded
+        }
     }
 
     /** Сохраняет источники в SharedPreferences. */
