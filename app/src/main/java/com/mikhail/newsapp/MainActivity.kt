@@ -1527,6 +1527,175 @@ fun FeaturedNewsCard(
 }
 
 @Composable
+fun NewsCard(
+    post: Post,
+    isFavorite: Boolean = false,
+    isRead: Boolean = false,
+    isReadLater: Boolean = false,
+    highlightQuery: String = "",
+    onReadLaterClick: () -> Unit = {},
+    onFavoriteClick: () -> Unit = {},
+    onShareClick: () -> Unit = {},
+    onClick: () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    val chipName = post.siteName
+        ?: post.siteUrl?.removePrefix("https://")?.removePrefix("www.")?.removePrefix("http://")
+            ?.substringBefore('/')
+        ?: post.sourceUrl
+            ?.removePrefix("https://")
+            ?.removePrefix("http://")
+            ?.removePrefix("www.")
+            ?.substringBefore('/')
+
+    // Карточка референса: фото вверху, заголовок и мета ПОД фото
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(UiSizes.RefCardRadius))
+            .background(CyberColors.SurfaceElevated)
+            .clickable(onClick = onClick)
+    ) {
+        // ---- Фото ----
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(UiSizes.RefCardImageHeight)
+        ) {
+            if (post.imageUrl != null) {
+                SmartNewsImage(
+                    imageUrl = post.imageUrl,
+                    modifier = Modifier.fillMaxSize(),
+                    cornerRadius = 0.dp,
+                    blurRadius = 20.dp
+                )
+            } else {
+                SourceGradientPlaceholder(
+                    sourceUrl = post.siteUrl ?: post.sourceUrl,
+                    modifier = Modifier.fillMaxSize(),
+                    cornerRadius = 0.dp,
+                )
+            }
+        }
+
+        // ---- Текст ПОД фото ----
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = UiSizes.SpacerMedium, vertical = UiSizes.SpacerSmall)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(CyberColors.AccentBlue)
+                )
+                Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
+                Text(
+                    text = (chipName ?: "Источник"),
+                    style = CyberTypography.BodySmall.copy(fontSize = 11.sp),
+                    color = CyberColors.TextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.widthIn(max = 140.dp)
+                )
+                Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
+                post.publishedAt?.let { date ->
+                    Text(
+                        text = date.take(17),
+                        style = CyberTypography.BodySmall.copy(fontSize = 11.sp),
+                        color = CyberColors.TextMuted,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
+            Text(
+                text = highlightText(post.title, highlightQuery, CyberColors.Warning),
+                style = CyberTypography.TitleLarge.copy(
+                    fontSize = 18.sp,
+                    lineHeight = 23.sp,
+                    fontWeight = FontWeight.Bold
+                ),
+                color = if (isRead) CyberColors.TextSecondary else CyberColors.TextPrimary,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.fillMaxWidth()
+            )
+            post.description?.let { desc ->
+                val cleanDesc = Post.stripHtml(desc)
+                if (cleanDesc?.isNotEmpty() == true) {
+                    Spacer(modifier = Modifier.height(UiSizes.SpacerXSmall))
+                    Text(
+                        text = highlightText(cleanDesc ?: "", highlightQuery, CyberColors.Warning),
+                        style = CyberTypography.BodySmall,
+                        color = CyberColors.TextSecondary,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(UiSizes.SpacerSmall),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                FilledTonalIconButton(
+                    onClick = onFavoriteClick,
+                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                        containerColor = if (isFavorite) CyberColors.AccentBlue else CyberColors.SurfaceGlass,
+                        contentColor = if (isFavorite) CyberColors.TextInverse else CyberColors.TextSecondary
+                    ),
+                    modifier = Modifier.size(34.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_favorite),
+                        contentDescription = "Избранное",
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+                FilledTonalIconButton(
+                    onClick = onReadLaterClick,
+                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                        containerColor = if (isReadLater) CyberColors.AccentBlue else CyberColors.SurfaceGlass,
+                        contentColor = if (isReadLater) CyberColors.TextInverse else CyberColors.TextSecondary
+                    ),
+                    modifier = Modifier.size(34.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_bookmark),
+                        contentDescription = "Читать позже",
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.weight(1f))
+                FilledTonalIconButton(
+                    onClick = onShareClick,
+                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                        containerColor = CyberColors.SurfaceGlass,
+                        contentColor = CyberColors.TextSecondary
+                    ),
+                    modifier = Modifier.size(34.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_share),
+                        contentDescription = "Поделиться",
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun SearchScreen(
     viewModel: MainViewModel,
     onNavigateBack: () -> Unit,
