@@ -317,7 +317,7 @@ fun NewsAppNavigator() {
             NewsBottomNavBar(
                 navController = navController,
                 currentRoute = currentRoute,
-                onTabRepeat = remember(homeScrollTrigger) { route ->
+                onTabRepeat = { route ->
                     when (route) {
                         "shorts" -> viewModel.setCurrentShortsIndex(0)
                         "home" -> homeScrollTrigger = homeScrollTrigger + 1
@@ -1142,65 +1142,60 @@ fun HomeScreen(
                         )
                     }
                 }
-                groupedItems.forEachIndexed { index, item ->
+                items(groupedItems) { item ->
                     when (item) {
                         is String -> {
-                            item(key = "date_header_" + index) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(
-                                            start = UiSizes.ScreenPadding,
-                                            end = UiSizes.ScreenPadding,
-                                            top = UiSizes.SpacerMedium,
-                                            bottom = UiSizes.SpacerXSmall
-                                        ),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .width(4.dp)
-                                                .height(18.dp)
-                                                .clip(RoundedCornerShape(2.dp))
-                                                .background(CyberColors.AccentBlue)
-                                        )
-                                        Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
-                                        Text(
-                                            text = item,
-                                            style = CyberTypography.TitleMedium,
-                                            color = CyberColors.TextSecondary
-                                        )
-                                    }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(
+                                        start = UiSizes.ScreenPadding,
+                                        end = UiSizes.ScreenPadding,
+                                        top = UiSizes.SpacerMedium,
+                                        bottom = UiSizes.SpacerXSmall
+                                    ),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .width(4.dp)
+                                            .height(18.dp)
+                                            .clip(RoundedCornerShape(2.dp))
+                                            .background(CyberColors.AccentBlue)
+                                    )
+                                    Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
+                                    Text(
+                                        text = item,
+                                        style = CyberTypography.TitleMedium,
+                                        color = CyberColors.TextSecondary
+                                    )
                                 }
                             }
                         }
                         is Post -> {
                             val post = item
-                            item(key = "post_" + post.id) {
-                                val ctx = LocalContext.current
-                                SwipeableNewsCard(
-                                    post = post,
-                                    isFavorite = viewModel.isFavorite(post),
-                                    isRead = viewModel.isRead(post),
-                                    isReadLater = viewModel.isReadLater(post),
-                                    onFavoriteClick = { viewModel.toggleFavorite(post) },
-                                    onReadClick = { viewModel.markAsRead(post) },
-                                    onReadLaterClick = { viewModel.toggleReadLater(post) },
-                                    onShareClick = {
-                                        post.sourceUrl?.let { url ->
-                                            val intent = Intent(Intent.ACTION_SEND).apply {
-                                                type = "text/plain"
-                                                putExtra(Intent.EXTRA_TEXT, "$url")
-                                            }
-                                            ctx.startActivity(Intent.createChooser(intent, "Поделиться"))
+                            SwipeableNewsCard(
+                                post = post,
+                                isFavorite = viewModel.isFavorite(post),
+                                isRead = viewModel.isRead(post),
+                                isReadLater = viewModel.isReadLater(post),
+                                onFavoriteClick = { viewModel.toggleFavorite(post) },
+                                onReadClick = { viewModel.markAsRead(post) },
+                                onReadLaterClick = { viewModel.toggleReadLater(post) },
+                                onShareClick = {
+                                    post.sourceUrl?.let { url ->
+                                        val intent = Intent(Intent.ACTION_SEND).apply {
+                                            type = "text/plain"
+                                            putExtra(Intent.EXTRA_TEXT, "$url")
                                         }
-                                    },
-                                    onClick = { onArticleClick(post) },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = UiSizes.CardPadding, vertical = UiSizes.SpacerXSmall)
-                                )
-                            }
+                                        ctx.startActivity(Intent.createChooser(intent, "Поделиться"))
+                                    }
+                                },
+                                onClick = { onArticleClick(post) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = UiSizes.CardPadding, vertical = UiSizes.SpacerXSmall)
+                            )
                         }
                     }
                 }
