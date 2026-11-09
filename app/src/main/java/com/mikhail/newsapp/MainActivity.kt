@@ -120,6 +120,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.mikhail.newsapp.data.Post
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -127,7 +128,7 @@ import coil.request.ImageRequest
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         // Системная заставка (Splash Screen API)
-        androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen()
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         setContent {
             val settingsViewModel: MainViewModel = viewModel()
