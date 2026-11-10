@@ -65,6 +65,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.NavigationBar
@@ -572,93 +573,142 @@ fun NewsBottomNavBar(
 
     val transition = updateTransition(targetState = selectedIndex, label = "Bottom nav active tab")
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(UiSizes.BottomNavHeight)
-            .background(CyberColors.SurfaceGlassStrong.copy(alpha = 0.92f))
+    Column(
+        modifier = Modifier.fillMaxWidth()
     ) {
-        // Тонкая светящаяся верхняя граница панели (эффект стекла, без размытия)
+        // Тонкая светящаяся верхняя граница панели (эффект стекла)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
-                .background(CyberColors.AccentBlueBright.copy(alpha = 0.6f))
+                .padding(horizontal = 20.dp)
+                .background(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            CyberColors.AccentBlue.copy(alpha = 0.35f),
+                            CyberColors.AccentBlueBright.copy(alpha = 0.6f),
+                            CyberColors.AccentBlue.copy(alpha = 0.35f),
+                            Color.Transparent
+                        )
+                    )
+                )
         )
 
-        Row(
+        // Стеклянная панель-капсула
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(UiSizes.BottomNavHeight)
-                .padding(horizontal = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = 16.dp)
+                .background(CyberColors.SurfaceGlassStrong.copy(alpha = 0.92f))
+                .clip(RoundedCornerShape(UiSizes.BottomNavHeight / 2))
         ) {
-            tabs.forEachIndexed { index, (route, label, iconRes) ->
-                val selected = currentRoute == route
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                tabs.forEachIndexed { index, (route, label, iconRes) ->
+                    val selected = currentRoute == route
 
-                val active by transition.animateFloat(
-                    label = "tab $index active",
-                    transitionSpec = { tween(durationMillis = 220, easing = FastOutSlowInEasing) }
-                ) { state: Int -> if (state == index) 1f else 0f }
+                    val active by transition.animateFloat(
+                        label = "tab $index active",
+                        transitionSpec = { tween(durationMillis = 220, easing = FastOutSlowInEasing) }
+                    ) { state: Int -> if (state == index) 1f else 0f }
 
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .clickable(
-                            onClickLabel = label,
-                            role = Role.Tab,
-                            onClick = {
-                                if (selected) {
-                                    onTabRepeat(route)
-                                    return@clickable
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .clickable(
+                                onClickLabel = label,
+                                role = Role.Tab,
+                                onClick = {
+                                    if (selected) {
+                                        onTabRepeat(route)
+                                        return@clickable
+                                    }
+                                    navController.navigate(route) {
+                                        launchSingleTop = true
+                                        popUpTo("home") { inclusive = false }
+                                    }
                                 }
-                                navController.navigate(route) {
-                                    launchSingleTop = true
-                                    popUpTo("home") { inclusive = false }
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (selected) {
+                            // Активная стеклянная капсула: иконка + подпись внутри
+                            Box(
+                                modifier = Modifier
+                                    .width(78.dp)
+                                    .height(44.dp)
+                                    .clip(RoundedCornerShape(22.dp))
+                                    .background(
+                                        brush = Brush.linearGradient(
+                                            colors = listOf(
+                                                CyberColors.AccentBlue,
+                                                CyberColors.AccentBlueBright,
+                                                CyberColors.AccentBlue
+                                            ),
+                                            start = androidx.compose.ui.geometry.Offset(x = 0f, y = 0f),
+                                            end = androidx.compose.ui.geometry.Offset(x = 1f, y = 1f)
+                                        )
+                                    )
+                                    .graphicsLayer { alpha = active }
+                            ) {
+                                Column(
+                                    modifier = Modifier.fillMaxSize(),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = iconRes),
+                                        contentDescription = "$label (активно)",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Text(
+                                        text = label,
+                                        style = CyberTypography.BodySmall.copy(
+                                            fontSize = 9.sp,
+                                            lineHeight = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            letterSpacing = 0.1.sp
+                                        ),
+                                        color = Color.White,
+                                        maxLines = 1
+                                    )
                                 }
                             }
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    // Активная стеклянная подложка-капсула 56×36dp, AccentBlue
-                    if (selected) {
-                        Box(
-                            modifier = Modifier
-                                .width(56.dp)
-                                .height(36.dp)
-                                .clip(RoundedCornerShape(18.dp))
-                                .background(CyberColors.AccentBlue)
-                                .graphicsLayer { alpha = active }
-                        ) {
-                            Icon(
-                                painter = painterResource(id = iconRes),
-                                contentDescription = "$label (активно)",
-                                tint = Color.White,
-                                modifier = Modifier.size(24.dp)
-                            )
+                        } else {
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = iconRes),
+                                    contentDescription = label,
+                                    tint = CyberColors.TextSecondary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Text(
+                                    text = label,
+                                    style = CyberTypography.BodySmall.copy(
+                                        fontSize = 9.sp,
+                                        lineHeight = 11.sp,
+                                        fontWeight = FontWeight.Normal,
+                                        letterSpacing = 0.1.sp
+                                    ),
+                                    color = CyberColors.TextSecondary,
+                                    maxLines = 1
+                                )
+                            }
                         }
-                    } else {
-                        Icon(
-                            painter = painterResource(id = iconRes),
-                            contentDescription = label,
-                            tint = CyberColors.TextSecondary,
-                            modifier = Modifier.size(22.dp)
-                        )
                     }
-
-                    Text(
-                        text = label,
-                        style = CyberTypography.BodySmall.copy(
-                            fontSize = 10.sp,
-                            lineHeight = 12.sp,
-                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                            letterSpacing = 0.2.sp
-                        ),
-                        color = if (selected) CyberColors.AccentBlueBright else CyberColors.TextSecondary,
-                        maxLines = 1
-                    )
                 }
             }
         }
