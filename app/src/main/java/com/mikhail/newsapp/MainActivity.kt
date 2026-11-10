@@ -111,6 +111,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
+
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -549,77 +550,119 @@ fun NewsBottomNavBar(
     currentRoute: String?,
     onTabRepeat: (String) -> Unit
 ) {
+    data class TabItem(
+        val route: String,
+        val label: String,
+        val iconRes: Int
+    )
+
+    val tabs = listOf(
+        TabItem("home", "Главная", R.drawable.ic_home),
+        TabItem("favorites", "Избранное", R.drawable.ic_favorite),
+        TabItem("shorts", "Шортс", R.drawable.ic_shorts),
+        TabItem("add_source", "Добавить", R.drawable.ic_add),
+        TabItem("settings", "Настройки", R.drawable.ic_settings)
+    )
+
     Surface(
-        color = CyberColors.SurfaceGlassStrong,
-        shadowElevation = 8.dp,
-        tonalElevation = 2.dp
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(UiSizes.BottomNavHeight),
+        color = CyberColors.SurfaceGlassStrong.copy(alpha = 0.92f),
+        shadowElevation = 0.dp,
+        tonalElevation = 0.dp
     ) {
-        NavigationBar(
-            containerColor = Color.Transparent,
-            contentColor = CyberColors.TextPrimary,
-            tonalElevation = 0.dp
+        // Тонкая светящаяся синяя граница сверху панели
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            CyberColors.AccentBlue.copy(alpha = 0.5f),
+                            CyberColors.AccentBlueBright.copy(alpha = 0.75f),
+                            CyberColors.AccentBlue.copy(alpha = 0.5f),
+                            Color.Transparent
+                        )
+                    )
+                )
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(0.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            val items = listOf(
-                Triple("home", "Главная", R.drawable.ic_home),
-                Triple("favorites", "Избранное", R.drawable.ic_favorite),
-                Triple("shorts", "Шортс", R.drawable.ic_shorts),
-                Triple("add_source", "Добавить", R.drawable.ic_add),
-                Triple("settings", "Настройки", R.drawable.ic_settings)
-            )
-            items.forEach { (route, label, icon) ->
-                val selected = currentRoute == route
-                NavigationBarItem(
-                    selected = selected,
-                    onClick = {
-                        // Тап по уже активному табу — возврат в начало (как в топ-лентах)
+            tabs.forEachIndexed { index, tab ->
+                val selected = currentRoute == tab.route
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable {
+                            if (selected) {
+                                onTabRepeat(tab.route)
+                            }
+                            navController.navigate(tab.route) {
+                                launchSingleTop = true
+                                popUpTo("home") { inclusive = false }
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        // Активная вкладка: стеклянная подложка с синим оттенком
                         if (selected) {
-                            onTabRepeat(route)
-                        }
-                        navController.navigate(route) {
-                            launchSingleTop = true
-                            popUpTo("home") { inclusive = false }
-                        }
-                    },
-                    icon = {
-                        // Пилюля-индикатор активного таба (как топовые приложения)
-                        Box(
-                            modifier = Modifier
-                                .size(width = 52.dp, height = 32.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(
-                                    if (selected) CyberColors.AccentBlue.copy(alpha = 0.95f)
-                                    else Color.Transparent
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(56.dp, 36.dp)
+                                    .clip(RoundedCornerShape(18.dp))
+                                    .background(
+                                        brush = Brush.horizontalGradient(
+                                            colors = listOf(
+                                                CyberColors.AccentBlue.copy(alpha = 0.30f),
+                                                CyberColors.AccentBlueBright.copy(alpha = 0.50f),
+                                                CyberColors.AccentBlue.copy(alpha = 0.30f)
+                                            )
+                                        )
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = tab.iconRes),
+                                    contentDescription = "${tab.label} (активно)",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        } else {
                             Icon(
-                                painter = painterResource(id = icon),
-                                contentDescription = label,
-                                tint = if (selected) Color.White else CyberColors.TextSecondary,
+                                painter = painterResource(id = tab.iconRes),
+                                contentDescription = tab.label,
+                                tint = CyberColors.TextSecondary.copy(alpha = 0.75f),
                                 modifier = Modifier.size(22.dp)
                             )
                         }
-                    },
-                    label = {
+
                         Text(
-                            text = label,
+                            text = tab.label,
                             style = CyberTypography.BodySmall.copy(
-                                fontSize = 11.sp,
-                                lineHeight = 13.sp,
-                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                                fontSize = 10.sp,
+                                lineHeight = 12.sp,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                letterSpacing = 0.2.sp
                             ),
-                            color = if (selected) CyberColors.AccentBlueBright else CyberColors.TextSecondary,
+                            color = if (selected) CyberColors.AccentBlueBright else CyberColors.TextSecondary.copy(alpha = 0.7f),
                             maxLines = 1
                         )
-                    },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = CyberColors.AccentBlueBright,
-                        selectedTextColor = CyberColors.AccentBlueBright,
-                        unselectedIconColor = CyberColors.TextSecondary,
-                        unselectedTextColor = CyberColors.TextSecondary,
-                        indicatorColor = Color.Transparent
-                    )
-                )
+                    }
+                }
             }
         }
     }
