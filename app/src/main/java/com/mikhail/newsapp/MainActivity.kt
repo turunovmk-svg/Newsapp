@@ -577,34 +577,61 @@ fun NewsBottomNavBar(
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
-        // Стеклянная панель-капсула: заметно отличается от фона #090B10
+        // Верхняя световая грань — деликатное электрическое синее свечение над панелью
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(60.dp)
-                .padding(horizontal = 12.dp)
+                .height(1.dp)
+                .padding(horizontal = 28.dp)
+                .background(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            CyberColors.AccentBlue.copy(alpha = 0.35f),
+                            CyberColors.AccentBlueBright.copy(alpha = 0.6f),
+                            CyberColors.AccentBlue.copy(alpha = 0.35f),
+                            Color.Transparent
+                        )
+                    )
+                )
+        )
+
+        // Плавающая стеклянная панель с отступами от краёв экрана
+        // Многослойный эффект: тёмная основа + светлый внутренний слой + верхняя грань + тень
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(64.dp)
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 12.dp)
                 .background(
                     brush = Brush.linearGradient(
                         colors = listOf(
-                            CyberColors.SurfaceElevated.copy(alpha = 0.97f),
-                            CyberColors.SurfaceGlass.copy(alpha = 0.95f)
+                            CyberColors.BackgroundDeep.copy(alpha = 0.98f),
+                            CyberColors.SurfaceElevated.copy(alpha = 0.94f),
+                            CyberColors.BackgroundDeep.copy(alpha = 0.98f)
                         ),
                         start = androidx.compose.ui.geometry.Offset(x = 0f, y = 0f),
                         end = androidx.compose.ui.geometry.Offset(x = 1f, y = 1f)
                     )
                 )
                 .border(
-                    width = 1.5.dp,
-                    color = CyberColors.BorderGlassBright.copy(alpha = 0.7f),
-                    shape = RoundedCornerShape(30.dp)
+                    width = 1.dp,
+                    color = CyberColors.BorderGlassBright.copy(alpha = 0.5f),
+                    shape = RoundedCornerShape(32.dp)
                 )
-                .clip(RoundedCornerShape(30.dp))
+                .clip(RoundedCornerShape(32.dp))
+                .graphicsLayer {
+                    shadowElevation = 8f
+                    ambientShadowColor = Color.Black.copy(alpha = 0.35f)
+                    spotShadowColor = Color.Black.copy(alpha = 0.45f)
+                }
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 tabs.forEachIndexed { index, (route, label, iconRes) ->
@@ -612,7 +639,7 @@ fun NewsBottomNavBar(
 
                     val active by transition.animateFloat(
                         label = "tab $index active",
-                        transitionSpec = { tween(durationMillis = 220, easing = FastOutSlowInEasing) }
+                        transitionSpec = { tween(durationMillis = 240, easing = FastOutSlowInEasing) }
                     ) { state: Int -> if (state == index) 1f else 0f }
 
                     Box(
@@ -636,12 +663,12 @@ fun NewsBottomNavBar(
                         contentAlignment = Alignment.Center
                     ) {
                         if (selected) {
-                            // Активная синяя стеклянная капсула с иконкой и подписью внутри
+                            // Активный элемент: электрический синий градиент с внутренним бликом
                             Box(
                                 modifier = Modifier
-                                    .width(88.dp)
-                                    .height(44.dp)
-                                    .clip(RoundedCornerShape(22.dp))
+                                    .width(82.dp)
+                                    .height(42.dp)
+                                    .clip(RoundedCornerShape(21.dp))
                                     .background(
                                         brush = Brush.linearGradient(
                                             colors = listOf(
@@ -655,10 +682,10 @@ fun NewsBottomNavBar(
                                     )
                                     .border(
                                         width = 1.dp,
-                                        color = Color.White.copy(alpha = 0.3f),
-                                        shape = RoundedCornerShape(22.dp)
+                                        color = Color.White.copy(alpha = 0.25f),
+                                        shape = RoundedCornerShape(21.dp)
                                     )
-                                    .graphicsLayer { scaleX = 1f + (0.03f * active); scaleY = 1f + (0.03f * active) }
+                                    .graphicsLayer { scaleX = 1f + (0.04f * active); scaleY = 1f + (0.04f * active) }
                             ) {
                                 Column(
                                     modifier = Modifier.fillMaxSize(),
