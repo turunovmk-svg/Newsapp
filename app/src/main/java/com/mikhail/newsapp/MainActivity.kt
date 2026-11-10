@@ -577,37 +577,17 @@ fun NewsBottomNavBar(
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
-        // Тонкая светящаяся верхняя граница панели (эффект стекла)
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .padding(horizontal = 20.dp)
-                .background(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(
-                            Color.Transparent,
-                            CyberColors.AccentBlue.copy(alpha = 0.4f),
-                            CyberColors.AccentBlueBright.copy(alpha = 0.7f),
-                            CyberColors.AccentBlue.copy(alpha = 0.4f),
-                            Color.Transparent
-                        )
-                    )
-                )
-        )
-
-        // Стеклянная панель-капсула с учётом системных отступов Android
+        // Единая стеклянная панель-капсула без отдельной светящейся рамки
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(UiSizes.BottomNavHeight)
-                .padding(horizontal = 12.dp)
-                
+                .padding(horizontal = 16.dp)
                 .background(
                     brush = Brush.linearGradient(
                         colors = listOf(
-                            CyberColors.SurfaceGlass.copy(alpha = 0.95f),
-                            CyberColors.SurfaceGlassLight.copy(alpha = 0.9f)
+                            CyberColors.SurfaceGlass.copy(alpha = 0.92f),
+                            CyberColors.SurfaceGlassLight.copy(alpha = 0.88f)
                         ),
                         start = androidx.compose.ui.geometry.Offset(x = 0f, y = 0f),
                         end = androidx.compose.ui.geometry.Offset(x = 1f, y = 1f)
@@ -615,7 +595,7 @@ fun NewsBottomNavBar(
                 )
                 .border(
                     width = 1.dp,
-                    color = CyberColors.AccentBlueBright.copy(alpha = 0.5f),
+                    color = CyberColors.BorderGlassBright.copy(alpha = 0.35f),
                     shape = RoundedCornerShape(UiSizes.BottomNavHeight / 2)
                 )
                 .clip(RoundedCornerShape(UiSizes.BottomNavHeight / 2))
@@ -624,7 +604,7 @@ fun NewsBottomNavBar(
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 tabs.forEachIndexed { index, (route, label, iconRes) ->
@@ -656,13 +636,12 @@ fun NewsBottomNavBar(
                         contentAlignment = Alignment.Center
                     ) {
                         if (selected) {
-                            // Активная стеклянная капсула: иконка + подпись внутри.
-                            // alpha НЕ применяется к содержимому — иконка и подпись всегда видимы.
+                            // Активная компактная стеклянная капсула с иконкой и подписью внутри
                             Box(
                                 modifier = Modifier
-                                    .width(72.dp)
-                                    .height(40.dp)
-                                    .clip(RoundedCornerShape(20.dp))
+                                    .width(76.dp)
+                                    .height(42.dp)
+                                    .clip(RoundedCornerShape(21.dp))
                                     .background(
                                         brush = Brush.linearGradient(
                                             colors = listOf(
@@ -676,11 +655,11 @@ fun NewsBottomNavBar(
                                     )
                                     .border(
                                         width = 1.dp,
-                                        color = Color.White.copy(alpha = 0.25f),
-                                        shape = RoundedCornerShape(20.dp)
+                                        color = Color.White.copy(alpha = 0.2f),
+                                        shape = RoundedCornerShape(21.dp)
                                     )
-                                    // Анимируем только размер/внешний вид, но не alpha содержимого
-                                    .graphicsLayer { scaleX = 1f + (0.03f * active); scaleY = 1f + (0.03f * active) }
+                                    // alpha НЕ применяется к содержимому — иконка и подпись всегда видимы
+                                    .graphicsLayer { scaleX = 1f + (0.02f * active); scaleY = 1f + (0.02f * active) }
                             ) {
                                 Column(
                                     modifier = Modifier.fillMaxSize(),
