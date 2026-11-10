@@ -577,7 +577,7 @@ fun NewsBottomNavBar(
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
-        // Единая стеклянная панель-капсула без отдельной светящейся рамки
+        // Единая стеклянная панель-капсула: заметный контраст с фоном, тонкая граница
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -586,8 +586,8 @@ fun NewsBottomNavBar(
                 .background(
                     brush = Brush.linearGradient(
                         colors = listOf(
-                            CyberColors.SurfaceGlass.copy(alpha = 0.92f),
-                            CyberColors.SurfaceGlassLight.copy(alpha = 0.88f)
+                            CyberColors.SurfaceGlass.copy(alpha = 0.85f),
+                            CyberColors.SurfaceGlassLight.copy(alpha = 0.80f)
                         ),
                         start = androidx.compose.ui.geometry.Offset(x = 0f, y = 0f),
                         end = androidx.compose.ui.geometry.Offset(x = 1f, y = 1f)
@@ -595,7 +595,7 @@ fun NewsBottomNavBar(
                 )
                 .border(
                     width = 1.dp,
-                    color = CyberColors.BorderGlassBright.copy(alpha = 0.35f),
+                    color = CyberColors.BorderGlassBright.copy(alpha = 0.55f),
                     shape = RoundedCornerShape(UiSizes.BottomNavHeight / 2)
                 )
                 .clip(RoundedCornerShape(UiSizes.BottomNavHeight / 2))
@@ -655,7 +655,7 @@ fun NewsBottomNavBar(
                                     )
                                     .border(
                                         width = 1.dp,
-                                        color = Color.White.copy(alpha = 0.2f),
+                                        color = Color.White.copy(alpha = 0.25f),
                                         shape = RoundedCornerShape(21.dp)
                                     )
                                     // alpha НЕ применяется к содержимому — иконка и подпись всегда видимы
