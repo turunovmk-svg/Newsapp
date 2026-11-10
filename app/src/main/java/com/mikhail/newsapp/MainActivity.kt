@@ -107,6 +107,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.alpha
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -157,7 +158,7 @@ private fun highlightText(text: String, query: String, markColor: Color): Annota
         var start = lowerText.indexOf(lowerQuery)
         while (start >= 0) {
             if (start > pos) append(text.substring(pos, start))
-            withStyle(SpanStyle(background = markColor.copy(alpha = 0.35f), fontWeight = FontWeight.Bold)) {
+            withStyle(SpanStyle(background = markColor.alpha( 0.35f), fontWeight = FontWeight.Bold)) {
                 append(text.substring(start, (start + query.length).coerceAtMost(text.length)))
             }
             pos = (start + query.length).coerceAtMost(text.length)
@@ -238,9 +239,9 @@ fun NewsAppNavigator() {
                             brush = Brush.horizontalGradient(
                                 colors = listOf(
                                     Color.Transparent,
-                                    CyberColors.AccentBlue.copy(alpha = 0.4f),
-                                    CyberColors.AccentBlueBright.copy(alpha = 0.55f),
-                                    CyberColors.AccentBlue.copy(alpha = 0.4f),
+                                    CyberColors.AccentBlue.alpha( 0.4f),
+                                    CyberColors.AccentBlueBright.alpha( 0.55f),
+                                    CyberColors.AccentBlue.alpha( 0.4f),
                                     Color.Transparent
                                 )
                             )
@@ -568,7 +569,7 @@ fun NewsBottomNavBar(
         modifier = Modifier
             .fillMaxWidth()
             .height(UiSizes.BottomNavHeight),
-        color = CyberColors.SurfaceGlassStrong,
+        color = CyberColors.SurfaceGlassStrong.alpha( 0.92f),
         shadowElevation = 0.dp,
         tonalElevation = 0.dp
     ) {
@@ -595,16 +596,18 @@ fun NewsBottomNavBar(
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
-                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        modifier = Modifier.align(Alignment.Center),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
+                        // Активная вкладка: стеклянная подложка с синим оттенком
                         if (selected) {
                             Box(
                                 modifier = Modifier
-                                    .size(56.dp)
+                                    .width(56.dp)
+                                    .height(36.dp)
                                     .clip(RoundedCornerShape(18.dp))
-                                    .background(CyberColors.AccentBlue.alpha(0.20f)),
+                                    .background(CyberColors.AccentBlue.alpha( 0.25f)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
@@ -618,7 +621,7 @@ fun NewsBottomNavBar(
                             Icon(
                                 painter = painterResource(id = iconRes),
                                 contentDescription = label,
-                                tint = CyberColors.TextSecondary,
+                                tint = CyberColors.TextSecondary.alpha( 0.75f),
                                 modifier = Modifier.size(22.dp)
                             )
                         }
@@ -628,9 +631,10 @@ fun NewsBottomNavBar(
                             style = CyberTypography.BodySmall.copy(
                                 fontSize = 10.sp,
                                 lineHeight = 12.sp,
-                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                                letterSpacing = 0.2.sp
                             ),
-                            color = if (selected) CyberColors.AccentBlueBright else CyberColors.TextSecondary,
+                            color = if (selected) CyberColors.AccentBlueBright else CyberColors.TextSecondary.alpha( 0.7f),
                             maxLines = 1
                         )
                     }
@@ -704,7 +708,7 @@ fun HomeScreen(
                 .fillMaxWidth()
                 .padding(horizontal = UiSizes.ScreenPadding, vertical = UiSizes.SpacerXSmall)
                 .clip(RoundedCornerShape(50))
-                .background(CyberColors.Warning.copy(alpha = 0.18f))
+                .background(CyberColors.Warning.alpha( 0.18f))
                 .padding(horizontal = UiSizes.CardPadding, vertical = UiSizes.SpacerSmall),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
@@ -782,7 +786,7 @@ fun HomeScreen(
                     modifier = Modifier
                         .clip(RoundedCornerShape(50))
                         .background(
-                            if (selected) CyberColors.AccentBlueBright else CyberColors.SurfaceElevated.copy(alpha = 0.6f),
+                            if (selected) CyberColors.AccentBlueBright else CyberColors.SurfaceElevated.alpha( 0.6f),
                             RoundedCornerShape(50)
                         )
                         .clickable { viewModel.setSelectedFolder("") }
@@ -802,7 +806,7 @@ fun HomeScreen(
                     modifier = Modifier
                         .clip(RoundedCornerShape(50))
                         .background(
-                            if (selected) CyberColors.AccentBlueBright else CyberColors.SurfaceElevated.copy(alpha = 0.6f),
+                            if (selected) CyberColors.AccentBlueBright else CyberColors.SurfaceElevated.alpha( 0.6f),
                             RoundedCornerShape(50)
                         )
                         .clickable { viewModel.setSelectedFolder(folder) }
@@ -859,7 +863,7 @@ fun HomeScreen(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
                     .background(
-                        if (selected) CyberColors.AccentBlue else CyberColors.SurfaceElevated.copy(alpha = 0.6f),
+                        if (selected) CyberColors.AccentBlue else CyberColors.SurfaceElevated.alpha( 0.6f),
                         RoundedCornerShape(8.dp)
                     )
                     .clickable { viewModel.setViewMode(mode) }
@@ -882,7 +886,7 @@ fun HomeScreen(
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(8.dp))
-                .background(CyberColors.SurfaceElevated.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
+                .background(CyberColors.SurfaceElevated.alpha( 0.6f), RoundedCornerShape(8.dp))
                 .clickable {
                     viewModel.setSortMode(if (sortMode == "date") "source" else "date")
                 }
@@ -921,7 +925,7 @@ fun HomeScreen(
                         .clip(RoundedCornerShape(50))
                         .background(
                             if (selected) CyberColors.AccentBlue
-                            else CyberColors.SurfaceElevated.copy(alpha = 0.6f),
+                            else CyberColors.SurfaceElevated.alpha( 0.6f),
                             RoundedCornerShape(50)
                         )
                         .clickable { filterType = opt }
@@ -1165,7 +1169,7 @@ fun GridNewsCard(
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(UiSizes.CardCornerRadius))
-            .background(CyberColors.SurfaceElevated.copy(alpha = 0.55f))
+            .background(CyberColors.SurfaceElevated.alpha( 0.55f))
             .clickable(onClick = onClick)
     ) {
         Box(
@@ -1241,12 +1245,12 @@ fun SwipeableNewsCard(
                 brush = Brush.horizontalGradient(
                     colors = when {
                         animatedOffset > 0f -> listOf(
-                            CyberColors.AccentBlue.copy(alpha = 0.25f),
-                            CyberColors.SurfaceElevated.copy(alpha = 0f)
+                            CyberColors.AccentBlue.alpha( 0.25f),
+                            CyberColors.SurfaceElevated.alpha( 0f)
                         )
                         animatedOffset < 0f -> listOf(
-                            CyberColors.SurfaceElevated.copy(alpha = 0f),
-                            CyberColors.Success.copy(alpha = 0.2f)
+                            CyberColors.SurfaceElevated.alpha( 0f),
+                            CyberColors.Success.alpha( 0.2f)
                         )
                         else -> listOf(Color.Transparent, Color.Transparent)
                     }
@@ -1345,7 +1349,7 @@ fun FeaturedNewsCard(
                         .align(Alignment.TopStart)
                         .padding(UiSizes.SpacerSmall)
                         .clip(RoundedCornerShape(UiSizes.RefChipRadius))
-                        .background(CyberColors.BackgroundDeep.copy(alpha = 0.6f))
+                        .background(CyberColors.BackgroundDeep.alpha( 0.6f))
                         .padding(horizontal = 10.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -1717,7 +1721,7 @@ fun SearchScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(14.dp))
-                            .background(CyberColors.SurfaceElevated.copy(alpha = 0.5f))
+                            .background(CyberColors.SurfaceElevated.alpha( 0.5f))
                             .clickable { searchQuery = label }
                             .padding(horizontal = UiSizes.SpacerMedium, vertical = UiSizes.SpacerSmall),
                         verticalAlignment = Alignment.CenterVertically
