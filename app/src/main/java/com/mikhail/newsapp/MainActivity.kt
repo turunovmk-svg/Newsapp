@@ -111,6 +111,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.animation.core.updateTransition
+import androidx.compose.ui.semantics.Role
 
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -564,78 +566,99 @@ fun NewsBottomNavBar(
         TabItem("settings", "Настройки", R.drawable.ic_settings)
     )
 
-    Surface(
+    val selectedIndex by remember {
+        derivedStateOf { tabs.indexOfFirst { it.route == currentRoute } }
+    }
+
+    val transition = updateTransition(targetState = selectedIndex, label = "Bottom nav active tab")
+
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(UiSizes.BottomNavHeight),
-        color = CyberColors.SurfaceGlassStrong,
-        shadowElevation = 0.dp,
-        tonalElevation = 0.dp
+            .height(UiSizes.BottomNavHeight)
+            .background(CyberColors.SurfaceGlassStrong.copy(alpha = 0.92f))
     ) {
+        // Тонкая светящаяся верхняя граница панели (эффект стекла, без размытия)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(CyberColors.AccentBlueBright.copy(alpha = 0.6f))
+        )
+
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(0.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(UiSizes.BottomNavHeight)
+                .padding(horizontal = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            tabs.forEach { (route, label, iconRes) ->
+            tabs.forEachIndexed { index, (route, label, iconRes) ->
                 val selected = currentRoute == route
+
+                val active by transition.animateFloat(
+                    label = "tab $index active",
+                    transitionSpec = { tween(durationMillis = 220, easing = FastOutSlowInEasing) }
+                ) { state: Int -> if (state == index) 1f else 0f }
 
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .clickable {
-                            if (selected) {
-                                onTabRepeat(route)
+                        .fillMaxHeight()
+                        .clickable(
+                            onClickLabel = label,
+                            role = Role.Tab,
+                            onClick = {
+                                if (selected) {
+                                    onTabRepeat(route)
+                                    return@clickable
+                                }
+                                navController.navigate(route) {
+                                    launchSingleTop = true
+                                    popUpTo("home") { inclusive = false }
+                                }
                             }
-                            navController.navigate(route) {
-                                launchSingleTop = true
-                                popUpTo("home") { inclusive = false }
-                            }
-                        },
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Column(
-                        modifier = Modifier.align(Alignment.Center),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
-                    ) {
-                        if (selected) {
-                            Box(
-                                modifier = Modifier
-                                    .width(56.dp)
-                                    .height(36.dp)
-                                    .clip(RoundedCornerShape(18.dp))
-                                    .background(CyberColors.AccentBlue),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = iconRes),
-                                    contentDescription = "${label} (активно)",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                        } else {
+                    // Активная стеклянная подложка-капсула 56×36dp, AccentBlue
+                    if (selected) {
+                        Box(
+                            modifier = Modifier
+                                .width(56.dp)
+                                .height(36.dp)
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(CyberColors.AccentBlue)
+                                .graphicsLayer { alpha = active }
+                        ) {
                             Icon(
                                 painter = painterResource(id = iconRes),
-                                contentDescription = label,
-                                tint = CyberColors.TextSecondary,
-                                modifier = Modifier.size(22.dp)
+                                contentDescription = "$label (активно)",
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
                             )
                         }
-
-                        Text(
-                            text = label,
-                            style = CyberTypography.BodySmall.copy(
-                                fontSize = 10.sp,
-                                lineHeight = 12.sp,
-                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                                letterSpacing = 0.2.sp
-                            ),
-                            color = if (selected) CyberColors.AccentBlueBright else CyberColors.TextSecondary,
-                            maxLines = 1
+                    } else {
+                        Icon(
+                            painter = painterResource(id = iconRes),
+                            contentDescription = label,
+                            tint = CyberColors.TextSecondary,
+                            modifier = Modifier.size(22.dp)
                         )
                     }
+
+                    Text(
+                        text = label,
+                        style = CyberTypography.BodySmall.copy(
+                            fontSize = 10.sp,
+                            lineHeight = 12.sp,
+                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                            letterSpacing = 0.2.sp
+                        ),
+                        color = if (selected) CyberColors.AccentBlueBright else CyberColors.TextSecondary,
+                        maxLines = 1
+                    )
                 }
             }
         }
