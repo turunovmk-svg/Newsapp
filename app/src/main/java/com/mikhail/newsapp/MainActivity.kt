@@ -107,11 +107,11 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.alpha
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalWindowInsets
 
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -551,9 +551,6 @@ fun NewsBottomNavBar(
     currentRoute: String?,
     onTabRepeat: (String) -> Unit
 ) {
-    val insets = LocalWindowInsets.current
-    val bottomPadding = insets.navigationBars.bottom
-
     data class TabItem(
         val route: String,
         val label: String,
@@ -571,46 +568,27 @@ fun NewsBottomNavBar(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(UiSizes.BottomNavHeight + bottomPadding)
-            .padding(bottom = bottomPadding),
-        color = CyberColors.SurfaceGlassStrong.copy(alpha = 0.92f),
+            .height(UiSizes.BottomNavHeight),
+        color = CyberColors.SurfaceGlassStrong,
         shadowElevation = 0.dp,
         tonalElevation = 0.dp
     ) {
-        // Тонкая светящаяся синяя граница сверху панели
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(
-                            Color.Transparent,
-                            CyberColors.AccentBlue,
-                            CyberColors.AccentBlueBright,
-                            CyberColors.AccentBlue,
-                            Color.Transparent
-                        )
-                    )
-                )
-        )
-
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(0.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            tabs.forEachIndexed { index, tab ->
-                val selected = currentRoute == tab.route
+            tabs.forEach { (route, label, iconRes) ->
+                val selected = currentRoute == route
 
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .clickable {
                             if (selected) {
-                                onTabRepeat(tab.route)
+                                onTabRepeat(route)
                             }
-                            navController.navigate(tab.route) {
+                            navController.navigate(route) {
                                 launchSingleTop = true
                                 popUpTo("home") { inclusive = false }
                             }
@@ -622,42 +600,33 @@ fun NewsBottomNavBar(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
-                        // Активная вкладка: стеклянная подложка с синим оттенком
                         if (selected) {
                             Box(
                                 modifier = Modifier
                                     .width(56.dp)
                                     .height(36.dp)
                                     .clip(RoundedCornerShape(18.dp))
-                                    .background(
-                                        brush = Brush.horizontalGradient(
-                                            colors = listOf(
-                                                CyberColors.AccentBlue,
-                                                CyberColors.AccentBlueBright,
-                                                CyberColors.AccentBlue
-                                            )
-                                        )
-                                    ),
+                                    .background(CyberColors.AccentBlue),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    painter = painterResource(id = tab.iconRes),
-                                    contentDescription = "${tab.label} (активно)",
+                                    painter = painterResource(id = iconRes),
+                                    contentDescription = "${label} (активно)",
                                     tint = Color.White,
                                     modifier = Modifier.size(24.dp)
                                 )
                             }
                         } else {
                             Icon(
-                                painter = painterResource(id = tab.iconRes),
-                                contentDescription = tab.label,
+                                painter = painterResource(id = iconRes),
+                                contentDescription = label,
                                 tint = CyberColors.TextSecondary,
                                 modifier = Modifier.size(22.dp)
                             )
                         }
 
                         Text(
-                            text = tab.label,
+                            text = label,
                             style = CyberTypography.BodySmall.copy(
                                 fontSize = 10.sp,
                                 lineHeight = 12.sp,
@@ -738,7 +707,7 @@ fun HomeScreen(
                 .fillMaxWidth()
                 .padding(horizontal = UiSizes.ScreenPadding, vertical = UiSizes.SpacerXSmall)
                 .clip(RoundedCornerShape(50))
-                .background(CyberColors.Warning.alpha( 0.18f))
+                .background(CyberColors.Warning)
                 .padding(horizontal = UiSizes.CardPadding, vertical = UiSizes.SpacerSmall),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
@@ -816,7 +785,7 @@ fun HomeScreen(
                     modifier = Modifier
                         .clip(RoundedCornerShape(50))
                         .background(
-                            if (selected) CyberColors.AccentBlueBright else CyberColors.SurfaceElevated.alpha( 0.6f),
+                            if (selected) CyberColors.AccentBlueBright else CyberColors.SurfaceElevated,
                             RoundedCornerShape(50)
                         )
                         .clickable { viewModel.setSelectedFolder("") }
@@ -836,7 +805,7 @@ fun HomeScreen(
                     modifier = Modifier
                         .clip(RoundedCornerShape(50))
                         .background(
-                            if (selected) CyberColors.AccentBlueBright else CyberColors.SurfaceElevated.alpha( 0.6f),
+                            if (selected) CyberColors.AccentBlueBright else CyberColors.SurfaceElevated,
                             RoundedCornerShape(50)
                         )
                         .clickable { viewModel.setSelectedFolder(folder) }
@@ -893,7 +862,7 @@ fun HomeScreen(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
                     .background(
-                        if (selected) CyberColors.AccentBlue else CyberColors.SurfaceElevated.alpha( 0.6f),
+                        if (selected) CyberColors.AccentBlue else CyberColors.SurfaceElevated,
                         RoundedCornerShape(8.dp)
                     )
                     .clickable { viewModel.setViewMode(mode) }
@@ -916,7 +885,7 @@ fun HomeScreen(
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(8.dp))
-                .background(CyberColors.SurfaceElevated.alpha( 0.6f), RoundedCornerShape(8.dp))
+                .background(CyberColors.SurfaceElevated, RoundedCornerShape(8.dp))
                 .clickable {
                     viewModel.setSortMode(if (sortMode == "date") "source" else "date")
                 }
@@ -955,7 +924,7 @@ fun HomeScreen(
                         .clip(RoundedCornerShape(50))
                         .background(
                             if (selected) CyberColors.AccentBlue
-                            else CyberColors.SurfaceElevated.alpha( 0.6f),
+                            else CyberColors.SurfaceElevated,
                             RoundedCornerShape(50)
                         )
                         .clickable { filterType = opt }
