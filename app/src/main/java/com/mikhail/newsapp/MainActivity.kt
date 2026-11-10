@@ -276,7 +276,7 @@ fun NewsAppNavigator() {
                 )
                 Box(
                     modifier = Modifier
-                        .padding(end = UiSizes.SpacerSmall, bottom = UiSizes.BottomNavHeight + UiSizes.SpacerSmall)
+                        .padding(end = UiSizes.SpacerSmall, bottom = UiSizes.SpacerSmall)
                 ) {
                     FloatingActionButton(
                         onClick = { navController.navigate("add_source") },
@@ -596,12 +596,13 @@ fun NewsBottomNavBar(
                 )
         )
 
-        // Стеклянная панель-капсула: заметный голубой оттенок, граница, мягкая тень
+        // Стеклянная панель-капсула с учётом системных отступов Android
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(UiSizes.BottomNavHeight)
                 .padding(horizontal = 12.dp)
+                
                 .background(
                     brush = Brush.linearGradient(
                         colors = listOf(
@@ -655,12 +656,13 @@ fun NewsBottomNavBar(
                         contentAlignment = Alignment.Center
                     ) {
                         if (selected) {
-                            // Активная стеклянная капсула: иконка + подпись внутри
+                            // Активная стеклянная капсула: иконка + подпись внутри.
+                            // alpha НЕ применяется к содержимому — иконка и подпись всегда видимы.
                             Box(
                                 modifier = Modifier
-                                    .width(84.dp)
-                                    .height(46.dp)
-                                    .clip(RoundedCornerShape(23.dp))
+                                    .width(72.dp)
+                                    .height(40.dp)
+                                    .clip(RoundedCornerShape(20.dp))
                                     .background(
                                         brush = Brush.linearGradient(
                                             colors = listOf(
@@ -675,9 +677,10 @@ fun NewsBottomNavBar(
                                     .border(
                                         width = 1.dp,
                                         color = Color.White.copy(alpha = 0.25f),
-                                        shape = RoundedCornerShape(23.dp)
+                                        shape = RoundedCornerShape(20.dp)
                                     )
-                                    .graphicsLayer { alpha = active }
+                                    // Анимируем только размер/внешний вид, но не alpha содержимого
+                                    .graphicsLayer { scaleX = 1f + (0.03f * active); scaleY = 1f + (0.03f * active) }
                             ) {
                                 Column(
                                     modifier = Modifier.fillMaxSize(),
@@ -688,13 +691,13 @@ fun NewsBottomNavBar(
                                         painter = painterResource(id = iconRes),
                                         contentDescription = "$label (активно)",
                                         tint = Color.White,
-                                        modifier = Modifier.size(22.dp)
+                                        modifier = Modifier.size(20.dp)
                                     )
                                     Text(
                                         text = label,
                                         style = CyberTypography.BodySmall.copy(
-                                            fontSize = 9.5.sp,
-                                            lineHeight = 11.5.sp,
+                                            fontSize = 9.sp,
+                                            lineHeight = 11.sp,
                                             fontWeight = FontWeight.Bold,
                                             letterSpacing = 0.15.sp
                                         ),
@@ -718,8 +721,8 @@ fun NewsBottomNavBar(
                                 Text(
                                     text = label,
                                     style = CyberTypography.BodySmall.copy(
-                                        fontSize = 9.5.sp,
-                                        lineHeight = 11.5.sp,
+                                        fontSize = 9.sp,
+                                        lineHeight = 11.sp,
                                         fontWeight = FontWeight.Normal,
                                         letterSpacing = 0.15.sp
                                     ),
