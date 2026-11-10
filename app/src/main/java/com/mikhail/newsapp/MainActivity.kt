@@ -107,7 +107,6 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.alpha
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -158,7 +157,7 @@ private fun highlightText(text: String, query: String, markColor: Color): Annota
         var start = lowerText.indexOf(lowerQuery)
         while (start >= 0) {
             if (start > pos) append(text.substring(pos, start))
-            withStyle(SpanStyle(background = markColor.alpha( 0.35f), fontWeight = FontWeight.Bold)) {
+            withStyle(SpanStyle(background = markColor.copy(alpha = 0.35f), fontWeight = FontWeight.Bold)) {
                 append(text.substring(start, (start + query.length).coerceAtMost(text.length)))
             }
             pos = (start + query.length).coerceAtMost(text.length)
@@ -239,9 +238,9 @@ fun NewsAppNavigator() {
                             brush = Brush.horizontalGradient(
                                 colors = listOf(
                                     Color.Transparent,
-                                    CyberColors.AccentBlue.alpha( 0.4f),
-                                    CyberColors.AccentBlueBright.alpha( 0.55f),
-                                    CyberColors.AccentBlue.alpha( 0.4f),
+                                    CyberColors.AccentBlue.copy(alpha = 0.4f),
+                                    CyberColors.AccentBlueBright.copy(alpha = 0.55f),
+                                    CyberColors.AccentBlue.copy(alpha = 0.4f),
                                     Color.Transparent
                                 )
                             )
@@ -1168,7 +1167,7 @@ fun GridNewsCard(
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(UiSizes.CardCornerRadius))
-            .background(CyberColors.SurfaceElevated.alpha( 0.55f))
+            .background(CyberColors.SurfaceElevated.copy(alpha = 0.55f))
             .clickable(onClick = onClick)
     ) {
         Box(
@@ -1244,12 +1243,12 @@ fun SwipeableNewsCard(
                 brush = Brush.horizontalGradient(
                     colors = when {
                         animatedOffset > 0f -> listOf(
-                            CyberColors.AccentBlue.alpha( 0.25f),
-                            CyberColors.SurfaceElevated.alpha( 0f)
+                            CyberColors.AccentBlue.copy(alpha = 0.25f),
+                            CyberColors.SurfaceElevated.copy(alpha = 0f)
                         )
                         animatedOffset < 0f -> listOf(
-                            CyberColors.SurfaceElevated.alpha( 0f),
-                            CyberColors.Success.alpha( 0.2f)
+                            CyberColors.SurfaceElevated.copy(alpha = 0f),
+                            CyberColors.Success.copy(alpha = 0.2f)
                         )
                         else -> listOf(Color.Transparent, Color.Transparent)
                     }
@@ -1348,7 +1347,7 @@ fun FeaturedNewsCard(
                         .align(Alignment.TopStart)
                         .padding(UiSizes.SpacerSmall)
                         .clip(RoundedCornerShape(UiSizes.RefChipRadius))
-                        .background(CyberColors.BackgroundDeep.alpha( 0.6f))
+                        .background(CyberColors.BackgroundDeep.copy(alpha = 0.6f))
                         .padding(horizontal = 10.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -1720,7 +1719,7 @@ fun SearchScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(14.dp))
-                            .background(CyberColors.SurfaceElevated.alpha( 0.5f))
+                            .background(CyberColors.SurfaceElevated.copy(alpha = 0.5f))
                             .clickable { searchQuery = label }
                             .padding(horizontal = UiSizes.SpacerMedium, vertical = UiSizes.SpacerSmall),
                         verticalAlignment = Alignment.CenterVertically
