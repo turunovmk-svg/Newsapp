@@ -8,6 +8,7 @@ import android.app.Activity
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -275,7 +276,7 @@ fun NewsAppNavigator() {
                 )
                 Box(
                     modifier = Modifier
-                        .padding(end = UiSizes.SpacerSmall, bottom = UiSizes.SpacerSmall)
+                        .padding(end = UiSizes.SpacerSmall, bottom = UiSizes.BottomNavHeight + UiSizes.SpacerSmall)
                 ) {
                     FloatingActionButton(
                         onClick = { navController.navigate("add_source") },
@@ -586,29 +587,43 @@ fun NewsBottomNavBar(
                     brush = Brush.horizontalGradient(
                         colors = listOf(
                             Color.Transparent,
-                            CyberColors.AccentBlue.copy(alpha = 0.35f),
-                            CyberColors.AccentBlueBright.copy(alpha = 0.6f),
-                            CyberColors.AccentBlue.copy(alpha = 0.35f),
+                            CyberColors.AccentBlue.copy(alpha = 0.4f),
+                            CyberColors.AccentBlueBright.copy(alpha = 0.7f),
+                            CyberColors.AccentBlue.copy(alpha = 0.4f),
                             Color.Transparent
                         )
                     )
                 )
         )
 
-        // Стеклянная панель-капсула
+        // Стеклянная панель-капсула: заметный голубой оттенок, граница, мягкая тень
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(UiSizes.BottomNavHeight)
-                .padding(horizontal = 16.dp)
-                .background(CyberColors.SurfaceGlassStrong.copy(alpha = 0.92f))
+                .padding(horizontal = 12.dp)
+                .background(
+                    brush = Brush.linearGradient(
+                        colors = listOf(
+                            CyberColors.SurfaceGlass.copy(alpha = 0.95f),
+                            CyberColors.SurfaceGlassLight.copy(alpha = 0.9f)
+                        ),
+                        start = androidx.compose.ui.geometry.Offset(x = 0f, y = 0f),
+                        end = androidx.compose.ui.geometry.Offset(x = 1f, y = 1f)
+                    )
+                )
+                .border(
+                    width = 1.dp,
+                    color = CyberColors.AccentBlueBright.copy(alpha = 0.5f),
+                    shape = RoundedCornerShape(UiSizes.BottomNavHeight / 2)
+                )
                 .clip(RoundedCornerShape(UiSizes.BottomNavHeight / 2))
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 tabs.forEachIndexed { index, (route, label, iconRes) ->
@@ -643,9 +658,9 @@ fun NewsBottomNavBar(
                             // Активная стеклянная капсула: иконка + подпись внутри
                             Box(
                                 modifier = Modifier
-                                    .width(78.dp)
-                                    .height(44.dp)
-                                    .clip(RoundedCornerShape(22.dp))
+                                    .width(84.dp)
+                                    .height(46.dp)
+                                    .clip(RoundedCornerShape(23.dp))
                                     .background(
                                         brush = Brush.linearGradient(
                                             colors = listOf(
@@ -656,6 +671,11 @@ fun NewsBottomNavBar(
                                             start = androidx.compose.ui.geometry.Offset(x = 0f, y = 0f),
                                             end = androidx.compose.ui.geometry.Offset(x = 1f, y = 1f)
                                         )
+                                    )
+                                    .border(
+                                        width = 1.dp,
+                                        color = Color.White.copy(alpha = 0.25f),
+                                        shape = RoundedCornerShape(23.dp)
                                     )
                                     .graphicsLayer { alpha = active }
                             ) {
@@ -668,15 +688,15 @@ fun NewsBottomNavBar(
                                         painter = painterResource(id = iconRes),
                                         contentDescription = "$label (активно)",
                                         tint = Color.White,
-                                        modifier = Modifier.size(20.dp)
+                                        modifier = Modifier.size(22.dp)
                                     )
                                     Text(
                                         text = label,
                                         style = CyberTypography.BodySmall.copy(
-                                            fontSize = 9.sp,
-                                            lineHeight = 11.sp,
+                                            fontSize = 9.5.sp,
+                                            lineHeight = 11.5.sp,
                                             fontWeight = FontWeight.Bold,
-                                            letterSpacing = 0.1.sp
+                                            letterSpacing = 0.15.sp
                                         ),
                                         color = Color.White,
                                         maxLines = 1
@@ -698,10 +718,10 @@ fun NewsBottomNavBar(
                                 Text(
                                     text = label,
                                     style = CyberTypography.BodySmall.copy(
-                                        fontSize = 9.sp,
-                                        lineHeight = 11.sp,
+                                        fontSize = 9.5.sp,
+                                        lineHeight = 11.5.sp,
                                         fontWeight = FontWeight.Normal,
-                                        letterSpacing = 0.1.sp
+                                        letterSpacing = 0.15.sp
                                     ),
                                     color = CyberColors.TextSecondary,
                                     maxLines = 1
