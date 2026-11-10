@@ -718,6 +718,29 @@ private fun SourceFolderCard(
                 )
             }
         }
+        GlassCard {
+            Column(modifier = Modifier.padding(UiSizes.CardPadding)) {
+                Text(
+                    text = "О приложении",
+                    style = CyberTypography.TitleMedium,
+                    color = CyberColors.TextPrimary
+                )
+                Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
+                Text(
+                    text = "UI BUILD 287",
+                    style = CyberTypography.BodySmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.5.sp
+                    ),
+                    color = CyberColors.TextSecondary
+                )
+                Text(
+                    text = "NewsApp • news sources reader",
+                    style = CyberTypography.BodySmall,
+                    color = CyberColors.TextMuted
+                )
+            }
+        }
     }
 }
 

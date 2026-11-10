@@ -577,34 +577,34 @@ fun NewsBottomNavBar(
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
-        // Единая стеклянная панель-капсула: заметный контраст с фоном, тонкая граница
+        // Стеклянная панель-капсула: заметно отличается от фона #090B10
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(UiSizes.BottomNavHeight)
-                .padding(horizontal = 16.dp)
+                .height(60.dp)
+                .padding(horizontal = 12.dp)
                 .background(
                     brush = Brush.linearGradient(
                         colors = listOf(
-                            CyberColors.SurfaceGlass.copy(alpha = 0.85f),
-                            CyberColors.SurfaceGlassLight.copy(alpha = 0.80f)
+                            CyberColors.SurfaceElevated.copy(alpha = 0.97f),
+                            CyberColors.SurfaceGlass.copy(alpha = 0.95f)
                         ),
                         start = androidx.compose.ui.geometry.Offset(x = 0f, y = 0f),
                         end = androidx.compose.ui.geometry.Offset(x = 1f, y = 1f)
                     )
                 )
                 .border(
-                    width = 1.dp,
-                    color = CyberColors.BorderGlassBright.copy(alpha = 0.55f),
-                    shape = RoundedCornerShape(UiSizes.BottomNavHeight / 2)
+                    width = 1.5.dp,
+                    color = CyberColors.BorderGlassBright.copy(alpha = 0.7f),
+                    shape = RoundedCornerShape(30.dp)
                 )
-                .clip(RoundedCornerShape(UiSizes.BottomNavHeight / 2))
+                .clip(RoundedCornerShape(30.dp))
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight(),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 tabs.forEachIndexed { index, (route, label, iconRes) ->
@@ -636,12 +636,12 @@ fun NewsBottomNavBar(
                         contentAlignment = Alignment.Center
                     ) {
                         if (selected) {
-                            // Активная компактная стеклянная капсула с иконкой и подписью внутри
+                            // Активная синяя стеклянная капсула с иконкой и подписью внутри
                             Box(
                                 modifier = Modifier
-                                    .width(76.dp)
-                                    .height(42.dp)
-                                    .clip(RoundedCornerShape(21.dp))
+                                    .width(88.dp)
+                                    .height(44.dp)
+                                    .clip(RoundedCornerShape(22.dp))
                                     .background(
                                         brush = Brush.linearGradient(
                                             colors = listOf(
@@ -655,11 +655,10 @@ fun NewsBottomNavBar(
                                     )
                                     .border(
                                         width = 1.dp,
-                                        color = Color.White.copy(alpha = 0.25f),
-                                        shape = RoundedCornerShape(21.dp)
+                                        color = Color.White.copy(alpha = 0.3f),
+                                        shape = RoundedCornerShape(22.dp)
                                     )
-                                    // alpha НЕ применяется к содержимому — иконка и подпись всегда видимы
-                                    .graphicsLayer { scaleX = 1f + (0.02f * active); scaleY = 1f + (0.02f * active) }
+                                    .graphicsLayer { scaleX = 1f + (0.03f * active); scaleY = 1f + (0.03f * active) }
                             ) {
                                 Column(
                                     modifier = Modifier.fillMaxSize(),
@@ -670,13 +669,13 @@ fun NewsBottomNavBar(
                                         painter = painterResource(id = iconRes),
                                         contentDescription = "$label (активно)",
                                         tint = Color.White,
-                                        modifier = Modifier.size(20.dp)
+                                        modifier = Modifier.size(22.dp)
                                     )
                                     Text(
                                         text = label,
                                         style = CyberTypography.BodySmall.copy(
-                                            fontSize = 9.sp,
-                                            lineHeight = 11.sp,
+                                            fontSize = 10.sp,
+                                            lineHeight = 12.sp,
                                             fontWeight = FontWeight.Bold,
                                             letterSpacing = 0.15.sp
                                         ),
@@ -695,13 +694,13 @@ fun NewsBottomNavBar(
                                     painter = painterResource(id = iconRes),
                                     contentDescription = label,
                                     tint = CyberColors.TextSecondary,
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(22.dp)
                                 )
                                 Text(
                                     text = label,
                                     style = CyberTypography.BodySmall.copy(
-                                        fontSize = 9.sp,
-                                        lineHeight = 11.sp,
+                                        fontSize = 10.sp,
+                                        lineHeight = 12.sp,
                                         fontWeight = FontWeight.Normal,
                                         letterSpacing = 0.15.sp
                                     ),
