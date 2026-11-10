@@ -107,11 +107,11 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.alpha
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalWindowInsets
 
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -551,6 +551,9 @@ fun NewsBottomNavBar(
     currentRoute: String?,
     onTabRepeat: (String) -> Unit
 ) {
+    val insets = LocalWindowInsets.current
+    val bottomPadding = insets.navigationBars.bottom
+
     data class TabItem(
         val route: String,
         val label: String,
@@ -568,27 +571,46 @@ fun NewsBottomNavBar(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(UiSizes.BottomNavHeight),
-        color = CyberColors.SurfaceGlassStrong.alpha( 0.92f),
+            .height(UiSizes.BottomNavHeight + bottomPadding)
+            .padding(bottom = bottomPadding),
+        color = CyberColors.SurfaceGlassStrong.copy(alpha = 0.92f),
         shadowElevation = 0.dp,
         tonalElevation = 0.dp
     ) {
+        // Тонкая светящаяся синяя граница сверху панели
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            CyberColors.AccentBlue,
+                            CyberColors.AccentBlueBright,
+                            CyberColors.AccentBlue,
+                            Color.Transparent
+                        )
+                    )
+                )
+        )
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(0.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            tabs.forEach { (route, label, iconRes) ->
-                val selected = currentRoute == route
+            tabs.forEachIndexed { index, tab ->
+                val selected = currentRoute == tab.route
 
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .clickable {
                             if (selected) {
-                                onTabRepeat(route)
+                                onTabRepeat(tab.route)
                             }
-                            navController.navigate(route) {
+                            navController.navigate(tab.route) {
                                 launchSingleTop = true
                                 popUpTo("home") { inclusive = false }
                             }
@@ -607,34 +629,42 @@ fun NewsBottomNavBar(
                                     .width(56.dp)
                                     .height(36.dp)
                                     .clip(RoundedCornerShape(18.dp))
-                                    .background(CyberColors.AccentBlue.alpha( 0.25f)),
+                                    .background(
+                                        brush = Brush.horizontalGradient(
+                                            colors = listOf(
+                                                CyberColors.AccentBlue,
+                                                CyberColors.AccentBlueBright,
+                                                CyberColors.AccentBlue
+                                            )
+                                        )
+                                    ),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    painter = painterResource(id = iconRes),
-                                    contentDescription = "${label} (активно)",
+                                    painter = painterResource(id = tab.iconRes),
+                                    contentDescription = "${tab.label} (активно)",
                                     tint = Color.White,
                                     modifier = Modifier.size(24.dp)
                                 )
                             }
                         } else {
                             Icon(
-                                painter = painterResource(id = iconRes),
-                                contentDescription = label,
-                                tint = CyberColors.TextSecondary.alpha( 0.75f),
+                                painter = painterResource(id = tab.iconRes),
+                                contentDescription = tab.label,
+                                tint = CyberColors.TextSecondary,
                                 modifier = Modifier.size(22.dp)
                             )
                         }
 
                         Text(
-                            text = label,
+                            text = tab.label,
                             style = CyberTypography.BodySmall.copy(
                                 fontSize = 10.sp,
                                 lineHeight = 12.sp,
                                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                                 letterSpacing = 0.2.sp
                             ),
-                            color = if (selected) CyberColors.AccentBlueBright else CyberColors.TextSecondary.alpha( 0.7f),
+                            color = if (selected) CyberColors.AccentBlueBright else CyberColors.TextSecondary,
                             maxLines = 1
                         )
                     }
