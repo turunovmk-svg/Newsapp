@@ -568,44 +568,26 @@ fun NewsBottomNavBar(
         modifier = Modifier
             .fillMaxWidth()
             .height(UiSizes.BottomNavHeight),
-        color = CyberColors.SurfaceGlassStrong.copy(alpha = 0.92f),
+        color = CyberColors.SurfaceGlassStrong,
         shadowElevation = 0.dp,
         tonalElevation = 0.dp
     ) {
-        // Тонкая светящаяся синяя граница сверху панели
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(
-                            Color.Transparent,
-                            CyberColors.AccentBlue.copy(alpha = 0.5f),
-                            CyberColors.AccentBlueBright.copy(alpha = 0.75f),
-                            CyberColors.AccentBlue.copy(alpha = 0.5f),
-                            Color.Transparent
-                        )
-                    )
-                )
-        )
-
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(0.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            tabs.forEachIndexed { index, tab ->
-                val selected = currentRoute == tab.route
+            tabs.forEach { (route, label, iconRes) ->
+                val selected = currentRoute == route
 
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .clickable {
                             if (selected) {
-                                onTabRepeat(tab.route)
+                                onTabRepeat(route)
                             }
-                            navController.navigate(tab.route) {
+                            navController.navigate(route) {
                                 launchSingleTop = true
                                 popUpTo("home") { inclusive = false }
                             }
@@ -617,48 +599,38 @@ fun NewsBottomNavBar(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
-                        // Активная вкладка: стеклянная подложка с синим оттенком
                         if (selected) {
                             Box(
                                 modifier = Modifier
-                                    .size(56.dp, 36.dp)
+                                    .size(56.dp)
                                     .clip(RoundedCornerShape(18.dp))
-                                    .background(
-                                        brush = Brush.horizontalGradient(
-                                            colors = listOf(
-                                                CyberColors.AccentBlue.copy(alpha = 0.30f),
-                                                CyberColors.AccentBlueBright.copy(alpha = 0.50f),
-                                                CyberColors.AccentBlue.copy(alpha = 0.30f)
-                                            )
-                                        )
-                                    ),
+                                    .background(CyberColors.AccentBlue.alpha(0.20f)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    painter = painterResource(id = tab.iconRes),
-                                    contentDescription = "${tab.label} (активно)",
+                                    painter = painterResource(id = iconRes),
+                                    contentDescription = "${label} (активно)",
                                     tint = Color.White,
                                     modifier = Modifier.size(24.dp)
                                 )
                             }
                         } else {
                             Icon(
-                                painter = painterResource(id = tab.iconRes),
-                                contentDescription = tab.label,
-                                tint = CyberColors.TextSecondary.copy(alpha = 0.75f),
+                                painter = painterResource(id = iconRes),
+                                contentDescription = label,
+                                tint = CyberColors.TextSecondary,
                                 modifier = Modifier.size(22.dp)
                             )
                         }
 
                         Text(
-                            text = tab.label,
+                            text = label,
                             style = CyberTypography.BodySmall.copy(
                                 fontSize = 10.sp,
                                 lineHeight = 12.sp,
-                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-                                letterSpacing = 0.2.sp
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
                             ),
-                            color = if (selected) CyberColors.AccentBlueBright else CyberColors.TextSecondary.copy(alpha = 0.7f),
+                            color = if (selected) CyberColors.AccentBlueBright else CyberColors.TextSecondary,
                             maxLines = 1
                         )
                     }
