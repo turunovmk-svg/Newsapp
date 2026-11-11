@@ -577,60 +577,58 @@ fun NewsBottomNavBar(
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
-        // Верхняя световая грань — заметное электрическое синее свечение над панелью
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(1.5.dp)
+                .height(1.dp)
                 .padding(horizontal = 32.dp)
                 .background(
                     brush = Brush.horizontalGradient(
                         colors = listOf(
                             Color.Transparent,
-                            CyberColors.AccentBlue.copy(alpha = 0.5f),
-                            CyberColors.AccentBlueBright.copy(alpha = 0.9f),
-                            CyberColors.AccentBlue.copy(alpha = 0.5f),
+                            CyberColors.AccentBlue.copy(alpha = 0.3f),
+                            CyberColors.AccentBlueBright.copy(alpha = 0.4f),
+                            CyberColors.AccentBlue.copy(alpha = 0.3f),
                             Color.Transparent
                         )
                     )
                 )
         )
 
-        // Плавающая стеклянная панель: отдельная капсула с отступами от краёв экрана
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(74.dp)
-                .padding(horizontal = 18.dp)
-                .padding(bottom = 18.dp)
+                .height(70.dp)
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp)
                 .background(
                     brush = Brush.linearGradient(
                         colors = listOf(
-                            CyberColors.BackgroundDeep.copy(alpha = 0.98f),
-                            CyberColors.SurfaceElevated.copy(alpha = 0.95f),
-                            CyberColors.BackgroundDeep.copy(alpha = 0.98f)
+                            CyberColors.BackgroundDeep.copy(alpha = 0.95f),
+                            CyberColors.SurfaceElevated.copy(alpha = 0.92f),
+                            CyberColors.BackgroundDeep.copy(alpha = 0.95f)
                         ),
                         start = androidx.compose.ui.geometry.Offset(x = 0f, y = 0f),
                         end = androidx.compose.ui.geometry.Offset(x = 1f, y = 1f)
                     )
                 )
                 .border(
-                    width = 1.5.dp,
-                    color = CyberColors.BorderGlassBright.copy(alpha = 0.7f),
-                    shape = RoundedCornerShape(38.dp)
+                    width = 1.dp,
+                    color = CyberColors.BorderGlassBright.copy(alpha = 0.4f),
+                    shape = RoundedCornerShape(32.dp)
                 )
-                .clip(RoundedCornerShape(38.dp))
+                .clip(RoundedCornerShape(32.dp))
                 .graphicsLayer {
-                    shadowElevation = 14f
-                    ambientShadowColor = Color.Black.copy(alpha = 0.5f)
-                    spotShadowColor = Color.Black.copy(alpha = 0.6f)
+                    shadowElevation = 8f
+                    ambientShadowColor = Color.Black.copy(alpha = 0.3f)
+                    spotShadowColor = Color.Black.copy(alpha = 0.4f)
                 }
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 tabs.forEachIndexed { index, (route, label, iconRes) ->
@@ -638,7 +636,7 @@ fun NewsBottomNavBar(
 
                     val active by transition.animateFloat(
                         label = "tab $index active",
-                        transitionSpec = { tween(durationMillis = 300, easing = FastOutSlowInEasing) }
+                        transitionSpec = { tween(durationMillis = 240, easing = FastOutSlowInEasing) }
                     ) { state: Int -> if (state == index) 1f else 0f }
 
                     Box(
@@ -662,12 +660,11 @@ fun NewsBottomNavBar(
                         contentAlignment = Alignment.Center
                     ) {
                         if (selected) {
-                            // Активный элемент: выразительная синяя стеклянная капсула
                             Box(
                                 modifier = Modifier
-                                    .width(94.dp)
-                                    .height(50.dp)
-                                    .clip(RoundedCornerShape(25.dp))
+                                    .width(78.dp)
+                                    .height(40.dp)
+                                    .clip(RoundedCornerShape(20.dp))
                                     .background(
                                         brush = Brush.linearGradient(
                                             colors = listOf(
@@ -680,12 +677,36 @@ fun NewsBottomNavBar(
                                         )
                                     )
                                     .border(
-                                        width = 1.5.dp,
-                                        color = Color.White.copy(alpha = 0.35f),
-                                        shape = RoundedCornerShape(25.dp)
+                                        width = 1.dp,
+                                        color = Color.White.copy(alpha = 0.2f),
+                                        shape = RoundedCornerShape(20.dp)
                                     )
-                                    .graphicsLayer { scaleX = 1f + (0.08f * active); scaleY = 1f + (0.08f * active) }
-                            ) {
+                                ) {
+                                    Column(
+                                        modifier = Modifier.fillMaxSize(),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.Center
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(id = iconRes),
+                                            contentDescription = "$label (активно)",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                        Text(
+                                            text = label,
+                                            style = CyberTypography.BodySmall.copy(
+                                                fontSize = 10.sp,
+                                                lineHeight = 12.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                letterSpacing = 0.15.sp
+                                            ),
+                                            color = Color.White,
+                                            maxLines = 1
+                                        )
+                                    }
+                                }
+                            } else {
                                 Column(
                                     modifier = Modifier.fillMaxSize(),
                                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -693,46 +714,22 @@ fun NewsBottomNavBar(
                                 ) {
                                     Icon(
                                         painter = painterResource(id = iconRes),
-                                        contentDescription = "$label (активно)",
-                                        tint = Color.White,
-                                        modifier = Modifier.size(26.dp)
+                                        contentDescription = label,
+                                        tint = CyberColors.TextSecondary,
+                                        modifier = Modifier.size(22.dp)
                                     )
                                     Text(
                                         text = label,
                                         style = CyberTypography.BodySmall.copy(
-                                            fontSize = 11.sp,
-                                            lineHeight = 13.sp,
-                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 9.sp,
+                                            lineHeight = 11.sp,
+                                            fontWeight = FontWeight.Normal,
                                             letterSpacing = 0.15.sp
                                         ),
-                                        color = Color.White,
+                                        color = CyberColors.TextSecondary,
                                         maxLines = 1
                                     )
                                 }
-                            }
-                        } else {
-                            Column(
-                                modifier = Modifier.fillMaxSize(),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = iconRes),
-                                    contentDescription = label,
-                                    tint = CyberColors.TextSecondary,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Text(
-                                    text = label,
-                                    style = CyberTypography.BodySmall.copy(
-                                        fontSize = 9.sp,
-                                        lineHeight = 11.sp,
-                                        fontWeight = FontWeight.Normal,
-                                        letterSpacing = 0.15.sp
-                                    ),
-                                    color = CyberColors.TextSecondary,
-                                    maxLines = 1
-                                )
                             }
                         }
                     }
@@ -740,9 +737,10 @@ fun NewsBottomNavBar(
             }
         }
     }
-}
+
 
 @OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
 fun HomeScreen(
     viewModel: MainViewModel,
