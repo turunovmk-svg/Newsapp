@@ -577,19 +577,19 @@ fun NewsBottomNavBar(
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
-        // Верхняя световая грань — деликатное электрическое синее свечение над панелью
+        // Верхняя световая грань — заметное электрическое синее свечение над панелью
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(1.dp)
+                .height(1.5.dp)
                 .padding(horizontal = 32.dp)
                 .background(
                     brush = Brush.horizontalGradient(
                         colors = listOf(
                             Color.Transparent,
-                            CyberColors.AccentBlue.copy(alpha = 0.45f),
-                            CyberColors.AccentBlueBright.copy(alpha = 0.8f),
-                            CyberColors.AccentBlue.copy(alpha = 0.45f),
+                            CyberColors.AccentBlue.copy(alpha = 0.5f),
+                            CyberColors.AccentBlueBright.copy(alpha = 0.9f),
+                            CyberColors.AccentBlue.copy(alpha = 0.5f),
                             Color.Transparent
                         )
                     )
@@ -597,41 +597,40 @@ fun NewsBottomNavBar(
         )
 
         // Плавающая стеклянная панель: отдельная капсула с отступами от краёв экрана
-        // Многослойный эффект: тёмная основа + светлый внутренний слой + верхняя грань + тень
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(72.dp)
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 16.dp)
+                .height(74.dp)
+                .padding(horizontal = 18.dp)
+                .padding(bottom = 18.dp)
                 .background(
                     brush = Brush.linearGradient(
                         colors = listOf(
-                            CyberColors.BackgroundDeep.copy(alpha = 0.97f),
-                            CyberColors.SurfaceElevated.copy(alpha = 0.93f),
-                            CyberColors.BackgroundDeep.copy(alpha = 0.97f)
+                            CyberColors.BackgroundDeep.copy(alpha = 0.98f),
+                            CyberColors.SurfaceElevated.copy(alpha = 0.95f),
+                            CyberColors.BackgroundDeep.copy(alpha = 0.98f)
                         ),
                         start = androidx.compose.ui.geometry.Offset(x = 0f, y = 0f),
                         end = androidx.compose.ui.geometry.Offset(x = 1f, y = 1f)
                     )
                 )
                 .border(
-                    width = 1.dp,
-                    color = CyberColors.BorderGlassBright.copy(alpha = 0.55f),
-                    shape = RoundedCornerShape(36.dp)
+                    width = 1.5.dp,
+                    color = CyberColors.BorderGlassBright.copy(alpha = 0.7f),
+                    shape = RoundedCornerShape(38.dp)
                 )
-                .clip(RoundedCornerShape(36.dp))
+                .clip(RoundedCornerShape(38.dp))
                 .graphicsLayer {
-                    shadowElevation = 12f
-                    ambientShadowColor = Color.Black.copy(alpha = 0.45f)
-                    spotShadowColor = Color.Black.copy(alpha = 0.55f)
+                    shadowElevation = 14f
+                    ambientShadowColor = Color.Black.copy(alpha = 0.5f)
+                    spotShadowColor = Color.Black.copy(alpha = 0.6f)
                 }
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 tabs.forEachIndexed { index, (route, label, iconRes) ->
@@ -639,7 +638,7 @@ fun NewsBottomNavBar(
 
                     val active by transition.animateFloat(
                         label = "tab $index active",
-                        transitionSpec = { tween(durationMillis = 280, easing = FastOutSlowInEasing) }
+                        transitionSpec = { tween(durationMillis = 300, easing = FastOutSlowInEasing) }
                     ) { state: Int -> if (state == index) 1f else 0f }
 
                     Box(
@@ -666,9 +665,9 @@ fun NewsBottomNavBar(
                             // Активный элемент: выразительная синяя стеклянная капсула
                             Box(
                                 modifier = Modifier
-                                    .width(86.dp)
-                                    .height(46.dp)
-                                    .clip(RoundedCornerShape(23.dp))
+                                    .width(94.dp)
+                                    .height(50.dp)
+                                    .clip(RoundedCornerShape(25.dp))
                                     .background(
                                         brush = Brush.linearGradient(
                                             colors = listOf(
@@ -681,11 +680,11 @@ fun NewsBottomNavBar(
                                         )
                                     )
                                     .border(
-                                        width = 1.dp,
-                                        color = Color.White.copy(alpha = 0.3f),
-                                        shape = RoundedCornerShape(23.dp)
+                                        width = 1.5.dp,
+                                        color = Color.White.copy(alpha = 0.35f),
+                                        shape = RoundedCornerShape(25.dp)
                                     )
-                                    .graphicsLayer { scaleX = 1f + (0.06f * active); scaleY = 1f + (0.06f * active) }
+                                    .graphicsLayer { scaleX = 1f + (0.08f * active); scaleY = 1f + (0.08f * active) }
                             ) {
                                 Column(
                                     modifier = Modifier.fillMaxSize(),
@@ -696,13 +695,13 @@ fun NewsBottomNavBar(
                                         painter = painterResource(id = iconRes),
                                         contentDescription = "$label (активно)",
                                         tint = Color.White,
-                                        modifier = Modifier.size(22.dp)
+                                        modifier = Modifier.size(26.dp)
                                     )
                                     Text(
                                         text = label,
                                         style = CyberTypography.BodySmall.copy(
-                                            fontSize = 10.sp,
-                                            lineHeight = 12.sp,
+                                            fontSize = 11.sp,
+                                            lineHeight = 13.sp,
                                             fontWeight = FontWeight.Bold,
                                             letterSpacing = 0.15.sp
                                         ),
@@ -721,13 +720,13 @@ fun NewsBottomNavBar(
                                     painter = painterResource(id = iconRes),
                                     contentDescription = label,
                                     tint = CyberColors.TextSecondary,
-                                    modifier = Modifier.size(22.dp)
+                                    modifier = Modifier.size(20.dp)
                                 )
                                 Text(
                                     text = label,
                                     style = CyberTypography.BodySmall.copy(
-                                        fontSize = 10.sp,
-                                        lineHeight = 12.sp,
+                                        fontSize = 9.sp,
+                                        lineHeight = 11.sp,
                                         fontWeight = FontWeight.Normal,
                                         letterSpacing = 0.15.sp
                                     ),

@@ -727,7 +727,7 @@ private fun SourceFolderCard(
                 )
                 Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
                 Text(
-                    text = "UI BUILD 292",
+                    text = "UI BUILD 293",
                     style = CyberTypography.BodySmall.copy(
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 0.5.sp
