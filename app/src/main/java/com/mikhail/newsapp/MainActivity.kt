@@ -63,16 +63,13 @@ import com.mikhail.newsapp.theme.SourceGradientPlaceholder
 import com.mikhail.newsapp.theme.SmartNewsImage
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.FabPosition
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.material3.FloatingActionButtonDefaults
-import androidx.compose.material3.FloatingActionButton
+
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
@@ -99,7 +96,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.foundation.shape.CircleShape
+
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
@@ -266,42 +263,7 @@ fun NewsAppNavigator() {
                 }
             )
         },
-        floatingActionButton = {
-            if (currentRoute == "home") {
-                var fabPressed by remember { mutableStateOf(false) }
-                val fabScale by androidx.compose.animation.core.animateFloatAsState(
-                    targetValue = if (fabPressed) 0.92f else 1f,
-                    animationSpec = androidx.compose.animation.core.spring(dampingRatio = 0.55f),
-                    label = "fabScale"
-                )
-                Box(
-                    modifier = Modifier
-                        .padding(end = UiSizes.SpacerSmall, bottom = UiSizes.SpacerSmall)
-                ) {
-                    FloatingActionButton(
-                        onClick = { navController.navigate("add_source") },
-                        containerColor = CyberColors.AccentBlue,
-                        contentColor = CyberColors.TextInverse,
-                        shape = CircleShape,
-                        elevation = FloatingActionButtonDefaults.elevation(
-                            defaultElevation = 8.dp,
-                            pressedElevation = 14.dp
-                        ),
-                        modifier = Modifier
-                            .size(64.dp)
-                            .graphicsLayer(scaleX = fabScale, scaleY = fabScale)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Add,
-                            contentDescription = "Добавить источник",
-                            tint = Color.White,
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
-                }
-            }
-        },
-        floatingActionButtonPosition = FabPosition.End,
+
         containerColor = CyberColors.BackgroundDeep
     ) { paddingValues ->
         NavHost(
