@@ -587,51 +587,51 @@ fun NewsBottomNavBar(
                     brush = Brush.horizontalGradient(
                         colors = listOf(
                             Color.Transparent,
-                            CyberColors.AccentBlue.copy(alpha = 0.4f),
-                            CyberColors.AccentBlueBright.copy(alpha = 0.7f),
-                            CyberColors.AccentBlue.copy(alpha = 0.4f),
+                            CyberColors.AccentBlue.copy(alpha = 0.45f),
+                            CyberColors.AccentBlueBright.copy(alpha = 0.8f),
+                            CyberColors.AccentBlue.copy(alpha = 0.45f),
                             Color.Transparent
                         )
                     )
                 )
         )
 
-        // Плавающая стеклянная панель: отдельная плавающая капсула с отступами от краёв экрана
-        // Многослойный эффект: тёмная основа + светлый внутренний слой + тень
+        // Плавающая стеклянная панель: отдельная капсула с отступами от краёв экрана
+        // Многослойный эффект: тёмная основа + светлый внутренний слой + верхняя грань + тень
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(68.dp)
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 14.dp)
+                .height(72.dp)
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 16.dp)
                 .background(
                     brush = Brush.linearGradient(
                         colors = listOf(
-                            CyberColors.BackgroundDeep.copy(alpha = 0.96f),
-                            CyberColors.SurfaceElevated.copy(alpha = 0.92f),
-                            CyberColors.BackgroundDeep.copy(alpha = 0.96f)
+                            CyberColors.BackgroundDeep.copy(alpha = 0.97f),
+                            CyberColors.SurfaceElevated.copy(alpha = 0.93f),
+                            CyberColors.BackgroundDeep.copy(alpha = 0.97f)
                         ),
                         start = androidx.compose.ui.geometry.Offset(x = 0f, y = 0f),
                         end = androidx.compose.ui.geometry.Offset(x = 1f, y = 1f)
                     )
                 )
                 .border(
-                    width = 1.2.dp,
-                    color = CyberColors.BorderGlassBright.copy(alpha = 0.6f),
-                    shape = RoundedCornerShape(34.dp)
+                    width = 1.dp,
+                    color = CyberColors.BorderGlassBright.copy(alpha = 0.55f),
+                    shape = RoundedCornerShape(36.dp)
                 )
-                .clip(RoundedCornerShape(34.dp))
+                .clip(RoundedCornerShape(36.dp))
                 .graphicsLayer {
-                    shadowElevation = 10f
-                    ambientShadowColor = Color.Black.copy(alpha = 0.4f)
-                    spotShadowColor = Color.Black.copy(alpha = 0.5f)
+                    shadowElevation = 12f
+                    ambientShadowColor = Color.Black.copy(alpha = 0.45f)
+                    spotShadowColor = Color.Black.copy(alpha = 0.55f)
                 }
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 tabs.forEachIndexed { index, (route, label, iconRes) ->
@@ -639,7 +639,7 @@ fun NewsBottomNavBar(
 
                     val active by transition.animateFloat(
                         label = "tab $index active",
-                        transitionSpec = { tween(durationMillis = 260, easing = FastOutSlowInEasing) }
+                        transitionSpec = { tween(durationMillis = 280, easing = FastOutSlowInEasing) }
                     ) { state: Int -> if (state == index) 1f else 0f }
 
                     Box(
@@ -664,10 +664,9 @@ fun NewsBottomNavBar(
                     ) {
                         if (selected) {
                             // Активный элемент: выразительная синяя стеклянная капсула
-                            // с градиентом, внутренним бликом и плавным масштабированием
                             Box(
                                 modifier = Modifier
-                                    .width(92.dp)
+                                    .width(86.dp)
                                     .height(46.dp)
                                     .clip(RoundedCornerShape(23.dp))
                                     .background(
@@ -686,7 +685,7 @@ fun NewsBottomNavBar(
                                         color = Color.White.copy(alpha = 0.3f),
                                         shape = RoundedCornerShape(23.dp)
                                     )
-                                    .graphicsLayer { scaleX = 1f + (0.05f * active); scaleY = 1f + (0.05f * active) }
+                                    .graphicsLayer { scaleX = 1f + (0.06f * active); scaleY = 1f + (0.06f * active) }
                             ) {
                                 Column(
                                     modifier = Modifier.fillMaxSize(),
@@ -697,13 +696,13 @@ fun NewsBottomNavBar(
                                         painter = painterResource(id = iconRes),
                                         contentDescription = "$label (активно)",
                                         tint = Color.White,
-                                        modifier = Modifier.size(24.dp)
+                                        modifier = Modifier.size(22.dp)
                                     )
                                     Text(
                                         text = label,
                                         style = CyberTypography.BodySmall.copy(
-                                            fontSize = 11.sp,
-                                            lineHeight = 13.sp,
+                                            fontSize = 10.sp,
+                                            lineHeight = 12.sp,
                                             fontWeight = FontWeight.Bold,
                                             letterSpacing = 0.15.sp
                                         ),
@@ -722,13 +721,13 @@ fun NewsBottomNavBar(
                                     painter = painterResource(id = iconRes),
                                     contentDescription = label,
                                     tint = CyberColors.TextSecondary,
-                                    modifier = Modifier.size(24.dp)
+                                    modifier = Modifier.size(22.dp)
                                 )
                                 Text(
                                     text = label,
                                     style = CyberTypography.BodySmall.copy(
-                                        fontSize = 11.sp,
-                                        lineHeight = 13.sp,
+                                        fontSize = 10.sp,
+                                        lineHeight = 12.sp,
                                         fontWeight = FontWeight.Normal,
                                         letterSpacing = 0.15.sp
                                     ),
