@@ -29,7 +29,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     companion object {
         private const val USER_AGENT =
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
-        const val MAX_POSTS_PER_SOURCE = 15
+        const val MAX_POSTS_PER_SOURCE = 20
     }
 
     private val prefs: SharedPreferences =
@@ -538,20 +538,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     // Сохраняем предыдущие посты, если новая загрузка не вернула ничего
                 } else {
                     // Дедупликация: 1) по оригинальной ссылке (originalUrl для GNEWS, иначе sourceUrl)
-                    // 2) по нормализованному заголовку (для случаев, когда URL разные, но статья та же)
+                    // 2) по точному совпадению заголовка (без агрессивной нормализации, чтобы не объединить разные статьи)
                     fun normalizeTitle(t: String): String {
-                        return t.lowercase()
-                            .replace(Regex("[\\p{Punct}\\s]+"), " ")
-                            .trim()
+                        return t.lowercase().trim()
                     }
                     val byUrl = allPosts.distinctBy { it.originalUrl ?: it.sourceUrl ?: it.title }
                     val seenTitles = mutableSetOf<String>()
                     val deduplicatedPosts = byUrl.filter { post ->
                         val key = normalizeTitle(post.title)
-                        if (key in seenTitles) false else {
-                            seenTitles.add(key)
-                            true
-                        }
+                        if (key.isEmpty()) true // без заголовка не считаем дублем
+                        else if (key in seenTitles) false
+                        else { seenTitles.add(key); true }
                     }
                     _posts.value = deduplicatedPosts.sortedByDescending { it.publishedAt ?: "" }
                 }
