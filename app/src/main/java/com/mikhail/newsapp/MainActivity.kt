@@ -740,6 +740,23 @@ fun NewsBottomNavBar(
                 }
             }
         }
+        // ==== ДИАГНОСТИКА NAV TEST 289 ====
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(60.dp)
+                .padding(horizontal = 20.dp)
+                .background(Color.Magenta)
+                .clip(RoundedCornerShape(32.dp))
+        ) {
+            Text(
+                text = "NAV TEST 289",
+                color = Color.White,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.Center)
+            )
+        }
     }
 }
 
