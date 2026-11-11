@@ -29,6 +29,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     companion object {
         private const val USER_AGENT =
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
+        const val MAX_POSTS_PER_SOURCE = 15
     }
 
     private val prefs: SharedPreferences =
@@ -85,6 +86,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // ---------- Ошибки конкретных источников (url → текст) ----------
     private val _sourceErrors = MutableStateFlow<Map<String, String>>(emptyMap())
     val sourceErrors: StateFlow<Map<String, String>> = _sourceErrors.asStateFlow()
+
+    // ---------- Счётчик неудач источника (url → количество неудач подряд) ----------
+    private val _sourceErrorCount = MutableStateFlow<Map<String, Int>>(emptyMap())
+    val sourceErrorCount: StateFlow<Map<String, Int>> = _sourceErrorCount.asStateFlow()
+
+    // ---------- Временно отключённые источники (url → время истечения в мс) ----------
+    private val _disabledSources = MutableStateFlow<Map<String, Long>>(emptyMap())
+    val disabledSources: StateFlow<Map<String, Long>> = _disabledSources.asStateFlow()
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
@@ -275,6 +284,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         loadReadIds()
         loadSettings()
         loadCachedPosts()
+        clearOldCache()
         loadPosts()
         // Пересчёт непрочитанных
         viewModelScope.launch {
@@ -452,7 +462,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val allPosts = mutableListOf<Post>()
                 var success = false
+                val now = System.currentTimeMillis()
+                val disabled = _disabledSources.value
+                val errorCount = _sourceErrorCount.value
                 for (source in sources) {
+                    // Пропускаем временно отключённые источники
+                    val disableUntil = disabled[source.url]
+                    if (disableUntil != null && disableUntil > now) continue
+                    // Если источник был отключён, но время истекло — сбрасываем счётчик
+                    if (disableUntil != null && disableUntil <= now) {
+                        _disabledSources.value = _disabledSources.value - source.url
+                        _sourceErrorCount.value = _sourceErrorCount.value - source.url
+                    }
                     try {
                         val feedUrl = if (source.type == "YOUTUBE") resolveYoutubeFeedUrl(source.url) else source.url
                         val xml = withContext(Dispatchers.Default) {
@@ -460,6 +481,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         }
                         var parsed = withContext(Dispatchers.Default) {
                             parseFeed(source.type, xml)
+                        }
+                        // Ограничиваем количество постов из одного источника
+                        if (parsed.size > MAX_POSTS_PER_SOURCE) {
+                            parsed = parsed.take(MAX_POSTS_PER_SOURCE)
                         }
                         // Telegram: догружаем вторую страницу превью (старые посты)
                         if (source.type == "TELEGRAM" && parsed.size >= 10) {
@@ -484,6 +509,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         }
                         allPosts.addAll(parsed)
                         success = true
+                        // Сбрасываем счётчик неудач при успехе
+                        if (_sourceErrorCount.value.containsKey(source.url)) {
+                            _sourceErrorCount.value = _sourceErrorCount.value - source.url
+                        }
                         // сбрасываем ошибку этого источника при успехе
                         if (_sourceErrors.value.containsKey(source.url)) {
                             _sourceErrors.value = _sourceErrors.value - source.url
@@ -493,7 +522,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         }
                     } catch (e: Exception) {
                         e.printStackTrace()
+                        // Увеличиваем счётчик неудач
+                        val currentCount = _sourceErrorCount.value[source.url] ?: 0
+                        val newCount = currentCount + 1
+                        _sourceErrorCount.value = _sourceErrorCount.value + (source.url to newCount)
                         _sourceErrors.value = _sourceErrors.value + (source.url to (e.message ?: "Ошибка загрузки"))
+                        // Если неудач 3 подряд — отключаем источник на 24 часа
+                        if (newCount >= 3) {
+                            val disableUntil = now + 24 * 60 * 60 * 1000L
+                            _disabledSources.value = _disabledSources.value + (source.url to disableUntil)
+                        }
                     }
                 }
                 if (allPosts.isEmpty() && _posts.value.isNotEmpty()) {
@@ -984,5 +1022,26 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun clearCache() {
         prefs.edit().remove("posts_json").apply()
         _posts.value = emptyList()
+    }
+
+    /** Удаляет из кэша посты старше 7 дней. */
+    private fun clearOldCache() {
+        val cachedJson = prefs.getString("posts_json", null) ?: return
+        val cached = Post.fromJsonList(cachedJson)
+        val sevenDaysAgo = System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000L
+        val fresh = cached.filter { post ->
+            post.publishedAt?.let { dateStr ->
+                try {
+                    val sdf = java.text.SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss Z", java.util.Locale.US)
+                    val parsed = sdf.parse(dateStr)
+                    parsed?.time ?: 0L >= sevenDaysAgo
+                } catch (e: Exception) {
+                    true // если не распарсилось — оставляем
+                }
+            } ?: true
+        }
+        if (fresh.size != cached.size) {
+            prefs.edit().putString("posts_json", Post.toJsonList(fresh)).apply()
+        }
     }
 }
