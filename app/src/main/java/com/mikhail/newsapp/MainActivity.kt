@@ -785,6 +785,7 @@ fun HomeScreen(
     var filterType by remember { mutableStateOf("Все") }
     var filterSource by remember { mutableStateOf<String?>(null) }
     var filterCategory by remember { mutableStateOf<String?>(null) }
+    var filtersExpanded by remember { mutableStateOf(false) }
 
     // ---------- Баннер новых статей при обновлении ----------
     var knownIds by remember { mutableStateOf<Set<String>>(emptySet()) }
@@ -833,8 +834,54 @@ fun HomeScreen(
     val viewMode by viewModel.viewMode.collectAsState()
     val sortMode by viewModel.sortMode.collectAsState()
 
+    // Строка управления фильтрами (всегда видна)
+    val activeFilterCount = listOf(
+        selectedFolder.isNotEmpty(),
+        filterType != "Все",
+        filterSource != null,
+        filterCategory != null
+    ).count { it }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = UiSizes.ScreenPadding, vertical = UiSizes.SpacerXSmall),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(UiSizes.SpacerSmall)
+    ) {
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(50))
+                .background(
+                    if (filtersExpanded) CyberColors.AccentBlueBright else CyberColors.SurfaceElevated,
+                    RoundedCornerShape(50)
+                )
+                .clickable { filtersExpanded = !filtersExpanded }
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    painter = painterResource(
+                        if (filtersExpanded) R.drawable.ic_arrow_up else R.drawable.ic_chevron_right
+                    ),
+                    contentDescription = if (filtersExpanded) "Свернуть фильтры" else "Развернуть фильтры",
+                    tint = CyberColors.TextSecondary,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(UiSizes.SpacerXSmall))
+                Text(
+                    text = "Фильтры" + (if (activeFilterCount > 0) " · $activeFilterCount" else ""),
+                    style = CyberTypography.BodySmall,
+                    color = if (activeFilterCount > 0) CyberColors.AccentBlue else CyberColors.TextSecondary
+                )
+            }
+        }
+    }
+
     // Чипы папок (если есть)
-    if (folders.isNotEmpty()) {
+    if (filtersExpanded && folders.isNotEmpty()) {
         LazyRow(
             modifier = Modifier
                 .fillMaxWidth()
@@ -985,7 +1032,7 @@ fun HomeScreen(
         types.add("Статьи")
         types
     }
-    if (filterOptions.size > 2) {
+    if (filtersExpanded && filterOptions.size > 2) {
         LazyRow(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1023,7 +1070,7 @@ fun HomeScreen(
             filterSource = null
         }
     }
-    if (sourceOptions.size > 1) {
+    if (filtersExpanded && sourceOptions.size > 1) {
         LazyRow(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1081,7 +1128,7 @@ fun HomeScreen(
             filterCategory = null
         }
     }
-    if (categoryOptions.size > 1) {
+    if (filtersExpanded && categoryOptions.size > 1) {
         LazyRow(
             modifier = Modifier
                 .fillMaxWidth()
