@@ -824,7 +824,11 @@ fun HomeScreen(
                 color = CyberColors.TextPrimary,
             )
             Text(
-                text = "Нет сети — показаны сохранённые копии",
+                text = if (posts.isNotEmpty()) {
+                    "Нет сети — показаны сохранённые копии"
+                } else {
+                    "Нет сети — нет сохранённых копий"
+                },
                 style = CyberTypography.BodySmall,
                 color = CyberColors.TextPrimary,
             )
