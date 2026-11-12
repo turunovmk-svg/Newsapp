@@ -123,6 +123,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import com.mikhail.newsapp.FeedFilter
 import com.mikhail.newsapp.data.Post
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -782,6 +783,7 @@ fun HomeScreen(
     // Поисковое поле
     var searchQuery by remember { mutableStateOf("") }
     var filterType by remember { mutableStateOf("Все") }
+    var filterSource by remember { mutableStateOf<String?>(null) }
 
     // ---------- Баннер новых статей при обновлении ----------
     var knownIds by remember { mutableStateOf<Set<String>>(emptySet()) }
@@ -804,7 +806,7 @@ fun HomeScreen(
         }
     }
     // Баннер скрываем при смене фильтра/поиска (пользователь взаимодействует)
-    LaunchedEffect(searchQuery, filterType) { bannerNewCount = 0 }
+    LaunchedEffect(searchQuery, filterType, filterSource) { bannerNewCount = 0 }
 
     if (showNewBanner) {
         Row(
@@ -851,7 +853,7 @@ fun HomeScreen(
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                     Text(
-                        text = "Все источники",
+                        text = "Все папки",
                         style = CyberTypography.BodySmall,
                         color = if (selected) CyberColors.TextInverse else CyberColors.TextSecondary,
                     )
@@ -896,6 +898,20 @@ fun HomeScreen(
                     contentDescription = "Поиск",
                     tint = CyberColors.TextSecondary
                 )
+            },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(
+                        onClick = { searchQuery = "" },
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_close),
+                            contentDescription = "Очистить поиск",
+                            tint = CyberColors.TextSecondary,
+                        )
+                    }
+                }
             },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
@@ -998,6 +1014,64 @@ fun HomeScreen(
             }
         }
     }
+    // Фильтр по конкретному источнику (есть источники)
+    val sourceOptions = remember(posts) { FeedFilter.sourceOptions(posts) }
+    // Если выбранный источник исчез из ленты (обновили фиды) — сбрасываем фильтр
+    LaunchedEffect(sourceOptions, filterSource) {
+        if (filterSource != null && sourceOptions.none { it.key == filterSource }) {
+            filterSource = null
+        }
+    }
+    if (sourceOptions.size > 1) {
+        LazyRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = UiSizes.ScreenPadding, vertical = UiSizes.SpacerXSmall),
+            horizontalArrangement = Arrangement.spacedBy(UiSizes.SpacerSmall)
+        ) {
+            item {
+                val selected = filterSource == null
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(
+                            if (selected) CyberColors.AccentBlueBright else CyberColors.SurfaceElevated,
+                            RoundedCornerShape(50)
+                        )
+                        .clickable { filterSource = null }
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        text = "Все источники",
+                        style = CyberTypography.BodySmall,
+                        color = if (selected) CyberColors.TextInverse else CyberColors.TextSecondary,
+                    )
+                }
+            }
+            items(sourceOptions.size) { i ->
+                val option = sourceOptions[i]
+                val selected = filterSource == option.key
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(
+                            if (selected) CyberColors.AccentBlueBright else CyberColors.SurfaceElevated,
+                            RoundedCornerShape(50)
+                        )
+                        .clickable { filterSource = option.key }
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                    ) {
+                        Text(
+                            text = option.label,
+                            style = CyberTypography.BodySmall,
+                            color = if (selected) CyberColors.TextInverse else CyberColors.TextSecondary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
+        }
     Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
 
     val feedListState = rememberLazyListState()
@@ -1017,25 +1091,16 @@ fun HomeScreen(
         onRefresh = { viewModel.loadPosts() },
         modifier = Modifier.fillMaxSize(),
     ) {
-        fun typeOf(post: Post): String {
-            val u = post.sourceUrl ?: ""
-            return when {
-                u.contains("youtube.com") || u.contains("youtu.be") -> "YouTube"
-                u.contains("t.me") -> "Telegram"
-                u.contains("reddit.com") -> "Reddit"
-                else -> "Статьи"
-            }
-        }
         val searchedPosts = if (searchQuery.isNotBlank()) {
-            posts.filter { post ->
-                post.title.contains(searchQuery, ignoreCase = true)
-                    || (post.description ?: "").contains(searchQuery, ignoreCase = true)
-            }
+            posts.filter { post -> FeedFilter.matchesQuery(post, searchQuery) }
         } else {
             posts
         }
-        val filteredPosts = if (filterType == "Все") searchedPosts
-        else searchedPosts.filter { typeOf(it) == filterType }
+        val filteredByType = if (filterType == "Все") searchedPosts
+        else searchedPosts.filter { FeedFilter.typeOf(it) == filterType }
+        // Фильтрация по конкретному источнику
+        val filteredPosts = if (filterSource != null) filteredByType.filter { FeedFilter.sourceKey(it) == filterSource }
+        else filteredByType
 
         // Сортировка
         val sortedPosts = if (sortMode == "source") {
@@ -1044,7 +1109,29 @@ fun HomeScreen(
             filteredPosts
         }
 
-        when (viewMode) {
+        // Пустое состояние: поиск/фильтр ничего не нашли
+        if (sortedPosts.isEmpty() && (searchQuery.isNotBlank() || filterSource != null || filterType != "Все")) {
+            RefEmptyState(
+                iconRes = R.drawable.ic_search,
+                title = "Ничего не найдено",
+                hint = if (searchQuery.isNotBlank())
+                    "По запросу «$searchQuery» нет новостей. Попробуйте изменить запрос или сбросить фильтры."
+                else
+                    "В выбранном источнике нет новостей. Сбросьте фильтр, чтобы увидеть все.",
+                modifier = Modifier.fillMaxSize(),
+                action = {
+                    NeonButton(
+                        onClick = {
+                            searchQuery = ""
+                            filterType = "Все"
+                            filterSource = null
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        text = "Сбросить поиск и фильтры"
+                    )
+                }
+            )
+        } else when (viewMode) {
             "list" -> LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(
@@ -1815,10 +1902,7 @@ fun SearchScreen(
         } else {
             Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
             Text(
-                text = "Найдено: ${posts.count { post ->
-                    post.title.contains(searchQuery, ignoreCase = true) ||
-                        (post.description ?: "").contains(searchQuery, ignoreCase = true)
-                }} из ${posts.size}",
+                text = "Найдено: ${posts.count { post -> FeedFilter.matchesQuery(post, searchQuery) }} из ${posts.size}",
                 style = CyberTypography.BodySmall,
                 color = CyberColors.TextSecondary,
             )
@@ -1826,10 +1910,7 @@ fun SearchScreen(
         }
 
         val filteredPosts = if (searchQuery.isNotBlank()) {
-            posts.filter { post ->
-                post.title.contains(searchQuery, ignoreCase = true)
-                    || (post.description ?: "").contains(searchQuery, ignoreCase = true)
-            }
+            posts.filter { post -> FeedFilter.matchesQuery(post, searchQuery) }
         } else {
             emptyList()
         }
