@@ -27,9 +27,16 @@ import okhttp3.Request
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 
-class MainViewModel(
-    application: Application,
-    httpClient: OkHttpClient = OkHttpClient.Builder()
+class MainViewModel(application: Application) : AndroidViewModel(application) {
+
+    companion object {
+        private const val USER_AGENT =
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
+        const val MAX_POSTS_PER_SOURCE = 20
+    }
+
+    private val prefs: SharedPreferences = getApplication<Application>().getSharedPreferences("NewsAppPrefs", Context.MODE_PRIVATE)
+    private val httpClient: OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(10_000, java.util.concurrent.TimeUnit.MILLISECONDS)
         .readTimeout(15_000, java.util.concurrent.TimeUnit.MILLISECONDS)
         .writeTimeout(10_000, java.util.concurrent.TimeUnit.MILLISECONDS)
@@ -41,16 +48,6 @@ class MainViewModel(
             chain.proceed(request)
         }
         .build()
-) : AndroidViewModel(application) {
-
-    companion object {
-        private const val USER_AGENT =
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
-        const val MAX_POSTS_PER_SOURCE = 20
-    }
-
-    private val prefs: SharedPreferences = getApplication<Application>().getSharedPreferences("NewsAppPrefs", Context.MODE_PRIVATE)
-    private val httpClient: OkHttpClient = httpClient
 
     private val _posts = MutableStateFlow<List<Post>>(emptyList())
     val posts: StateFlow<List<Post>> = _posts.asStateFlow()
