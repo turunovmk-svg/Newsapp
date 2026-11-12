@@ -1552,9 +1552,7 @@ fun SwipeableNewsCard(
         animationSpec = animSpec,
         label = "swipeOffset"
     )
-    val animatedOffsetDp = with(LocalDensity.current) { animatedOffset.toDp() }
     val haptic = LocalHapticFeedback.current
-    val scope = androidx.compose.runtime.rememberCoroutineScope()
 
     Box(
         modifier = modifier
@@ -1653,7 +1651,9 @@ fun SwipeableNewsCard(
             onShareClick = onShareClick,
             onClick = onClick,
             modifier = Modifier
-                .offset(x = animatedOffsetDp)
+                .graphicsLayer {
+                    translationX = animatedOffset.dp.toPx()
+                }
         )
     }
 }
