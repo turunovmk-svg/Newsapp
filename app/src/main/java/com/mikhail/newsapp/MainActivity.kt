@@ -847,7 +847,7 @@ fun HomeScreen(
                     modifier = Modifier
                         .clip(RoundedCornerShape(50))
                         .background(
-                            if (selected) CyberColors.AccentBlueBright else CyberColors.SurfaceElevated,
+                            if (selected) CyberColors.AccentBlue else CyberColors.SurfaceElevated,
                             RoundedCornerShape(50)
                         )
                         .clickable { viewModel.setSelectedFolder("") }
@@ -867,7 +867,7 @@ fun HomeScreen(
                     modifier = Modifier
                         .clip(RoundedCornerShape(50))
                         .background(
-                            if (selected) CyberColors.AccentBlueBright else CyberColors.SurfaceElevated,
+                            if (selected) CyberColors.AccentBlue else CyberColors.SurfaceElevated,
                             RoundedCornerShape(50)
                         )
                         .clickable { viewModel.setSelectedFolder(folder) }
@@ -1036,7 +1036,7 @@ fun HomeScreen(
                     modifier = Modifier
                         .clip(RoundedCornerShape(50))
                         .background(
-                            if (selected) CyberColors.AccentBlueBright else CyberColors.SurfaceElevated,
+                            if (selected) CyberColors.AccentBlue else CyberColors.SurfaceElevated,
                             RoundedCornerShape(50)
                         )
                         .clickable { filterSource = null }
@@ -1056,7 +1056,7 @@ fun HomeScreen(
                     modifier = Modifier
                         .clip(RoundedCornerShape(50))
                         .background(
-                            if (selected) CyberColors.AccentBlueBright else CyberColors.SurfaceElevated,
+                            if (selected) CyberColors.AccentBlue else CyberColors.SurfaceElevated,
                             RoundedCornerShape(50)
                         )
                         .clickable { filterSource = option.key }
@@ -1094,7 +1094,7 @@ fun HomeScreen(
                     modifier = Modifier
                         .clip(RoundedCornerShape(50))
                         .background(
-                            if (selected) CyberColors.AccentBlueBright else CyberColors.SurfaceElevated,
+                            if (selected) CyberColors.AccentBlue else CyberColors.SurfaceElevated,
                             RoundedCornerShape(50)
                         )
                         .clickable { filterCategory = null }
@@ -1114,7 +1114,7 @@ fun HomeScreen(
                     modifier = Modifier
                         .clip(RoundedCornerShape(50))
                         .background(
-                            if (selected) CyberColors.AccentBlueBright else CyberColors.SurfaceElevated,
+                            if (selected) CyberColors.AccentBlue else CyberColors.SurfaceElevated,
                             RoundedCornerShape(50)
                         )
                         .clickable { filterCategory = option.id }
@@ -1189,7 +1189,7 @@ fun HomeScreen(
                             filterSource = null
                             filterCategory = null
                         },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier,
                         text = "Сбросить поиск и фильтры"
                     )
                 }
