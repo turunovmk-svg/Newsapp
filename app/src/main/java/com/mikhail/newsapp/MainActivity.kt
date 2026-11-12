@@ -1689,6 +1689,11 @@ fun NewsCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(UiSizes.RefCardRadius))
             .background(CyberColors.SurfaceElevated)
+            .border(
+                width = 1.dp,
+                color = CyberColors.BorderGlass,
+                shape = RoundedCornerShape(UiSizes.RefCardRadius)
+            )
             .clickable(onClick = onClick)
     ) {
         // ---- Фото ----
@@ -1749,7 +1754,7 @@ fun NewsCard(
                 ) {
                     Text(
                         text = category,
-                        style = CyberTypography.BodySmall.copy(fontSize = 9.sp),
+                        style = CyberTypography.BodySmall.copy(fontSize = 11.sp),
                         color = CyberColors.AccentBlueBright,
                         maxLines = 1
                     )
