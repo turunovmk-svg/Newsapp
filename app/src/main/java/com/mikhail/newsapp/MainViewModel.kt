@@ -501,8 +501,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     }
                     try {
                         val parsed = loadSourceWithRetries(source)
-                        // Успешная загрузка — обновляем посты этого источника
-                        _postsBySource.value = _postsBySource.value + (source.url to parsed)
+                        // Успешная загрузка — обновляем посты этого источника, если есть новые
+                        if (parsed.isNotEmpty()) {
+                            _postsBySource.value = _postsBySource.value + (source.url to parsed)
+                        }
                         anySuccess = true
                         // Сбрасываем счётчик неудач при успехе
                         if (_sourceErrorCount.value.containsKey(source.url)) {
