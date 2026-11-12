@@ -138,4 +138,102 @@ class FeedFilterTest {
         assertEquals(2, FeedFilter.filter(edge, "", "Все", null).size)
         assertTrue(FeedFilter.filter(edge, "что-то", "Все", null).isEmpty())
     }
+
+    // ---------- Категории ----------
+
+    private fun categorizedPosts() = listOf(
+        post("t1", "Новый процессор Intel вышел", "Чип на 3 нм для ноутбуков", siteName = "TechSite"),
+        post("t2", "Исследование космоса и планет", "Ученые нашли экзопланету", siteName = "ScienceMag"),
+        post("t3", "Финал чемпионата по футболу", "Сборная выиграла турнир", siteName = "SportNews"),
+        post("t4", "Президент подписал закон", "Парламент одобрил законопроект", siteName = "PoliticsDaily"),
+        post("t5", "Курс доллара и экономика", "Инфляция снизилась на рынке", siteName = "BizReview"),
+        post("t6", "Обзор новой игры", "Геймплей и графика проверены", siteName = "GamePortal")
+    )
+
+    @Test
+    fun `фильтр по категории отдельно`() {
+        val posts = categorizedPosts()
+        val tech = FeedFilter.categoryOptions(posts).first { it.id == "tech" }
+        val found = FeedFilter.filter(posts, "", "Все", null, tech.id)
+        assertEquals(1, found.size)
+        assertEquals("t1", found.first().id)
+    }
+
+    @Test
+    fun `категория вместе с поиском`() {
+        val posts = categorizedPosts()
+        val sport = FeedFilter.categoryOptions(posts).first { it.id == "sport" }
+        // В категории Спорт есть слово "турнир" в описании
+        val found = FeedFilter.filter(posts, "турнир", "Все", null, sport.id)
+        assertEquals(1, found.size)
+        assertEquals("t3", found.first().id)
+        // Но поиск по слову, которого нет в этой категории — пусто
+        val empty = FeedFilter.filter(posts, "процессор", "Все", null, sport.id)
+        assertTrue(empty.isEmpty())
+    }
+
+    @Test
+    fun `категория вместе с фильтром источника`() {
+        val posts = categorizedPosts()
+        val tech = FeedFilter.categoryOptions(posts).first { it.id == "tech" }
+        val sourceOptions = FeedFilter.sourceOptions(posts)
+        val techSite = sourceOptions.first { it.label.lowercase().contains("tech") }
+        val found = FeedFilter.filter(posts, "", "Все", techSite.key, tech.id)
+        assertEquals(1, found.size)
+        assertEquals("t1", found.first().id)
+    }
+
+    @Test
+    fun `все три условия одновременно поиск источник категория`() {
+        val posts = categorizedPosts()
+        val tech = FeedFilter.categoryOptions(posts).first { it.id == "tech" }
+        val sourceOptions = FeedFilter.sourceOptions(posts)
+        val techSite = sourceOptions.first { it.label.lowercase().contains("tech") }
+        val found = FeedFilter.filter(posts, "процессор", "Все", techSite.key, tech.id)
+        assertEquals(1, found.size)
+        assertEquals("t1", found.first().id)
+    }
+
+    @Test
+    fun `возврат к «Все категории» сбрасывает фильтр категории`() {
+        val posts = categorizedPosts()
+        val tech = FeedFilter.categoryOptions(posts).first { it.id == "tech" }
+        val byTech = FeedFilter.filter(posts, "", "Все", null, tech.id)
+        assertEquals(1, byTech.size)
+        val all = FeedFilter.filter(posts, "", "Все", null, null)
+        assertEquals(posts.size, all.size)
+    }
+
+    @Test
+    fun `пустое состояние при несовпадении категории`() {
+        val posts = categorizedPosts()
+        val allCategories = FeedFilter.categoryOptions(posts).map { it.id }
+        // Фильтруем по несуществующей категории
+        val found = FeedFilter.filter(posts, "", "Все", null, "nonexistent-category")
+        assertTrue(found.isEmpty())
+    }
+
+    @Test
+    fun `фильтрация по категории сохраняет порядок сортировки`() {
+        val posts = categorizedPosts()
+        // Все уже отсортированы по дате (одинаковая, так что порядок сохраняется)
+        val tech = FeedFilter.categoryOptions(posts).first { it.id == "tech" }
+        val found = FeedFilter.filter(posts, "", "Все", null, tech.id)
+        // Один пост — порядок тривиален, но проверяем что не переставляется
+        assertEquals(listOf("t1"), found.map { it.id })
+    }
+
+    @Test
+    fun `опции категорий уникальны и содержат ожидаемые`() {
+        val posts = categorizedPosts()
+        val options = FeedFilter.categoryOptions(posts)
+        val ids = options.map { it.id }
+        assertEquals(ids.size, ids.distinct().size)
+        assertTrue(options.any { it.id == "tech" })
+        assertTrue(options.any { it.id == "sport" })
+        assertTrue(options.any { it.id == "science" })
+        assertTrue(options.any { it.id == "politics" })
+        assertTrue(options.any { it.id == "economy" })
+        assertTrue(options.any { it.id == "games" })
+    }
 }

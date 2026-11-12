@@ -784,6 +784,7 @@ fun HomeScreen(
     var searchQuery by remember { mutableStateOf("") }
     var filterType by remember { mutableStateOf("Все") }
     var filterSource by remember { mutableStateOf<String?>(null) }
+    var filterCategory by remember { mutableStateOf<String?>(null) }
 
     // ---------- Баннер новых статей при обновлении ----------
     var knownIds by remember { mutableStateOf<Set<String>>(emptySet()) }
@@ -806,7 +807,7 @@ fun HomeScreen(
         }
     }
     // Баннер скрываем при смене фильтра/поиска (пользователь взаимодействует)
-    LaunchedEffect(searchQuery, filterType, filterSource) { bannerNewCount = 0 }
+    LaunchedEffect(searchQuery, filterType, filterSource, filterCategory) { bannerNewCount = 0 }
 
     if (showNewBanner) {
         Row(
@@ -1072,6 +1073,64 @@ fun HomeScreen(
                 }
             }
         }
+    // Фильтр по категориям (есть категории)
+    val categoryOptions = remember(posts) { FeedFilter.categoryOptions(posts) }
+    // Если выбранная категория исчезла из ленты — сбрасываем фильтр
+    LaunchedEffect(categoryOptions, filterCategory) {
+        if (filterCategory != null && categoryOptions.none { it.id == filterCategory }) {
+            filterCategory = null
+        }
+    }
+    if (categoryOptions.size > 1) {
+        LazyRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = UiSizes.ScreenPadding, vertical = UiSizes.SpacerXSmall),
+            horizontalArrangement = Arrangement.spacedBy(UiSizes.SpacerSmall)
+        ) {
+            item {
+                val selected = filterCategory == null
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(
+                            if (selected) CyberColors.AccentBlueBright else CyberColors.SurfaceElevated,
+                            RoundedCornerShape(50)
+                        )
+                        .clickable { filterCategory = null }
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        text = "Все категории",
+                        style = CyberTypography.BodySmall,
+                        color = if (selected) CyberColors.TextInverse else CyberColors.TextSecondary,
+                    )
+                }
+            }
+            items(categoryOptions.size) { i ->
+                val option = categoryOptions[i]
+                val selected = filterCategory == option.id
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(
+                            if (selected) CyberColors.AccentBlueBright else CyberColors.SurfaceElevated,
+                            RoundedCornerShape(50)
+                        )
+                        .clickable { filterCategory = option.id }
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                    ) {
+                        Text(
+                            text = option.label,
+                            style = CyberTypography.BodySmall,
+                            color = if (selected) CyberColors.TextInverse else CyberColors.TextSecondary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
+        }
     Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
 
     val feedListState = rememberLazyListState()
@@ -1098,9 +1157,10 @@ fun HomeScreen(
         }
         val filteredByType = if (filterType == "Все") searchedPosts
         else searchedPosts.filter { FeedFilter.typeOf(it) == filterType }
-        // Фильтрация по конкретному источнику
-        val filteredPosts = if (filterSource != null) filteredByType.filter { FeedFilter.sourceKey(it) == filterSource }
-        else filteredByType
+        // Фильтрация по конкретному источнику и категории
+        val filteredPosts = filteredByType
+            .filter { filterSource == null || FeedFilter.sourceKey(it) == filterSource }
+            .filter { filterCategory == null || FeedFilter.categoryKey(it) == filterCategory }
 
         // Сортировка
         val sortedPosts = if (sortMode == "source") {
@@ -1110,12 +1170,14 @@ fun HomeScreen(
         }
 
         // Пустое состояние: поиск/фильтр ничего не нашли
-        if (sortedPosts.isEmpty() && (searchQuery.isNotBlank() || filterSource != null || filterType != "Все")) {
+        if (sortedPosts.isEmpty() && (searchQuery.isNotBlank() || filterSource != null || filterType != "Все" || filterCategory != null)) {
             RefEmptyState(
                 iconRes = R.drawable.ic_search,
                 title = "Ничего не найдено",
                 hint = if (searchQuery.isNotBlank())
                     "По запросу «$searchQuery» нет новостей. Попробуйте изменить запрос или сбросить фильтры."
+                else if (filterCategory != null)
+                    "В категории «${FeedFilter.categoryOptions(posts).firstOrNull { it.id == filterCategory }?.label ?: filterCategory}» нет новостей. Сбросьте фильтр, чтобы увидеть все."
                 else
                     "В выбранном источнике нет новостей. Сбросьте фильтр, чтобы увидеть все.",
                 modifier = Modifier.fillMaxSize(),
@@ -1125,6 +1187,7 @@ fun HomeScreen(
                             searchQuery = ""
                             filterType = "Все"
                             filterSource = null
+                            filterCategory = null
                         },
                         modifier = Modifier.fillMaxWidth(),
                         text = "Сбросить поиск и фильтры"
@@ -1675,6 +1738,22 @@ fun NewsCard(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.widthIn(max = 140.dp)
                 )
+                Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
+                // Метка категории
+                val category = FeedFilter.categoryLabel(post)
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(CyberColors.AccentBlue.copy(alpha = 0.12f), RoundedCornerShape(50))
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = category,
+                        style = CyberTypography.BodySmall.copy(fontSize = 9.sp),
+                        color = CyberColors.AccentBlueBright,
+                        maxLines = 1
+                    )
+                }
                 Spacer(modifier = Modifier.width(UiSizes.SpacerSmall))
                 post.publishedAt?.let { date ->
                     Text(

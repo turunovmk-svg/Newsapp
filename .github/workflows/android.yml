@@ -60,6 +60,7 @@ jobs:
       with:
         tag_name: build-${{ github.run_number }}
         name: NewsApp 1.0.${{ github.run_number }}
+        targetCommitish: ${{ github.sha }}
         prerelease: false
         files: |
           app/build/outputs/apk/debug/*.apk

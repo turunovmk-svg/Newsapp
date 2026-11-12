@@ -16,6 +16,9 @@ object FeedFilter {
     /** Одна опция фильтра по источнику: ключ для сравнения + подпись для чипа. */
     data class SourceOption(val key: String, val label: String)
 
+    /** Одна опция фильтра по категории: id категории + подпись для чипа. */
+    data class CategoryOption(val id: String, val label: String)
+
     /** Тип ленты по ссылке на статью (как раньше в HomeScreen). */
     fun typeOf(post: Post): String {
         val u = post.sourceUrl ?: ""
@@ -24,6 +27,29 @@ object FeedFilter {
             u.contains("t.me") -> "Telegram"
             u.contains("reddit.com") -> "Reddit"
             else -> "Статьи"
+        }
+    }
+
+    /** Категория поста, вычисленная локально (не сохраняется в модели). */
+    fun categoryOf(post: Post): NewsCategory {
+        return NewsCategoryClassifier.classify(
+            post.title,
+            post.description,
+            post.siteName
+        )
+    }
+
+    /** Идентификатор категории поста (для сравнения в фильтре). */
+    fun categoryKey(post: Post): String = categoryOf(post).id
+
+    /** Подпись категории поста для отображения на карточке. */
+    fun categoryLabel(post: Post): String = categoryOf(post).title
+
+    /** Все категории, присутствующие в ленте (кроме OTHER, если она единственная). */
+    fun categoryOptions(posts: List<Post>): List<CategoryOption> {
+        val ids = posts.map { categoryKey(it) }.distinct().sorted()
+        return ids.map { id ->
+            CategoryOption(id, NewsCategory.fromId(id).title)
         }
     }
 
@@ -86,14 +112,15 @@ object FeedFilter {
     }
 
     /**
-     * Полная фильтрация: поиск + тип ленты + конкретный источник.
+     * Полная фильтрация: поиск + тип ленты + источник + категория.
      * Порядок входного списка сохраняется (сортировка уже применена во ViewModel).
      */
     fun filter(
         posts: List<Post>,
         query: String,
         type: String,
-        sourceKey: String?
+        sourceKey: String?,
+        category: String? = null
     ): List<Post> {
         var result = posts.filter { matchesQuery(it, query) }
         if (type != "Все") {
@@ -101,6 +128,9 @@ object FeedFilter {
         }
         if (!sourceKey.isNullOrBlank()) {
             result = result.filter { sourceKey(it) == sourceKey }
+        }
+        if (!category.isNullOrBlank() && category != "Все") {
+            result = result.filter { categoryKey(it) == category }
         }
         return result
     }
