@@ -2,9 +2,12 @@ package com.mikhail.newsapp
 
 import android.app.Application
 import android.os.Build
+import android.os.SystemClock
+import android.util.Log
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.lifecycle.AndroidViewModel
+import java.net.URI
 import androidx.lifecycle.viewModelScope
 import com.mikhail.newsapp.data.Source
 import com.mikhail.newsapp.data.SourceType
@@ -479,10 +482,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
             _isLoading.value = true
             _error.value = null
+            val loadStart = SystemClock.elapsedRealtime()
+            var anySuccess = false
             try {
                 val now = System.currentTimeMillis()
                 val disabled = _disabledSources.value
-                var anySuccess = false
                 // Загружаем каждый источник независимо
                 for (source in sources) {
                     // Пропускаем временно отключённые источники
@@ -554,6 +558,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 // Задача отменена пользователем — не считаем это ошибкой
                 throw e
             } finally {
+                val totalDuration = SystemClock.elapsedRealtime() - loadStart
+                if (BuildConfig.DEBUG) {
+                    Log.d("NewsApp.FeedLoader", "loadPosts: total=${totalDuration}ms sources=${sources.size} anySuccess=$anySuccess")
+                }
                 _isLoading.value = false
             }
         }
@@ -571,9 +579,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val maxAttempts = 3
         val delays = listOf(1000L, 2000L) // задержки перед 2-й и 3-й попыткой
         var lastException: Exception? = null
+        val sourceStart = SystemClock.elapsedRealtime()
+        val sourceId = safeSourceId(source)
+        var attemptsUsed = 0
+        var sourceResult = "failure"
+        var sourcePosts = 0
         for (attempt in 0 until maxAttempts) {
             // Проверяем отмену перед каждой попыткой
             if (!(viewModelScope.coroutineContext[Job]?.isActive ?: true)) throw CancellationException("Загрузка отменена")
+            val attemptStart = SystemClock.elapsedRealtime()
             try {
                 val feedUrl = if (source.type == "YOUTUBE") resolveYoutubeFeedUrl(source.url) else source.url
                 val xml = withContext(Dispatchers.Default) {
@@ -607,12 +621,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         e.printStackTrace()
                     }
                 }
+                attemptsUsed = attempt + 1
+                sourceResult = "success"
+                sourcePosts = parsed.size
+                if (BuildConfig.DEBUG) {
+                    val attemptDuration = SystemClock.elapsedRealtime() - attemptStart
+                    Log.d("NewsApp.FeedLoader", "source=$sourceId attempt=$attemptsUsed/$maxAttempts duration=${attemptDuration}ms result=success posts=${parsed.size}")
+                }
                 return parsed
             } catch (e: CancellationException) {
+                attemptsUsed = attempt + 1
+                sourceResult = "cancelled"
+                if (BuildConfig.DEBUG) {
+                    val attemptDuration = SystemClock.elapsedRealtime() - attemptStart
+                    Log.d("NewsApp.FeedLoader", "source=$sourceId attempt=$attemptsUsed/$maxAttempts duration=${attemptDuration}ms result=cancelled")
+                }
                 throw e
             } catch (e: Exception) {
                 lastException = e
-                // Не повторяем HTTP 4xx, ошибки парсинга и другие несетевые ошибки
+                attemptsUsed = attempt + 1
+                sourceResult = "failure"
+                val errorType = if (e is java.io.IOException) "IOException" else if (e.message?.startsWith("HTTP 5") == true) "HTTP5xx" else "Exception"
+                if (BuildConfig.DEBUG) {
+                    val attemptDuration = SystemClock.elapsedRealtime() - attemptStart
+                    Log.d("NewsApp.FeedLoader", "source=$sourceId attempt=$attemptsUsed/$maxAttempts duration=${attemptDuration}ms result=failure error=$errorType")
+                }
                 if (!shouldRetry(e)) {
                     throw e
                 }
@@ -627,19 +660,28 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
         }
+        val sourceDuration = SystemClock.elapsedRealtime() - sourceStart
+        if (BuildConfig.DEBUG) {
+            Log.d("NewsApp.FeedLoader", "source=$sourceId total=${sourceDuration}ms attempts=$attemptsUsed result=$sourceResult posts=$sourcePosts")
+        }
         throw lastException ?: Exception("Неизвестная ошибка загрузки источника")
     }
-
-    /**
-     * Определяет, нужно ли повторять запрос после ошибки.
-     *
-     * Повторяем только сетевые ошибки (IOException, включая тайм-ауты) и HTTP 5xx.
-     * Не повторяем HTTP 4xx, ошибки парсинга XML и другие неисправимые ошибки.
-     */
     private fun shouldRetry(e: Exception): Boolean {
         return e is java.io.IOException || e.message?.let { msg ->
             msg.startsWith("HTTP 5")
         } == true
+    }
+
+    /**
+     * Безопасный идентификатор источника для диагностических логов: хост из URL,
+     * иначе siteName, иначе "unknown". Полный URL не логируется.
+     */
+    private fun safeSourceId(source: Source): String {
+        return try {
+            URI(source.url).host ?: source.label ?: "unknown"
+        } catch (e: Exception) {
+            source.label ?: "unknown"
+        }
     }
 
     /** Дайджест «Утро»: посты за последние 12 часов (кроме уже прочитанных). */
