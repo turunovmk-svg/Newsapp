@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -471,6 +472,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         // Отменяем предыдущую задачу загрузки, если она ещё активна
         currentLoadJob?.cancel()
         currentLoadJob = viewModelScope.launch {
+            val myJob = coroutineContext[Job]
             val allSources = _sources.value
             val folder = _selectedFolder.value
             val sources = if (folder.isBlank()) allSources else allSources.filter { it.folder == folder }
@@ -562,7 +564,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 if (BuildConfig.DEBUG) {
                     Log.d("NewsApp.FeedLoader", "loadPosts: total=${totalDuration}ms sources=${sources.size} anySuccess=$anySuccess")
                 }
-                _isLoading.value = false
+                // Сбрасываем флаг загрузки только если текущая корутина всё ещё активна
+                // и не была отменена. Если старая задача отменена новой, не сбрасываем флаг,
+                // чтобы не скрыть активную загрузку от пользователя.
+                if (currentLoadJob === myJob) {
+                    _isLoading.value = false
+                }
             }
         }
         return currentLoadJob!!
@@ -579,6 +586,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val maxAttempts = 3
         val delays = listOf(1000L, 2000L) // задержки перед 2-й и 3-й попыткой
         var lastException: Exception? = null
+        val myJob = currentCoroutineContext()[Job]!!  // Текущая корутина для проверки отмены
         val sourceStart = SystemClock.elapsedRealtime()
         val sourceId = safeSourceId(source)
         var attemptsUsed = 0
@@ -586,13 +594,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         var sourcePosts = 0
         for (attempt in 0 until maxAttempts) {
             // Проверяем отмену перед каждой попыткой
-            if (!(viewModelScope.coroutineContext[Job]?.isActive ?: true)) throw CancellationException("Загрузка отменена")
+            myJob.isActive ?: throw CancellationException("Загрузка отменена")
             val attemptStart = SystemClock.elapsedRealtime()
             try {
                 val feedUrl = if (source.type == "YOUTUBE") resolveYoutubeFeedUrl(source.url) else source.url
                 val xml = withContext(Dispatchers.Default) {
                     fetchXml(feedUrl)
                 }
+                // Проверяем отмену корутины после сетевого запроса
+                myJob.isActive ?: throw CancellationException("Загрузка отменена")
                 var parsed = withContext(Dispatchers.Default) {
                     parseFeed(source.type, xml)
                 }
@@ -610,6 +620,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                             val pagedUrl = if (feedUrl.contains("?")) "$feedUrl&before=$lastBefore"
                             else "$feedUrl?before=$lastBefore"
                             val xml2 = withContext(Dispatchers.Default) { fetchXml(pagedUrl) }
+                            // Проверяем отмену корутины после второго сетевого запроса
+                            myJob.isActive ?: throw CancellationException("Загрузка отменена")
                             val parsed2 = withContext(Dispatchers.Default) {
                                 parseFeed(source.type, xml2)
                             }
@@ -656,7 +668,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         delay(delayMs)
                     }
                     // Проверяем отмену после задержки
-                    if (!(viewModelScope.coroutineContext[Job]?.isActive ?: true)) throw CancellationException("Загрузка отменена")
+                    myJob.isActive ?: throw CancellationException("Загрузка отменена")
                 }
             }
         }
