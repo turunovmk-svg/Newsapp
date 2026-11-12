@@ -760,27 +760,48 @@ fun HomeScreen(
     var isOffline by remember { mutableStateOf(false) }
     DisposableEffect(Unit) {
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
-        val request = NetworkRequest.Builder()
-            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-            .build()
-        val callback = object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) {
-                isOffline = false
+
+        // Начальное состояние из текущей сети (включая первый запуск без интернета)
+        val currentNetwork = cm.activeNetwork
+        val currentCaps = currentNetwork?.let { cm.getNetworkCapabilities(it) }
+        isOffline = currentCaps?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) == false ||
+                    currentCaps?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED) == false
+
+        val callback = object : android.net.ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: android.net.Network) {
+                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    isOffline = false
+                }
             }
-            override fun onLost(network: Network) {
-                isOffline = true
+            override fun onLost(network: android.net.Network) {
+                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    isOffline = true
+                }
             }
             override fun onUnavailable() {
-                isOffline = true
+                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    isOffline = true
+                }
             }
             override fun onCapabilitiesChanged(
-                network: Network,
-                networkCapabilities: NetworkCapabilities
+                network: android.net.Network,
+                networkCapabilities: android.net.NetworkCapabilities
             ) {
-                isOffline = !networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    isOffline = !networkCapabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) ||
+                              !networkCapabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+                }
             }
         }
-        cm.registerNetworkCallback(request, callback)
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            cm.registerDefaultNetworkCallback(callback)
+        } else {
+            val request = android.net.NetworkRequest.Builder()
+                .addCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                .build()
+            cm.registerNetworkCallback(request, callback)
+        }
         onDispose {
             cm.unregisterNetworkCallback(callback)
         }
