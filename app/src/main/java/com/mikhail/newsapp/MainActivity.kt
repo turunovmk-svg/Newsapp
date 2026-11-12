@@ -1535,6 +1535,50 @@ fun SwipeableNewsCard(
                 }
             )
     ) {
+        // Подсказка «В избранное» при свайпе вправо
+        if (animatedOffset > 10f) {
+            Row(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .padding(horizontal = UiSizes.SpacerMedium),
+                horizontalArrangement = Arrangement.spacedBy(UiSizes.SpacerXSmall),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_favorite),
+                    contentDescription = "В избранное",
+                    tint = CyberColors.AccentBlue,
+                    modifier = Modifier.size(16.dp)
+                )
+                Text(
+                    text = "В избранное",
+                    style = CyberTypography.BodySmall.copy(fontSize = 11.sp),
+                    color = CyberColors.AccentBlue,
+                )
+            }
+        }
+        // Подсказка «Прочитано» при свайпе влево
+        if (animatedOffset < -10f) {
+            Row(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(horizontal = UiSizes.SpacerMedium),
+                horizontalArrangement = Arrangement.spacedBy(UiSizes.SpacerXSmall),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Прочитано",
+                    style = CyberTypography.BodySmall.copy(fontSize = 11.sp),
+                    color = CyberColors.Success,
+                )
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_check),
+                    contentDescription = "Прочитано",
+                    tint = CyberColors.Success,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
         NewsCard(
             post = post,
             isFavorite = isFavorite,
