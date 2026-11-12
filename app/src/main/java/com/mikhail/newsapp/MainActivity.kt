@@ -76,6 +76,7 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.Button
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -767,16 +768,34 @@ fun HomeScreen(
                 .fillMaxWidth()
                 .padding(horizontal = UiSizes.ScreenPadding, vertical = UiSizes.SpacerXSmall)
                 .clip(RoundedCornerShape(50))
-                .background(CyberColors.Warning)
-                .padding(horizontal = UiSizes.CardPadding, vertical = UiSizes.SpacerSmall),
+                .background(CyberColors.Warning.copy(alpha = 0.9f))
+                .padding(horizontal = UiSizes.ScreenPadding, vertical = UiSizes.SpacerXSmall),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+            horizontalArrangement = Arrangement.spacedBy(UiSizes.SpacerSmall)
         ) {
+            Text(
+                text = "⚠",
+                style = CyberTypography.BodySmall,
+                color = CyberColors.TextPrimary,
+            )
             Text(
                 text = "Нет сети — показаны сохранённые копии",
                 style = CyberTypography.BodySmall,
-                color = CyberColors.Warning,
+                color = CyberColors.TextPrimary,
             )
+            Spacer(modifier = Modifier.weight(1f))
+            TextButton(
+                onClick = {
+                    if (!isLoading) viewModel.loadPosts()
+                },
+                enabled = !isLoading,
+            ) {
+                Text(
+                    text = "Повторить",
+                    style = CyberTypography.BodySmall,
+                    color = CyberColors.AccentBlue,
+                )
+            }
         }
     }
 
