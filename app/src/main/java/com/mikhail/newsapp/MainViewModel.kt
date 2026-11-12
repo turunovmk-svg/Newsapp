@@ -9,7 +9,10 @@ import androidx.lifecycle.viewModelScope
 import com.mikhail.newsapp.data.Source
 import com.mikhail.newsapp.data.SourceType
 import com.mikhail.newsapp.data.Post
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,20 +27,13 @@ import okhttp3.Request
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 
-class MainViewModel(application: Application) : AndroidViewModel(application) {
-
-    companion object {
-        private const val USER_AGENT =
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
-        const val MAX_POSTS_PER_SOURCE = 20
-    }
-
-    private val prefs: SharedPreferences =
-        getApplication<Application>().getSharedPreferences("NewsAppPrefs", Context.MODE_PRIVATE)
-    private val httpClient = OkHttpClient.Builder()
+class MainViewModel(
+    application: Application,
+    httpClient: OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(10_000, java.util.concurrent.TimeUnit.MILLISECONDS)
-        .readTimeout(10_000, java.util.concurrent.TimeUnit.MILLISECONDS)
+        .readTimeout(15_000, java.util.concurrent.TimeUnit.MILLISECONDS)
         .writeTimeout(10_000, java.util.concurrent.TimeUnit.MILLISECONDS)
+        .callTimeout(30_000, java.util.concurrent.TimeUnit.MILLISECONDS)
         .addInterceptor { chain ->
             val request = chain.request().newBuilder()
                 .header("User-Agent", USER_AGENT)
@@ -45,6 +41,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             chain.proceed(request)
         }
         .build()
+) : AndroidViewModel(application) {
+
+    companion object {
+        private const val USER_AGENT =
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
+        const val MAX_POSTS_PER_SOURCE = 20
+    }
+
+    private val prefs: SharedPreferences = getApplication<Application>().getSharedPreferences("NewsAppPrefs", Context.MODE_PRIVATE)
+    private val httpClient: OkHttpClient = httpClient
 
     private val _posts = MutableStateFlow<List<Post>>(emptyList())
     val posts: StateFlow<List<Post>> = _posts.asStateFlow()
@@ -90,6 +96,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // ---------- Счётчик неудач источника (url → количество неудач подряд) ----------
     private val _sourceErrorCount = MutableStateFlow<Map<String, Int>>(emptyMap())
     val sourceErrorCount: StateFlow<Map<String, Int>> = _sourceErrorCount.asStateFlow()
+
+    // ---------- Посты по источникам (url → список постов этого источника) ----------
+    // Позволяет при сбое одного источника оставить его предыдущие новости,
+    // не теряя их при перезаписи общей ленты.
+    private val _postsBySource = MutableStateFlow<Map<String, List<Post>>>(emptyMap())
+    val postsBySource: StateFlow<Map<String, List<Post>>> = _postsBySource.asStateFlow()
+
+    // ---------- Текущая задача загрузки (для отмены при повторном нажатии "Обновить") ----------
+    private var currentLoadJob: Job? = null
 
     // ---------- Временно отключённые источники (url → время истечения в мс) ----------
     private val _disabledSources = MutableStateFlow<Map<String, Long>>(emptyMap())
@@ -375,6 +390,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _sources.value = sources
     }
 
+    /** Устанавливает источники без записи в prefs (для тестов). */
+    fun setSourcesForTest(sources: List<Source>) {
+        _sources.value = sources
+    }
+
     /** Добавляет источник по вставленной ссылке: тип определяется автоматически. */
     fun addSource(type: String, url: String, folder: String = "") {
         val detected = Source.detect(url, type)
@@ -447,24 +467,26 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /** Загружает посты из всех сохранённых источников. */
-    fun loadPosts() {
-        viewModelScope.launch {
+    fun loadPosts(): Job {
+        // Отменяем предыдущую задачу загрузки, если она ещё активна
+        currentLoadJob?.cancel()
+        currentLoadJob = viewModelScope.launch {
             val allSources = _sources.value
             val folder = _selectedFolder.value
             val sources = if (folder.isBlank()) allSources else allSources.filter { it.folder == folder }
             if (sources.isEmpty()) {
                 _posts.value = emptyList()
+                _postsBySource.value = emptyMap()
                 _isLoading.value = false
                 return@launch
             }
             _isLoading.value = true
             _error.value = null
             try {
-                val allPosts = mutableListOf<Post>()
-                var success = false
                 val now = System.currentTimeMillis()
                 val disabled = _disabledSources.value
-                val errorCount = _sourceErrorCount.value
+                var anySuccess = false
+                // Загружаем каждый источник независимо
                 for (source in sources) {
                     // Пропускаем временно отключённые источники
                     val disableUntil = disabled[source.url]
@@ -475,40 +497,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         _sourceErrorCount.value = _sourceErrorCount.value - source.url
                     }
                     try {
-                        val feedUrl = if (source.type == "YOUTUBE") resolveYoutubeFeedUrl(source.url) else source.url
-                        val xml = withContext(Dispatchers.Default) {
-                            fetchXml(feedUrl)
-                        }
-                        var parsed = withContext(Dispatchers.Default) {
-                            parseFeed(source.type, xml)
-                        }
-                        // Ограничиваем количество постов из одного источника
-                        if (parsed.size > MAX_POSTS_PER_SOURCE) {
-                            parsed = parsed.take(MAX_POSTS_PER_SOURCE)
-                        }
-                        // Telegram: догружаем вторую страницу превью (старые посты)
-                        if (source.type == "TELEGRAM" && parsed.size >= 10) {
-                            try {
-                                val lastBefore = parsed.last().sourceUrl
-                                    ?.substringAfterLast("/")
-                                    ?.takeIf { it.isNotBlank() }
-                                if (lastBefore != null) {
-                                    val pagedUrl = if (feedUrl.contains("?")) "$feedUrl&before=$lastBefore"
-                                    else "$feedUrl?before=$lastBefore"
-                                    val xml2 = withContext(Dispatchers.Default) { fetchXml(pagedUrl) }
-                                    val parsed2 = withContext(Dispatchers.Default) {
-                                        parseFeed(source.type, xml2)
-                                    }
-                                    // склеиваем без дублей
-                                    val seen = parsed.map { it.id }.toSet()
-                                    parsed = parsed + parsed2.filter { it.id !in seen }
-                                }
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                            }
-                        }
-                        allPosts.addAll(parsed)
-                        success = true
+                        val parsed = loadSourceWithRetries(source)
+                        // Успешная загрузка — обновляем посты этого источника
+                        _postsBySource.value = _postsBySource.value + (source.url to parsed)
+                        anySuccess = true
                         // Сбрасываем счётчик неудач при успехе
                         if (_sourceErrorCount.value.containsKey(source.url)) {
                             _sourceErrorCount.value = _sourceErrorCount.value - source.url
@@ -521,6 +513,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                             _sourceErrors.value = _sourceErrors.value + (source.url to "Источник загрузился, но новостей не найдено")
                         }
                     } catch (e: Exception) {
+                        if (e is CancellationException) {
+                            throw e
+                        }
                         e.printStackTrace()
                         // Увеличиваем счётчик неудач
                         val currentCount = _sourceErrorCount.value[source.url] ?: 0
@@ -532,37 +527,122 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                             val disableUntil = now + 24 * 60 * 60 * 1000L
                             _disabledSources.value = _disabledSources.value + (source.url to disableUntil)
                         }
+                        // При ошибке источника оставляем его предыдущие посты в _postsBySource (не трогаем)
                     }
                 }
-                if (allPosts.isEmpty() && _posts.value.isNotEmpty()) {
-                    // Сохраняем предыдущие посты, если новая загрузка не вернула ничего
-                } else {
-                    // Дедупликация: 1) по оригинальной ссылке (originalUrl для GNEWS, иначе sourceUrl)
-                    // 2) по точному совпадению заголовка (без агрессивной нормализации, чтобы не объединить разные статьи)
-                    fun normalizeTitle(t: String): String {
-                        return t.lowercase().trim()
-                    }
-                    val byUrl = allPosts.distinctBy { it.originalUrl ?: it.sourceUrl ?: it.title }
-                    val seenTitles = mutableSetOf<String>()
-                    val deduplicatedPosts = byUrl.filter { post ->
-                        val key = normalizeTitle(post.title)
-                        if (key.isEmpty()) true // без заголовка не считаем дублем
-                        else if (key in seenTitles) false
-                        else { seenTitles.add(key); true }
-                    }
-                    _posts.value = deduplicatedPosts.sortedByDescending { it.publishedAt ?: "" }
+                // Объединяем посты всех источников (включая старые посты из ошибочных источников)
+                val allPosts = _postsBySource.value.values.flatten()
+                // Дедупликация: 1) по оригинальной ссылке (originalUrl для GNEWS, иначе sourceUrl)
+                // 2) по точному совпадению заголовка (без агрессивной нормализации, чтобы не объединить разные статьи)
+                fun normalizeTitle(t: String): String {
+                    return t.lowercase().trim()
                 }
-                if (!success && _posts.value.isEmpty()) {
+                val byUrl = allPosts.distinctBy { it.originalUrl ?: it.sourceUrl ?: it.title }
+                val seenTitles = mutableSetOf<String>()
+                val deduplicatedPosts = byUrl.filter { post ->
+                    val key = normalizeTitle(post.title)
+                    if (key.isEmpty()) true // без заголовка не считаем дублем
+                    else if (key in seenTitles) false
+                    else { seenTitles.add(key); true }
+                }
+                _posts.value = deduplicatedPosts.sortedByDescending { it.publishedAt ?: "" }
+                if (!anySuccess && _posts.value.isEmpty()) {
                     _error.value = "Не удалось загрузить новости ни из одного источника"
                 }
                 // Кэшируем загруженное для офлайна
-                if (allPosts.isNotEmpty()) {
+                if (_posts.value.isNotEmpty()) {
                     saveCachedPosts(_posts.value)
                 }
+            } catch (e: CancellationException) {
+                // Задача отменена пользователем — не считаем это ошибкой
+                throw e
             } finally {
                 _isLoading.value = false
             }
         }
+        return currentLoadJob!!
+    }
+
+    /**
+     * Загружает посты одного источника с ограниченными повторными попытками.
+     *
+     * Повторяет только сетевые ошибки (IOException) и HTTP 5xx.
+     * Не повторяет HTTP 4xx, ошибки парсинга XML и отменённые операции.
+     * Максимум 3 попытки: первая + 2 повтора с задержками 1с и 2с.
+     */
+    private suspend fun loadSourceWithRetries(source: Source): List<Post> {
+        val maxAttempts = 3
+        val delays = listOf(1000L, 2000L) // задержки перед 2-й и 3-й попыткой
+        var lastException: Exception? = null
+        for (attempt in 0 until maxAttempts) {
+            // Проверяем отмену перед каждой попыткой
+            if (!(viewModelScope.coroutineContext[Job]?.isActive ?: true)) throw CancellationException("Загрузка отменена")
+            try {
+                val feedUrl = if (source.type == "YOUTUBE") resolveYoutubeFeedUrl(source.url) else source.url
+                val xml = withContext(Dispatchers.Default) {
+                    fetchXml(feedUrl)
+                }
+                var parsed = withContext(Dispatchers.Default) {
+                    parseFeed(source.type, xml)
+                }
+                // Ограничиваем количество постов из одного источника
+                if (parsed.size > MAX_POSTS_PER_SOURCE) {
+                    parsed = parsed.take(MAX_POSTS_PER_SOURCE)
+                }
+                // Telegram: догружаем вторую страницу превью (старые посты)
+                if (source.type == "TELEGRAM" && parsed.size >= 10) {
+                    try {
+                        val lastBefore = parsed.last().sourceUrl
+                            ?.substringAfterLast("/")
+                            ?.takeIf { it.isNotBlank() }
+                        if (lastBefore != null) {
+                            val pagedUrl = if (feedUrl.contains("?")) "$feedUrl&before=$lastBefore"
+                            else "$feedUrl?before=$lastBefore"
+                            val xml2 = withContext(Dispatchers.Default) { fetchXml(pagedUrl) }
+                            val parsed2 = withContext(Dispatchers.Default) {
+                                parseFeed(source.type, xml2)
+                            }
+                            // склеиваем без дублей
+                            val seen = parsed.map { it.id }.toSet()
+                            parsed = parsed + parsed2.filter { it.id !in seen }
+                        }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+                return parsed
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                lastException = e
+                // Не повторяем HTTP 4xx, ошибки парсинга и другие несетевые ошибки
+                if (!shouldRetry(e)) {
+                    throw e
+                }
+                // Задержка перед следующей попыткой (если не последняя)
+                if (attempt < maxAttempts - 1) {
+                    val delayMs = delays[attempt]
+                    withContext(Dispatchers.Default) {
+                        delay(delayMs)
+                    }
+                    // Проверяем отмену после задержки
+                    if (!(viewModelScope.coroutineContext[Job]?.isActive ?: true)) throw CancellationException("Загрузка отменена")
+                }
+            }
+        }
+        throw lastException ?: Exception("Неизвестная ошибка загрузки источника")
+    }
+
+    /**
+     * Определяет, нужно ли повторять запрос после ошибки.
+     *
+     * Повторяем только сетевые ошибки (IOException, включая тайм-ауты) и HTTP 5xx.
+     * Не повторяем HTTP 4xx, ошибки парсинга XML и другие неисправимые ошибки.
+     */
+    private fun shouldRetry(e: Exception): Boolean {
+        return e is java.io.IOException || e.message?.let { msg ->
+            msg.startsWith("HTTP 5")
+        } == true
     }
 
     /** Дайджест «Утро»: посты за последние 12 часов (кроме уже прочитанных). */
