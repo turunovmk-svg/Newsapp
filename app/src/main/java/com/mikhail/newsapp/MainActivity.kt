@@ -727,36 +727,7 @@ fun HomeScreen(
     val refreshState = rememberPullToRefreshState()
     val context = LocalContext.current
 
-    if (posts.isEmpty() && error == null && !isLoading) {
-        // Нет источников — показываем экран с предложением добавить источник
-        Column(
-            modifier = modifier.fillMaxSize().padding(UiSizes.ScreenPadding),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = stringResource(id = R.string.empty_home),
-                style = CyberTypography.HeadlineMedium,
-                color = CyberColors.TextPrimary
-            )
-            Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
-            Text(
-                text = stringResource(id = R.string.add_sources_hint),
-                style = CyberTypography.BodyMedium,
-                color = CyberColors.TextSecondary,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
-            NeonButton(
-                onClick = onAddSource,
-                modifier = Modifier.fillMaxWidth(),
-                text = stringResource(id = R.string.add_source_button)
-            )
-        }
-        return
-    }
-
-    // ---------- Офлайн-индикатор ----------
+    // ---------- Офлайн-индикатор (объявляется раньше, чтобы использовать в условиях ниже) ----------
     var isOffline by remember { mutableStateOf(false) }
     DisposableEffect(Unit) {
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
@@ -805,6 +776,35 @@ fun HomeScreen(
         onDispose {
             cm.unregisterNetworkCallback(callback)
         }
+    }
+
+    if (posts.isEmpty() && error == null && !isLoading && !isOffline) {
+        // Нет источников — показываем экран с предложением добавить источник
+        Column(
+            modifier = modifier.fillMaxSize().padding(UiSizes.ScreenPadding),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = stringResource(id = R.string.empty_home),
+                style = CyberTypography.HeadlineMedium,
+                color = CyberColors.TextPrimary
+            )
+            Spacer(modifier = Modifier.height(UiSizes.SpacerMedium))
+            Text(
+                text = stringResource(id = R.string.add_sources_hint),
+                style = CyberTypography.BodyMedium,
+                color = CyberColors.TextSecondary,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
+            NeonButton(
+                onClick = onAddSource,
+                modifier = Modifier.fillMaxWidth(),
+                text = stringResource(id = R.string.add_source_button)
+            )
+        }
+        return
     }
 
     if (isOffline) {
@@ -1444,8 +1444,8 @@ fun HomeScreen(
     }
     } // конец Box
 
-    // Состояние ошибки — показываем под лентой
-    if (error != null && posts.isEmpty()) {
+    // Состояние ошибки — показываем под лентой (кроме случая отключённой сети, где показывается баннер офлайна)
+    if (error != null && posts.isEmpty() && !isOffline) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
