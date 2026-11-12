@@ -2,6 +2,10 @@ package com.mikhail.newsapp
 
 import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.net.Uri
 import android.os.Bundle
 import android.app.Activity
@@ -90,6 +94,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -753,12 +758,31 @@ fun HomeScreen(
 
     // ---------- Офлайн-индикатор ----------
     var isOffline by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
-            val caps = cm.activeNetwork?.let { cm.getNetworkCapabilities(it) }
-            isOffline = caps?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) != true
-            kotlinx.coroutines.delay(5000)
+    DisposableEffect(Unit) {
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+        val request = NetworkRequest.Builder()
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            .build()
+        val callback = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                isOffline = false
+            }
+            override fun onLost(network: Network) {
+                isOffline = true
+            }
+            override fun onUnavailable() {
+                isOffline = true
+            }
+            override fun onCapabilitiesChanged(
+                network: Network,
+                networkCapabilities: NetworkCapabilities
+            ) {
+                isOffline = !networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            }
+        }
+        cm.registerNetworkCallback(request, callback)
+        onDispose {
+            cm.unregisterNetworkCallback(callback)
         }
     }
 
