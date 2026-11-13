@@ -34,7 +34,11 @@ class NewsCheckWorker(
         const val KEY_INTERVAL_HOURS = "notif_interval_hours"
     }
 
-    private val client = OkHttpClient()
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(10_000, java.util.concurrent.TimeUnit.MILLISECONDS)
+        .readTimeout(15_000, java.util.concurrent.TimeUnit.MILLISECONDS)
+        .callTimeout(30_000, java.util.concurrent.TimeUnit.MILLISECONDS)
+        .build()
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         try {

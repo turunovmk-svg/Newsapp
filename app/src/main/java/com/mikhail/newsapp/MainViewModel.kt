@@ -28,8 +28,6 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import org.xmlpull.v1.XmlPullParser
-import org.xmlpull.v1.XmlPullParserFactory
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -454,6 +452,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 }
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 // путь не подошёл — пробуем следующий
             }
         }
@@ -476,6 +475,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val allSources = _sources.value
             val folder = _selectedFolder.value
             val sources = if (folder.isBlank()) allSources else allSources.filter { it.folder == folder }
+            _error.value = null
             if (sources.isEmpty()) {
                 _posts.value = emptyList()
                 _postsBySource.value = emptyMap()
@@ -483,7 +483,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 return@launch
             }
             _isLoading.value = true
-            _error.value = null
             val loadStart = SystemClock.elapsedRealtime()
             var anySuccess = false
             try {
@@ -502,9 +501,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     try {
                         val parsed = loadSourceWithRetries(source)
                         // Успешная загрузка — обновляем посты этого источника, если есть новые
-                        if (parsed.isNotEmpty()) {
-                            _postsBySource.value = _postsBySource.value + (source.url to parsed)
-                        }
+                        _postsBySource.value = FeedMerge.mergeSourcePosts(_postsBySource.value, source.url, parsed)
                         anySuccess = true
                         // Сбрасываем счётчик неудач при успехе
                         if (_sourceErrorCount.value.containsKey(source.url)) {
@@ -536,24 +533,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 }
                 // Объединяем посты всех источников (включая старые посты из ошибочных источников)
-                val allPosts = _postsBySource.value.values.flatten()
-                // Дедупликация: 1) по оригинальной ссылке (originalUrl для GNEWS, иначе sourceUrl)
-                // 2) по точному совпадению заголовка (без агрессивной нормализации, чтобы не объединить разные статьи)
-                fun normalizeTitle(t: String): String {
-                    return t.lowercase().trim()
-                }
-                val byUrl = allPosts.distinctBy { it.originalUrl ?: it.sourceUrl ?: it.title }
-                val seenTitles = mutableSetOf<String>()
-                val deduplicatedPosts = byUrl.filter { post ->
-                    val key = normalizeTitle(post.title)
-                    if (key.isEmpty()) true // без заголовка не считаем дублем
-                    else if (key in seenTitles) false
-                    else { seenTitles.add(key); true }
-                }
-                _posts.value = deduplicatedPosts.sortedByDescending { it.publishedAt ?: "" }
-                if (!anySuccess && _posts.value.isEmpty()) {
-                    _error.value = "Не удалось загрузить новости ни из одного источника"
-                }
+                _posts.value = FeedMerge.flattenDedupSort(_postsBySource.value)
+                _error.value = FeedMerge.decideError(anySuccess, _posts.value.size)
                 // Кэшируем загруженное для офлайна
                 if (_posts.value.isNotEmpty()) {
                     saveCachedPosts(_posts.value)
@@ -596,7 +577,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         var sourcePosts = 0
         for (attempt in 0 until maxAttempts) {
             // Проверяем отмену перед каждой попыткой
-            myJob.isActive ?: throw CancellationException("Загрузка отменена")
+            if (!myJob.isActive) throw CancellationException("Загрузка отменена")
             val attemptStart = SystemClock.elapsedRealtime()
             try {
                 val feedUrl = if (source.type == "YOUTUBE") resolveYoutubeFeedUrl(source.url) else source.url
@@ -604,7 +585,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     fetchXml(feedUrl)
                 }
                 // Проверяем отмену корутины после сетевого запроса
-                myJob.isActive ?: throw CancellationException("Загрузка отменена")
+                if (!myJob.isActive) throw CancellationException("Загрузка отменена")
                 var parsed = withContext(Dispatchers.Default) {
                     parseFeed(source.type, xml)
                 }
@@ -623,7 +604,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                             else "$feedUrl?before=$lastBefore"
                             val xml2 = withContext(Dispatchers.Default) { fetchXml(pagedUrl) }
                             // Проверяем отмену корутины после второго сетевого запроса
-                            myJob.isActive ?: throw CancellationException("Загрузка отменена")
+                            if (!myJob.isActive) throw CancellationException("Загрузка отменена")
                             val parsed2 = withContext(Dispatchers.Default) {
                                 parseFeed(source.type, xml2)
                             }
@@ -632,8 +613,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                             parsed = parsed + parsed2.filter { it.id !in seen }
                         }
                     } catch (e: Exception) {
+                        if (e is CancellationException) throw e
                         e.printStackTrace()
                     }
+                }
+                // Итоговый лимит постов источника (после возможной склейки 2-й страницы Telegram)
+                if (parsed.size > MAX_POSTS_PER_SOURCE) {
+                    parsed = parsed.take(MAX_POSTS_PER_SOURCE)
                 }
                 attemptsUsed = attempt + 1
                 sourceResult = "success"
@@ -670,7 +656,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         delay(delayMs)
                     }
                     // Проверяем отмену после задержки
-                    myJob.isActive ?: throw CancellationException("Загрузка отменена")
+                    if (!myJob.isActive) throw CancellationException("Загрузка отменена")
                 }
             }
         }
@@ -680,12 +666,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
         throw lastException ?: Exception("Неизвестная ошибка загрузки источника")
     }
-    private fun shouldRetry(e: Exception): Boolean {
-        return e is java.io.IOException || e.message?.let { msg ->
-            msg.startsWith("HTTP 5")
-        } == true
-    }
-
     /**
      * Безопасный идентификатор источника для диагностических логов: хост из URL,
      * иначе siteName, иначе "unknown". Полный URL не логируется.
@@ -737,18 +717,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * Апскейл картинок для CDN, которые отдают миниатюры по размеру в пути (BBC ichef и т.п.).
      * 240px → 1024px: резче на полном экране.
      */
-    private fun upgradeImageUrl(url: String): String {
-        val u = url.trim()
-        return when {
-            // BBC: https://ichef.bbci.co.uk/ace/ws/240/... → .../1024/...
-            u.contains("ichef.bbci.co.uk/ace/ws/") ->
-                Regex("""\/ace\/ws\/\d+\/""").replace(u, "/ace/ws/1024/")
-            u.contains("ichef-1.bbci.co.uk/ace/ws/") ->
-                Regex("""\/ace\/ws\/\d+\/""").replace(u, "/ace/ws/1024/")
-            else -> u
-        }
-    }
-
     private suspend fun parseFeed(type: String, xml: String): List<Post> {
         return withContext(Dispatchers.Default) {
             when (type) {
@@ -790,6 +758,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 }
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 e.printStackTrace()
                 url
             }
@@ -797,277 +766,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /** Категоризация статьи по темам на основе заголовка и описания. */
-    private fun categorizePost(title: String?, description: String?): List<String> {
-        val text = (title ?: "") + " " + (description ?: "")
-        val lower = text.lowercase()
-        val tags = mutableListOf<String>()
-        if (lower.contains("политик") || lower.contains("выбор") || lower.contains("парламент") || lower.contains("президент") || lower.contains("депутат")) tags.add("Политика")
-        if (lower.contains("технолог") || lower.contains("гитхаб") || lower.contains("программ") || lower.contains("айти") || lower.contains("разработ") || lower.contains("сервер") || lower.contains("код")) tags.add("Технологии")
-        if (lower.contains("экон") || lower.contains("доллар") || lower.contains("валюта") || lower.contains("рынок") || lower.contains("бизнес") || lower.contains("финанс")) tags.add("Экономика")
-        if (lower.contains("спорт") || lower.contains("футбол") || lower.contains("баскетбол") || lower.contains("олимпи")) tags.add("Спорт")
-        if (lower.contains("культур") || lower.contains("кино") || lower.contains("музык") || lower.contains("книг") || lower.contains("艺术")) tags.add("Культура")
-        if (lower.contains("наука") || lower.contains("исследов") || lower.contains("учен") || lower.contains("космос")) tags.add("Наука")
-        if (lower.contains("здоров") || lower.contains("медиц") || lower.contains("врач") || lower.contains("лечен") || lower.contains("эпидеми")) tags.add("Здоровье")
-        if (lower.contains("погода") || lower.contains("климат") || lower.contains("эколог") || lower.contains("природ")) tags.add("Природа")
-        return tags
-    }
-
-    private fun parseRss(xml: String): List<Post> {
-        val posts = mutableListOf<Post>()
-        try {
-            val factory = XmlPullParserFactory.newInstance()
-            factory.isNamespaceAware = false
-            val parser = factory.newPullParser()
-            val input = java.io.StringReader(xml)
-            parser.setInput(input)
-
-            var eventType = parser.eventType
-            var currentTag: String? = null
-            var currentTitle: String? = null
-            var currentDesc: String? = null
-            var currentDate: String? = null
-            var currentLink: String? = null
-            var currentImageUrl: String? = null
-            var currentImageWidth = 0
-            var currentSiteUrl: String? = null
-            var currentSiteName: String? = null
-            var currentOriginalUrl: String? = null
-            var inItem = false
-
-            while (eventType != XmlPullParser.END_DOCUMENT) {
-                when (eventType) {
-                    XmlPullParser.START_TAG -> {
-                        val tag = parser.name
-                        currentTag = tag
-                        if (tag == "item") {
-                            inItem = true
-                            currentTitle = null
-                            currentDesc = null
-                            currentDate = null
-                            currentLink = null
-                            currentImageUrl = null
-                            currentImageWidth = 0
-                            currentSiteUrl = null
-                            currentSiteName = null
-                            currentOriginalUrl = null
-                        } else if (inItem && tag == "source") {
-                            // <source url="https://site.domain">Название</source> (Google News)
-                            currentSiteUrl = parser.getAttributeValue(null, "url")
-                        } else if (inItem && tag == "link" && currentLink == null) {
-                            // <link> — для GNEWS это редирект Google, для обычных RSS — прямая ссылка на статью
-                            currentOriginalUrl = parser.nextText()
-                            currentLink = currentOriginalUrl
-                        } else if (inItem && (tag == "enclosure" || tag == "content" || tag == "thumbnail"
-                                || tag == "media:content" || tag == "media:thumbnail" || tag == "itunes:image")) {
-                            val imgUrl = parser.getAttributeValue(null, "url")
-                                ?: parser.getAttributeValue(null, "href")
-                                ?: parser.getAttributeValue(null, "image")
-                            if (imgUrl != null && imgUrl.isNotEmpty()) {
-                                val declaredWidth = parser.getAttributeValue(null, "width")?.toIntOrNull() ?: 0
-                                // берём самый большой из доступных
-                                if (declaredWidth >= currentImageWidth) {
-                                    currentImageWidth = declaredWidth
-                                    currentImageUrl = imgUrl
-                                } else if (currentImageUrl == null) {
-                                    currentImageUrl = imgUrl
-                                }
-                            }
-                        }
-                    }
-                    XmlPullParser.TEXT -> {
-                        val text = parser.text.trim()
-                        if (text.isNotEmpty() && inItem) {
-                            when (currentTag) {
-                                "title" -> currentTitle = text
-                                "description" -> currentDesc = text
-                                "pubDate" -> currentDate = text
-                                "link" -> currentLink = text
-                                "source" -> currentSiteName = text
-                            }
-                        }
-                    }
-                    XmlPullParser.END_TAG -> {
-                        val tag = parser.name
-                        if (tag == "item") {
-                            inItem = false
-                            if (currentTitle != null) {
-                                // Fallback: <img src> в описании
-                                val finalImageUrl = currentImageUrl ?: run {
-                                    val desc = currentDesc ?: ""
-                                    val imgRegex = Regex("""<img[^>]+src=["']([^"']+)["']""", RegexOption.IGNORE_CASE)
-                                    imgRegex.find(desc)?.groupValues?.get(1)
-                                }
-                                posts.add(Post(
-                                    id = currentLink ?: currentTitle.hashCode().toString(),
-                                    title = currentTitle ?: "",
-                                    description = currentDesc,
-                                    publishedAt = currentDate,
-                                    sourceUrl = currentLink,
-                                    originalUrl = currentOriginalUrl,
-                                    imageUrl = finalImageUrl?.let { upgradeImageUrl(it) },
-                                    siteUrl = currentSiteUrl,
-                                    siteName = currentSiteName,
-                                    tags = categorizePost(currentTitle, currentDesc)
-                                ))
-                            }
-                            currentTitle = null
-                            currentDesc = null
-                            currentDate = null
-                            currentLink = null
-                            currentImageUrl = null
-                            currentSiteUrl = null
-                            currentSiteName = null
-                        }
-                        currentTag = null
-                    }
-                }
-                eventType = parser.next()
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        return posts
-    }
-
-    private fun parseYouTube(xml: String): List<Post> {
-        val posts = mutableListOf<Post>()
-        try {
-            val factory = XmlPullParserFactory.newInstance()
-            factory.isNamespaceAware = true
-            val parser = factory.newPullParser()
-            val input = java.io.StringReader(xml)
-            parser.setInput(input)
-
-            var eventType = parser.eventType
-            var currentTag: String? = null
-            var currentTitle: String? = null
-            var currentDesc: String? = null
-            var currentDate: String? = null
-            var currentLink: String? = null
-            var currentImageUrl: String? = null
-            var inEntry = false
-
-            while (eventType != XmlPullParser.END_DOCUMENT) {
-                when (eventType) {
-                    XmlPullParser.START_TAG -> {
-                        val tag = parser.name
-                        currentTag = tag
-                        if (tag == "entry") {
-                            inEntry = true
-                            currentTitle = null
-                            currentDesc = null
-                            currentDate = null
-                            currentLink = null
-                            currentImageUrl = null
-                        } else if (inEntry && tag == "link") {
-                            // YouTube Atom: <link rel="alternate" href="..."/>
-                            val href = parser.getAttributeValue(null, "href")
-                            if (href != null && (parser.getAttributeValue(null, "rel") == null || parser.getAttributeValue(null, "rel") == "alternate")) {
-                                currentLink = href
-                            }
-                        } else if (inEntry && (tag == "thumbnail" || tag == "media:thumbnail")) {
-                            val thumbUrl = parser.getAttributeValue(null, "url")
-                            if (thumbUrl != null && thumbUrl.isNotEmpty()) {
-                                currentImageUrl = thumbUrl
-                            }
-                        }
-                    }
-                    XmlPullParser.TEXT -> {
-                        val text = parser.text.trim()
-                        if (text.isNotEmpty() && inEntry) {
-                            when (currentTag) {
-                                "title" -> currentTitle = text
-                                "summary" -> currentDesc = text
-                                "published" -> currentDate = text
-                            }
-                        }
-                    }
-                    XmlPullParser.END_TAG -> {
-                        val tag = parser.name
-                        if (tag == "entry") {
-                            inEntry = false
-                            if (currentTitle != null) {
-                                posts.add(Post(
-                                    id = currentLink ?: currentTitle.hashCode().toString(),
-                                    title = currentTitle ?: "",
-                                    description = currentDesc,
-                                    publishedAt = currentDate,
-                                    sourceUrl = currentLink,
-                                    imageUrl = currentImageUrl
-                                ))
-                            }
-                            currentTitle = null
-                            currentDesc = null
-                            currentDate = null
-                            currentLink = null
-                        }
-                        currentTag = null
-                    }
-                }
-                eventType = parser.next()
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        return posts
-    }
-
     /**
      * Telegram: парсим публичное превью канала t.me/s/<channel> (без API-ключа).
      * Каждый пост — .tgme_widget_message внутри message_bubble.
      */
-    private fun parseTelegram(html: String): List<Post> {
-        val posts = mutableListOf<Post>()
-        try {
-            val doc = org.jsoup.Jsoup.parse(html)
-            val channelTitle = doc.selectFirst("div.tgme_channel_header_title, div.tgme_header_title")?.text() ?: "Telegram"
-            val messages = doc.select("div.tgme_widget_message")
-            for (msg in messages) {
-                val permalink = msg.attr("data-post").takeIf { it.isNotEmpty() }?.let { "https://t.me/$it" }
-                    ?: msg.selectFirst("a.tgme_widget_message_date")?.attr("href")?.takeIf { it.isNotEmpty() }
-                val date = msg.selectFirst("a.tgme_widget_message_date time")?.attr("datetime")
-                    ?: msg.selectFirst("time")?.attr("datetime")
-                    ?: msg.selectFirst("a.tgme_widget_message_date time")?.text()
-                val textEl = msg.selectFirst("div.tgme_widget_message_text")
-                // Только текст сообщения: без кнопок ("Поделиться", "Обсудить" и т.п.)
-                val rawText = textEl?.let { el ->
-                    el.select("script, style, a.tgme_widget_message_link_inline, .tgme_widget_message_meta").remove()
-                    el.wholeText().trim().ifEmpty { el.text().trim() }
-                }.orEmpty()
-                // Видео-пост: <video src=...> + постер (thumbnail)
-                val videoUrl = msg.selectFirst("video.js-message_video, video.tgme_widget_message_video, video")
-                    ?.attr("src")?.takeIf { it.isNotBlank() }
-                val videoThumb = msg.selectFirst(".tgme_widget_message_video_thumb")
-                    ?.attr("style")
-                    ?.let { Regex("url\\(['\"]?([^'\")]+)['\"]?\\)").find(it)?.groupValues?.get(1) }
-                val imageUrl = videoThumb
-                    ?: msg.selectFirst("a.tgme_widget_message_photo_wrap")?.attr("style")
-                        ?.let { Regex("url\\(['\"]?([^'\")]+)['\"]?\\)").find(it)?.groupValues?.get(1) }
-                    ?: msg.selectFirst("img.tgme_widget_message_photo_image")?.attr("src")
-                    ?: msg.selectFirst("img")?.attr("src")
-                if (rawText.isEmpty() && permalink == null && videoUrl == null) continue
-                val title = rawText.take(120).let { if (rawText.length > 120) "$it…" else it }
-                val id = permalink ?: rawText.hashCode().toString()
-                posts.add(
-                    Post(
-                        id = id,
-                        title = title,
-                        description = rawText.ifEmpty { null },
-                        publishedAt = date,
-                        sourceUrl = permalink ?: "https://t.me/s/$channelTitle",
-                        imageUrl = imageUrl,
-                        videoUrl = videoUrl,
-                        siteUrl = null,
-                        siteName = channelTitle
-                    )
-                )
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        return posts
-    }
-
     /** Добавляет или удаляет публикацию из избранного с сохранением в SharedPreferences. */
     fun toggleFavorite(post: Post) {
         val current = _favorites.value
