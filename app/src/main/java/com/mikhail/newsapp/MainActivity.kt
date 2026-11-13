@@ -12,9 +12,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.image
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.ContentScale
@@ -38,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.brush.horizontalGradient
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -609,23 +608,24 @@ fun ShortsScreen(viewModel: MainViewModel, navController: androidx.navigation.Na
         is PostsResult.Error -> {
             ErrorState(message = result.message, onRetry = { viewModel.loadPosts() })
         }
-        shortsPosts.isEmpty() -> {
-            EmptyState(
-                icon = Icons.Filled.PlayCircle,
-                title = stringResource(R.string.shorts_empty_title),
-                subtitle = stringResource(R.string.shorts_empty_subtitle),
-                buttonText = stringResource(R.string.add_source),
-                onButtonClick = { navController.navigate(Screen.AddSource.route) }
-            )
-        }
-        else -> {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp, bottom = 80.dp)
-            ) {
-                items(items = shortsPosts, key = { "${it.source.name}_${it.id}" }) { post ->
-                    ShortCard(post, viewModel, navController)
+        is PostsResult.Success -> {
+            if (shortsPosts.isEmpty()) {
+                EmptyState(
+                    icon = Icons.Filled.PlayCircle,
+                    title = stringResource(R.string.shorts_empty_title),
+                    subtitle = stringResource(R.string.shorts_empty_subtitle),
+                    buttonText = stringResource(R.string.add_source),
+                    onButtonClick = { navController.navigate(Screen.AddSource.route) }
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(16.dp, 16.dp, 16.dp, 80.dp)
+                ) {
+                    items(items = shortsPosts, key = { "${it.source.name}_${it.id}" }) { post ->
+                        ShortCard(post, viewModel, navController)
+                    }
                 }
             }
         }
@@ -742,12 +742,11 @@ fun ShortCard(post: UnifiedPost, viewModel: MainViewModel, navController: androi
         modifier = Modifier
             .fillMaxWidth()
             .height(400.dp)
-            .combinedClickable(
+            .clickable(
                 onClick = {
                     viewModel.selectPost(post)
                     navController.navigate("article_reader")
-                },
-                onDoubleClick = { viewModel.toggleFavorite(post.id) }
+                }
             ),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
@@ -770,9 +769,8 @@ fun ShortCard(post: UnifiedPost, viewModel: MainViewModel, navController: androi
                         modifier = Modifier.fillMaxSize()
                     )
                 } else {
-                    androidx.compose.foundation.background(
-                        modifier = Modifier.fillMaxSize(),
-                        brush = androidx.compose.ui.graphics.brush.horizontalGradient(
+                    Modifier.background(
+                        brush = Brush.horizontalGradient(
                             colors = listOf(
                                 MaterialTheme.colorScheme.primaryContainer,
                                 MaterialTheme.colorScheme.secondaryContainer

@@ -166,7 +166,7 @@ object NetworkClient {
                     break
                 }
                 if (attempt <= MAX_RETRIES) {
-                    Thread.sleep(500 * attempt)
+                    Thread.sleep((500 * attempt).toLong())
                 }
             }
 
@@ -313,7 +313,7 @@ object NetworkClient {
             val doc = builder.parse(InputSource(StringReader(xml)))
             val entries = doc.getElementsByTagName("entry")
             val posts = mutableListOf<UnifiedPost>()
-            for (i in 0 until entries.length.min(10)) {
+            for (i in 0 until minOf(entries.length, 10)) {
                 val entry = entries.item(i) as Element
                 val title = getTextContent(entry, "title") ?: continue
                 val link = getLinkHref(entry) ?: continue
