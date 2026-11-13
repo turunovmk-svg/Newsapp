@@ -104,6 +104,8 @@ dependencies {
     testImplementation "junit:junit:4.13.2"
     // Real XmlPullParser implementation for local unit tests (android.jar stub returns null otherwise)
     testImplementation "net.sf.kxml:kxml2:2.3.0"
+    // Real org.json for local unit tests (Post cache serialization round-trips)
+    testImplementation "org.json:json:20231013"
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:1.7.0"
     debugImplementation "androidx.compose.ui:ui-tooling:1.7.0"
     debugImplementation "androidx.compose.ui:ui-test-manifest:1.7.0"

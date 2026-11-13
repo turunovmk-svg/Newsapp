@@ -138,11 +138,32 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
 
     // ---------- Кэш постов (офлайн) ----------
-    private fun loadCachedPosts() {
-        val json = prefs.getString("posts_json", null) ?: return
-        val cached = Post.fromJsonList(json)
-        if (cached.isNotEmpty()) {
+    /**
+     * Читает и разбирает posts_json ОДИН раз (на Dispatchers.IO), показывает кэш в ленту
+     * и подрезает устаревшие записи по прежним правилам (CachePolicy, 7 дней).
+     *
+     * Безопасность:
+     *  - кэш в _posts ставится только если лента ещё пуста — не затираем свежий сетевой результат;
+     *  - prune-запись делается только если в prefs до сих пор тот же JSON (CAS) —
+     *    не перезаписываем более свежий кэш, записанный saveCachedPosts() из loadPosts();
+     *  - отсутствующий/пустой/битый JSON → Post.fromJsonList вернёт пустой список, ничего не пишем;
+     *  - отмена корутины пробрасывается через withContext как CancellationException.
+     */
+    private suspend fun initPostsCache() {
+        val json = withContext(Dispatchers.IO) { prefs.getString("posts_json", null) } ?: return
+        val cached = withContext(Dispatchers.IO) { Post.fromJsonList(json) }
+        if (cached.isEmpty()) return
+        if (_posts.value.isEmpty()) {
             _posts.value = cached.sortedByDescending { it.publishedAt ?: "" }
+        }
+        val fresh = CachePolicy.prune(cached, System.currentTimeMillis())
+        if (fresh.size != cached.size) {
+            val freshJson = Post.toJsonList(fresh)
+            withContext(Dispatchers.IO) {
+                if (prefs.getString("posts_json", null) == json) {
+                    prefs.edit().putString("posts_json", freshJson).apply()
+                }
+            }
         }
     }
 
@@ -297,8 +318,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         loadReadLater()
         loadReadIds()
         loadSettings()
-        loadCachedPosts()
-        clearOldCache()
+        // Кэш постов читаем/парсим один раз на IO (этап 9B), чтобы не блокировать старт
+        viewModelScope.launch { initPostsCache() }
         loadPosts()
         // Пересчёт непрочитанных
         viewModelScope.launch {
@@ -856,24 +877,4 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _posts.value = emptyList()
     }
 
-    /** Удаляет из кэша посты старше 7 дней. */
-    private fun clearOldCache() {
-        val cachedJson = prefs.getString("posts_json", null) ?: return
-        val cached = Post.fromJsonList(cachedJson)
-        val sevenDaysAgo = System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000L
-        val fresh = cached.filter { post ->
-            post.publishedAt?.let { dateStr ->
-                try {
-                    val sdf = java.text.SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss Z", java.util.Locale.US)
-                    val parsed = sdf.parse(dateStr)
-                    parsed?.time ?: 0L >= sevenDaysAgo
-                } catch (e: Exception) {
-                    true // если не распарсилось — оставляем
-                }
-            } ?: true
-        }
-        if (fresh.size != cached.size) {
-            prefs.edit().putString("posts_json", Post.toJsonList(fresh)).apply()
-        }
-    }
 }
