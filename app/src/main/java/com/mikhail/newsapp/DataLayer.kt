@@ -500,22 +500,24 @@ class MainViewModel(private val appContext: Context) : ViewModel() {
         }
     }
 
-    suspend fun loadPostsForUrl(type: SourceType, url: String): PostsResult = withTimeoutOrNull(15_000L) {
-        withContext(Dispatchers.IO) {
-            if (!url.startsWith("http://") && !url.startsWith("https://")) {
-                return@withContext PostsResult.Error("URL должен начинаться с http:// или https://")
-            }
-            when (type) {
-                SourceType.TELEGRAM -> {
-                    val channel = extractTelegramChannel(url)
-                    if (channel != null) PostsResult.Success(NetworkClient.fetchTelegramWithFallback(channel))
-                    else PostsResult.Error("Неверный формат Telegram URL")
-                }
-                SourceType.REDDIT -> NetworkClient.fetchRedditWithHandling(url)
-                else -> PostsResult.Success(NetworkClient.fetchRssAsJson(url, type))
-            }
+    suspend fun loadPostsForUrl(type: SourceType, url: String): PostsResult {
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+            return PostsResult.Error("URL должен начинаться с http:// или https://")
         }
-    } ?: PostsResult.Error("Таймаут 15 сек. Источник не отвечает.")
+        return withTimeoutOrNull(15_000L) {
+            withContext(Dispatchers.IO) {
+                when (type) {
+                    SourceType.TELEGRAM -> {
+                        val channel = extractTelegramChannel(url)
+                        if (channel != null) PostsResult.Success(NetworkClient.fetchTelegramWithFallback(channel))
+                        else PostsResult.Error("Неверный формат Telegram URL")
+                    }
+                    SourceType.REDDIT -> NetworkClient.fetchRedditWithHandling(url)
+                    else -> PostsResult.Success(NetworkClient.fetchRssAsJson(url, type))
+                }
+            }
+        } ?: PostsResult.Error("Таймаут 15 сек. Источник не отвечает.")
+    }
 
     private fun extractTelegramChannel(url: String): String? {
         return try {
