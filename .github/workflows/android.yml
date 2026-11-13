@@ -20,6 +20,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Set up JDK 17
       uses: actions/setup-java@v4
@@ -32,16 +34,7 @@ jobs:
       run: chmod +x ./gradlew
 
     - name: Build Debug APK
-      run: ./gradlew :app:assembleDebug --no-daemon --stacktrace --info 2>&1 | tee build_output.txt
-
-    - name: Upload Build Log (always)
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-log-${{ github.run_number }}
-        path: build_output.txt
-        if-no-files-found: ignore
-        retention-days: 7
+      run: ./gradlew :app:assembleDebug --no-daemon --stacktrace --info
 
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
