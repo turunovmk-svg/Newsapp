@@ -79,6 +79,7 @@
     <!-- Add source -->
     <string name="add_source">Add</string>
     <string name="source_added">Source added!</string>
+    <string name="delete">Delete</string>
     <string name="sources_deleted">Sources deleted</string>
     <string name="favorite_added">Added to favorites</string>
     <string name="favorite_removed">Removed from favorites</string>

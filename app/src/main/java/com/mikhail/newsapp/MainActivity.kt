@@ -29,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
+import androidx.compose.material3.BorderStroke
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.*
@@ -255,6 +256,7 @@ fun HomeScreen(viewModel: MainViewModel, navController: androidx.navigation.NavC
             }
 
             // Content
+            val result = postsResult
             when {
                 sources.isEmpty() -> EmptyState(
                     icon = Icons.Filled.Add,
@@ -263,13 +265,13 @@ fun HomeScreen(viewModel: MainViewModel, navController: androidx.navigation.NavC
                     buttonText = stringResource(R.string.add_source),
                     onButtonClick = { navController.navigate(Screen.AddSource.route) }
                 )
-                postsResult is PostsResult.Loading -> SkeletonList(itemCount = 5)
-                postsResult is PostsResult.Error -> ErrorState(
-                    message = postsResult.message,
+                result is PostsResult.Loading -> SkeletonList(itemCount = 5)
+                result is PostsResult.Error -> ErrorState(
+                    message = result.message,
                     onRetry = { viewModel.loadPosts() }
                 )
-                postsResult is PostsResult.Success -> {
-                    val posts = postsResult.posts
+                result is PostsResult.Success -> {
+                    val posts = result.posts
                     if (posts.isEmpty()) {
                         EmptyState(
                             icon = Icons.Filled.Newspaper,
@@ -411,8 +413,9 @@ fun FavoritesScreen(viewModel: MainViewModel, navController: androidx.navigation
     val postsResult by viewModel.posts.collectAsState()
     val favorites = viewModel.getFavorites()
 
-    val favPosts = when (postsResult) {
-        is PostsResult.Success -> postsResult.posts.filter { it.id in favorites }
+    val result = postsResult
+    val favPosts = when (result) {
+        is PostsResult.Success -> result.posts.filter { it.id in favorites }
         else -> emptyList<UnifiedPost>()
     }
 
@@ -593,17 +596,18 @@ fun PopularSourceButton(name: String, url: String, type: SourceType, onClick: ()
 fun ShortsScreen(viewModel: MainViewModel, navController: androidx.navigation.NavController) {
     val postsResult by viewModel.posts.collectAsState()
 
-    val shortsPosts = when (postsResult) {
-        is PostsResult.Success -> postsResult.posts.take(10)
+    val result = postsResult
+    val shortsPosts = when (result) {
+        is PostsResult.Success -> result.posts.take(10)
         else -> emptyList<UnifiedPost>()
     }
 
-    when {
-        postsResult is PostsResult.Loading -> {
+    when (result) {
+        is PostsResult.Loading -> {
             SkeletonList(itemCount = 3)
         }
-        postsResult is PostsResult.Error -> {
-            ErrorState(message = postsResult.message, onRetry = { viewModel.loadPosts() })
+        is PostsResult.Error -> {
+            ErrorState(message = result.message, onRetry = { viewModel.loadPosts() })
         }
         shortsPosts.isEmpty() -> {
             EmptyState(

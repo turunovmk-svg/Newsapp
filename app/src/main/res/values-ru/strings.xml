@@ -79,6 +79,7 @@
     <!-- Add source -->
     <string name="add_source">Добавить</string>
     <string name="source_added">Источник добавлен!</string>
+    <string name="delete">Удалить</string>
     <string name="sources_deleted">Источники удалены</string>
     <string name="favorite_added">Добавлено в избранное</string>
     <string name="favorite_removed">Удалено из избранного</string>

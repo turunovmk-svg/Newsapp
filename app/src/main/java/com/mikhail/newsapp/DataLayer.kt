@@ -498,7 +498,7 @@ class MainViewModel(private val appContext: Context) : ViewModel() {
         }
     }
 
-    fun loadPostsForUrl(type: SourceType, url: String): PostsResult = withTimeoutOrNull(15_000) {
+    suspend fun loadPostsForUrl(type: SourceType, url: String): PostsResult = withTimeoutOrNull(15_000L) {
         withContext(Dispatchers.IO) {
             when (type) {
                 SourceType.TELEGRAM -> {
