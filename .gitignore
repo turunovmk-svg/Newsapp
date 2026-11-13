@@ -1,1 +1,9 @@
 local.properties
+
+# Gradle / build outputs (generated)
+.gradle/
+**/build/
+
+# IDE local files
+.idea/
+*.iml
