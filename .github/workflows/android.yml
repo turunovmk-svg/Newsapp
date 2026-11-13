@@ -23,6 +23,15 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Verify checkout SHA and file content
+      run: |
+        echo "=== SHA ==="
+        git log -1 --format=%H
+        echo "=== DataLayer line 501 ==="
+        sed -n '501p' app/src/main/java/com/mikhail/newsapp/DataLayer.kt
+        echo "=== MainActivity line 15 ==="
+        sed -n '15p' app/src/main/java/com/mikhail/newsapp/MainActivity.kt
+
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
