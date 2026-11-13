@@ -482,11 +482,12 @@ fun AddSourceScreen(viewModel: MainViewModel) {
             singleLine = true
         )
         Spacer(modifier = Modifier.height(16.dp))
+        val urlValidationError = stringResource(R.string.url_validation_error)
         Button(
             onClick = {
                 if (sourceUrl.isNotBlank()) {
                     if (!sourceUrl.startsWith("http://") && !sourceUrl.startsWith("https://")) {
-                        Toast.makeText(context, stringResource(R.string.url_validation_error), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, urlValidationError, Toast.LENGTH_SHORT).show()
                         return@Button
                     }
                     viewModel.addSource(sourceType, sourceUrl)
@@ -871,11 +872,12 @@ fun SettingsScreen(
         ) { Text(stringResource(R.string.clear_all_sources), fontSize = 16.sp, fontWeight = FontWeight.SemiBold) }
 
         // Delete confirmation dialog
+        val sourcesDeletedText = stringResource(R.string.sources_deleted)
         if (showDeleteConfirm) {
             AlertDialog(
                 onDismissRequest = { showDeleteConfirm = false },
                 confirmButton = {
-                    TextButton(onClick = { onClearAllSources(); showDeleteConfirm = false; Toast.makeText(context, stringResource(R.string.sources_deleted), Toast.LENGTH_SHORT).show() }) {
+                    TextButton(onClick = { onClearAllSources(); showDeleteConfirm = false; Toast.makeText(context, sourcesDeletedText, Toast.LENGTH_SHORT).show() }) {
                         Text(stringResource(R.string.dialog_ok))
                     }
                 },
@@ -935,16 +937,18 @@ fun SettingsScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         // Data section
+        val cacheClearedText = stringResource(R.string.cache_cleared)
+        val readHistoryClearedText = stringResource(R.string.read_history_cleared)
         Text(stringResource(R.string.data_title), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(bottom = 8.dp))
         Button(
-            onClick = { onClearCache(); Toast.makeText(context, stringResource(R.string.cache_cleared), Toast.LENGTH_SHORT).show() },
+            onClick = { onClearCache(); Toast.makeText(context, cacheClearedText, Toast.LENGTH_SHORT).show() },
             modifier = Modifier.fillMaxWidth().height(48.dp),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
         ) { Text(stringResource(R.string.clear_cache), fontSize = 14.sp, fontWeight = FontWeight.Medium) }
         Spacer(modifier = Modifier.height(8.dp))
         Button(
-            onClick = { onClearReadHistory(); Toast.makeText(context, stringResource(R.string.read_history_cleared), Toast.LENGTH_SHORT).show() },
+            onClick = { onClearReadHistory(); Toast.makeText(context, readHistoryClearedText, Toast.LENGTH_SHORT).show() },
             modifier = Modifier.fillMaxWidth().height(48.dp),
             shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
