@@ -1,7 +1,7 @@
-name: Build APK
+name: Build Android APK
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: android-apk-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 on:
