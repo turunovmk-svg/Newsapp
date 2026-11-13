@@ -56,7 +56,7 @@ class DataLayerTest {
 
         // Проверяем, что источник сохранён в SharedPreferences и доступен через getSources()
         val sources = viewModel.getSources()
-        assertEquals(1 as Any?, sources.size as Any?) { "Ожидался 1 источник, получен ${sources.size}" }
+        assertEquals(Integer.valueOf(1), Integer.valueOf(sources.size)) { "Ожидался 1 источник, получен ${sources.size}" }
         assertEquals(SourceType.RSS, sources[0].type)
         assertEquals("https://feeds.bbci.co.uk/ukrainian/rss.xml", sources[0].url)
     }
@@ -68,7 +68,7 @@ class DataLayerTest {
 
         // Источник не должен быть добавлен
         val sources = viewModel.getSources()
-        assertEquals(0 as Any?, sources.size as Any?) { "Невалидный URL не должен добавляться" }
+        assertEquals(Integer.valueOf(0), Integer.valueOf(sources.size)) { "Невалидный URL не должен добавляться" }
     }
 
     @Test
@@ -77,7 +77,7 @@ class DataLayerTest {
         viewModel.addSource(SourceType.RSS, "http://example.com/rss")
 
         val sources = viewModel.getSources()
-        assertEquals(1 as Any?, sources.size as Any?)
+        assertEquals(Integer.valueOf(1), Integer.valueOf(sources.size))
         assertEquals("http://example.com/rss", sources[0].url)
     }
 
@@ -87,7 +87,7 @@ class DataLayerTest {
         viewModel.addSource(SourceType.RSS, "https://example.com/rss")
 
         val sources = viewModel.getSources()
-        assertEquals(1 as Any?, sources.size as Any?)
+        assertEquals(Integer.valueOf(1), Integer.valueOf(sources.size))
         assertEquals("https://example.com/rss", sources[0].url)
     }
 
@@ -95,12 +95,12 @@ class DataLayerTest {
     fun testRemoveSource() {
         // Добавляем источник, затем удаляем
         viewModel.addSource(SourceType.RSS, "https://feeds.bbci.co.uk/ukrainian/rss.xml")
-        assertEquals(1 as Any?, viewModel.getSources().size as Any?)
+        assertEquals(Integer.valueOf(1), Integer.valueOf(viewModel.getSources().size))
 
         val sourceId = viewModel.getSources()[0].id
         viewModel.removeSource(sourceId)
 
-        assertEquals(0 as Any?, viewModel.getSources().size as Any?) { "Источник должен быть удалён" }
+        assertEquals(Integer.valueOf(0), Integer.valueOf(viewModel.getSources().size)) { "Источник должен быть удалён" }
     }
 
     @Test
@@ -108,10 +108,10 @@ class DataLayerTest {
         // Добавляем несколько источников, затем очищаем всё
         viewModel.addSource(SourceType.RSS, "https://feeds.bbci.co.uk/ukrainian/rss.xml")
         viewModel.addSource(SourceType.RSS, "https://www.pravda.com.ua/rss/")
-        assertEquals(2 as Any?, viewModel.getSources().size as Any?)
+        assertEquals(Integer.valueOf(2), Integer.valueOf(viewModel.getSources().size))
 
         viewModel.clearAllSources()
-        assertEquals(0 as Any?, viewModel.getSources().size as Any?) { "Все источники должны быть удалены" }
+        assertEquals(Integer.valueOf(0), Integer.valueOf(viewModel.getSources().size)) { "Все источники должны быть удалены" }
     }
 
     // ============================================================
@@ -122,7 +122,7 @@ class DataLayerTest {
     fun testImportSourcesFromOpmlDeduplication() {
         // Добавляем один источник напрямую
         viewModel.addSource(SourceType.RSS, "https://feeds.bbci.co.uk/ukrainian/rss.xml")
-        assertEquals(1 as Any?, viewModel.getSources().size as Any?)
+        assertEquals(Integer.valueOf(1), Integer.valueOf(viewModel.getSources().size))
 
         // Импортируем OPML с тем же URL — должен быть проигнорирован (дедупликация)
         val opmlXml = """<?xml version="1.0" encoding="UTF-8"?>
@@ -134,8 +134,8 @@ class DataLayerTest {
 </opml>"""
         val imported = viewModel.importSourcesFromOpml(opmlXml)
 
-        assertEquals(0 as Any?, imported as Any?) { "Дубликат не должен импортироваться" }
-        assertEquals(1 as Any?, viewModel.getSources().size as Any?) { "Количество источников не должно измениться" }
+        assertEquals(Integer.valueOf(0), Integer.valueOf(imported)) { "Дубликат не должен импортироваться" }
+        assertEquals(Integer.valueOf(1), Integer.valueOf(viewModel.getSources().size)) { "Количество источников не должно измениться" }
     }
 
     @Test
@@ -151,8 +151,8 @@ class DataLayerTest {
 </opml>"""
         val imported = viewModel.importSourcesFromOpml(opmlXml)
 
-        assertEquals(2 as Any?, imported as Any?) { "Два новых источника должны быть импортированы" }
-        assertEquals(2 as Any?, viewModel.getSources().size as Any?)
+        assertEquals(Integer.valueOf(2), Integer.valueOf(imported)) { "Два новых источника должны быть импортированы" }
+        assertEquals(Integer.valueOf(2), Integer.valueOf(viewModel.getSources().size))
     }
 
     @Test
@@ -168,8 +168,8 @@ class DataLayerTest {
 </opml>"""
         val imported = viewModel.importSourcesFromOpml(opmlXml)
 
-        assertEquals(1 as Any?, imported as Any?) { "Только валидный URL должен быть импортирован" }
-        assertEquals(1 as Any?, viewModel.getSources().size as Any?)
+        assertEquals(Integer.valueOf(1), Integer.valueOf(imported)) { "Только валидный URL должен быть импортирован" }
+        assertEquals(Integer.valueOf(1), Integer.valueOf(viewModel.getSources().size))
     }
 
     // ============================================================
@@ -185,7 +185,7 @@ class DataLayerTest {
         val posts = listOf(post1, post2)
         val unique = posts.distinctBy { it.id }
 
-        assertEquals(1 as Any?, unique.size as Any?) { "Дубликаты по id должны удаляться" }
+        assertEquals(Integer.valueOf(1), Integer.valueOf(unique.size)) { "Дубликаты по id должны удаляться" }
         assertEquals("Title 1", unique[0].title) { "Должен остаться первый элемент" }
     }
 
