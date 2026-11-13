@@ -208,7 +208,7 @@ class DataLayerTest {
     }
 
     @Test
-    fun testLoadPostsForUrlInvalidUrlReturnsError() {
+    fun testLoadPostsForUrlInvalidUrlReturnsError() = runTest {
         val result = viewModel.loadPostsForUrl(SourceType.RSS, "invalid-url")
         assertTrue("Ожидалась ошибка валидации URL, получен $result", result is PostsResult.Error)
         if (result is PostsResult.Error) {
