@@ -509,56 +509,66 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 val now = System.currentTimeMillis()
                 val disabled = _disabledSources.value
-                // Загружаем каждый источник независимо
-                for (source in sources) {
-                    // Пропускаем временно отключённые источники
-                    val disableUntil = disabled[source.url]
-                    if (disableUntil != null && disableUntil > now) continue
-                    // Если источник был отключён, но время истекло — сбрасываем счётчик
-                    if (disableUntil != null && disableUntil <= now) {
-                        _disabledSources.value = _disabledSources.value - source.url
-                        _sourceErrorCount.value = _sourceErrorCount.value - source.url
-                    }
-                    try {
-                        val parsed = loadSourceWithRetries(source)
-                        // Успешная загрузка — обновляем посты этого источника, если есть новые
-                        _postsBySource.value = FeedMerge.mergeSourcePosts(_postsBySource.value, source.url, parsed)
-                        anySuccess = true
-                        // Сбрасываем счётчик неудач при успехе
-                        if (_sourceErrorCount.value.containsKey(source.url)) {
-                            _sourceErrorCount.value = _sourceErrorCount.value - source.url
-                        }
-                        // сбрасываем ошибку этого источника при успехе
-                        if (_sourceErrors.value.containsKey(source.url)) {
-                            _sourceErrors.value = _sourceErrors.value - source.url
-                        }
-                        if (parsed.isEmpty()) {
-                            _sourceErrors.value = _sourceErrors.value + (source.url to "Источник загрузился, но новостей не найдено")
-                        }
-                    } catch (e: Exception) {
-                        if (e is CancellationException) {
-                            throw e
-                        }
-                        e.printStackTrace()
-                        // Увеличиваем счётчик неудач
-                        val currentCount = _sourceErrorCount.value[source.url] ?: 0
-                        val newCount = currentCount + 1
-                        _sourceErrorCount.value = _sourceErrorCount.value + (source.url to newCount)
-                        _sourceErrors.value = _sourceErrors.value + (source.url to (e.message ?: "Ошибка загрузки"))
-                        // Если неудач 3 подряд — отключаем источник на 24 часа
-                        if (newCount >= 3) {
-                            val disableUntil = now + 24 * 60 * 60 * 1000L
-                            _disabledSources.value = _disabledSources.value + (source.url to disableUntil)
-                        }
-                        // При ошибке источника оставляем его предыдущие посты в _postsBySource (не трогаем)
-                    }
+                // Истёкшие блокировки сбрасываем, временно отключённые источники пропускаем.
+                // Делаем это до запуска задач — на главном потоке, без гонок.
+                val expired = disabled.filterValues { it <= now }.keys
+                if (expired.isNotEmpty()) {
+                    _disabledSources.value = _disabledSources.value - expired
+                    _sourceErrorCount.value = _sourceErrorCount.value - expired
                 }
-                // Объединяем посты всех источников (включая старые посты из ошибочных источников)
-                _posts.value = FeedMerge.flattenDedupSort(_postsBySource.value)
-                _error.value = FeedMerge.decideError(anySuccess, _posts.value.size)
-                // Кэшируем загруженное для офлайна
-                if (_posts.value.isNotEmpty()) {
-                    saveCachedPosts(_posts.value)
+                val activeSources = sources.filter { source ->
+                    val disableUntil = disabled[source.url]
+                    disableUntil == null || disableUntil <= now
+                }
+                // Этап 10: загружаем источники параллельно, но не более MAX_CONCURRENT_SOURCE_LOADS
+                // одновременно. Каждый источник возвращает свой результат, общее состояние не пишется
+                // до завершения всех задач. Порядок результатов = порядку источников.
+                val results = loadSourcesParallel(activeSources) { source ->
+                    loadSourceWithRetries(source)
+                }
+                // Применяем результаты ОДНИМ проходом в порядке источников и только если этот цикл
+                // всё ещё текущий — отменённый старый цикл не может перезаписать состояние нового.
+                if (currentLoadJob === myJob) {
+                    for (r in results) {
+                        val url = r.sourceUrl
+                        if (r.error != null) {
+                            val e = r.error
+                            e.printStackTrace()
+                            // Увеличиваем счётчик неудач
+                            val currentCount = _sourceErrorCount.value[url] ?: 0
+                            val newCount = currentCount + 1
+                            _sourceErrorCount.value = _sourceErrorCount.value + (url to newCount)
+                            _sourceErrors.value = _sourceErrors.value + (url to (e.message ?: "Ошибка загрузки"))
+                            // Если неудач 3 подряд — отключаем источник на 24 часа
+                            if (newCount >= 3) {
+                                val disableUntil = now + 24 * 60 * 60 * 1000L
+                                _disabledSources.value = _disabledSources.value + (url to disableUntil)
+                            }
+                            // При ошибке источника оставляем его предыдущие посты в _postsBySource (не трогаем)
+                        } else {
+                            val parsed = r.posts.orEmpty()
+                            anySuccess = true
+                            // Сбрасываем счётчик неудач при успехе
+                            if (_sourceErrorCount.value.containsKey(url)) {
+                                _sourceErrorCount.value = _sourceErrorCount.value - url
+                            }
+                            // сбрасываем ошибку этого источника при успехе
+                            if (_sourceErrors.value.containsKey(url)) {
+                                _sourceErrors.value = _sourceErrors.value - url
+                            }
+                            if (parsed.isEmpty()) {
+                                _sourceErrors.value = _sourceErrors.value + (url to "Источник загрузился, но новостей не найдено")
+                            }
+                        }
+                    }
+                    // Объединяем посты всех источников (включая старые посты из ошибочных источников)
+                    _postsBySource.value = mergeLoadResults(_postsBySource.value, results)
+                    _posts.value = FeedMerge.flattenDedupSort(_postsBySource.value)
+                    _error.value = FeedMerge.decideError(anySuccess, _posts.value.size)
+                    // Кэшируем загруженное для офлайна (один раз, после всех задач — без частичного кэша)
+                    if (_posts.value.isNotEmpty()) {
+                        saveCachedPosts(_posts.value)
+                    }
                 }
             } catch (e: CancellationException) {
                 // Задача отменена пользователем — не считаем это ошибкой

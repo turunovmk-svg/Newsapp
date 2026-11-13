@@ -1,6 +1,14 @@
 package com.mikhail.newsapp
 
 import com.mikhail.newsapp.data.Post
+import com.mikhail.newsapp.data.Source
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 
@@ -9,8 +17,68 @@ import org.xmlpull.v1.XmlPullParserFactory
  *  - FeedParsers: разбор RSS/Atom/YouTube/Telegram в список Post (исключения НЕ глушатся —
  *    валидный пустой фид возвращает пустой список, битый XML пробрасывает исключение вызывающему коду);
  *  - FeedMerge: слияние постов по источникам, дедупликация, решение об общей ошибке;
- *  - shouldRetry: политика повторных попыток.
+ *  - shouldRetry: политика повторных попыток;
+ *  - loadSourcesParallel/mergeLoadResults: параллельная загрузка источников с лимитом конкурентности.
  */
+
+/** Максимум одновременно загружаемых источников (этап 10). */
+const val MAX_CONCURRENT_SOURCE_LOADS = 3
+
+/** Результат загрузки одного источника: либо посты, либо ошибка. */
+data class SourceLoadResult(
+    val sourceUrl: String,
+    val posts: List<Post>?,   // null — источник упал
+    val error: Throwable?
+)
+
+/**
+ * Загружает источники параллельно, но не более [maxConcurrent] одновременно.
+ *
+ *  - каждый источник грузится своей задачей через [loader], промежуточное состояние не пишется;
+ *  - результат возвращается В ПОРЯДКЕ исходного списка источников (awaitAll сохраняет порядок),
+ *    несмотря на произвольный порядок завершения сетевых запросов;
+ *  - ошибка одного источника не отменяет остальные (превращается в SourceLoadResult.error);
+ *  - CancellationException пробрасывается наверх и не глушится.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+internal suspend fun loadSourcesParallel(
+    sources: List<Source>,
+    maxConcurrent: Int = MAX_CONCURRENT_SOURCE_LOADS,
+    loader: suspend (Source) -> List<Post>
+): List<SourceLoadResult> = coroutineScope {
+    val semaphore = Semaphore(maxConcurrent)
+    sources.map { source ->
+        async {
+            semaphore.withPermit {
+                try {
+                    SourceLoadResult(source.url, loader(source), null)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    SourceLoadResult(source.url, null, e)
+                }
+            }
+        }
+    }.awaitAll()
+}
+
+/**
+ * Применяет результаты загрузки к карте постов по источникам строго в порядке списка результатов:
+ * успешные перезаписывают/дополняют свой источник, упавшие не трогают прежние посты.
+ * Вызывать один раз после завершения всех задач — без гонок.
+ */
+internal fun mergeLoadResults(
+    bySource: Map<String, List<Post>>,
+    results: List<SourceLoadResult>
+): Map<String, List<Post>> {
+    var acc = bySource
+    for (r in results) {
+        if (r.posts != null) {
+            acc = FeedMerge.mergeSourcePosts(acc, r.sourceUrl, r.posts)
+        }
+    }
+    return acc
+}
 
 /** Повторяем только сетевые ошибки (IOException) и HTTP 5xx. 4xx и ошибки парсинга — нет. */
 internal fun shouldRetry(e: Throwable): Boolean {
