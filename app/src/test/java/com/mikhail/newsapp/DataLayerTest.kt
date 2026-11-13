@@ -4,7 +4,6 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.coroutines.test.runTest
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -56,7 +55,7 @@ class DataLayerTest {
 
         // Проверяем, что источник сохранён в SharedPreferences и доступен через getSources()
         val sources = viewModel.getSources()
-        assertEquals(1, sources.size) { "Ожидался 1 источник, получен ${sources.size}" }
+        assertEquals(1 as Any?, sources.size as Any?) { "Ожидался 1 источник, получен ${sources.size}" }
         assertEquals(SourceType.RSS, sources[0].type)
         assertEquals("https://feeds.bbci.co.uk/ukrainian/rss.xml", sources[0].url)
     }
@@ -68,7 +67,7 @@ class DataLayerTest {
 
         // Источник не должен быть добавлен
         val sources = viewModel.getSources()
-        assertEquals(0, sources.size) { "Невалидный URL не должен добавляться" }
+        assertEquals(0 as Any?, sources.size as Any?) { "Невалидный URL не должен добавляться" }
     }
 
     @Test
@@ -77,7 +76,7 @@ class DataLayerTest {
         viewModel.addSource(SourceType.RSS, "http://example.com/rss")
 
         val sources = viewModel.getSources()
-        assertEquals(1, sources.size)
+        assertEquals(1 as Any?, sources.size as Any?)
         assertEquals("http://example.com/rss", sources[0].url)
     }
 
@@ -87,7 +86,7 @@ class DataLayerTest {
         viewModel.addSource(SourceType.RSS, "https://example.com/rss")
 
         val sources = viewModel.getSources()
-        assertEquals(1, sources.size)
+        assertEquals(1 as Any?, sources.size as Any?)
         assertEquals("https://example.com/rss", sources[0].url)
     }
 
@@ -95,12 +94,12 @@ class DataLayerTest {
     fun testRemoveSource() {
         // Добавляем источник, затем удаляем
         viewModel.addSource(SourceType.RSS, "https://feeds.bbci.co.uk/ukrainian/rss.xml")
-        assertEquals(1, viewModel.getSources().size)
+        assertEquals(1 as Any?, viewModel.getSources().size as Any?)
 
         val sourceId = viewModel.getSources()[0].id
         viewModel.removeSource(sourceId)
 
-        assertEquals(0, viewModel.getSources().size) { "Источник должен быть удалён" }
+        assertEquals(0 as Any?, viewModel.getSources().size as Any?) { "Источник должен быть удалён" }
     }
 
     @Test
@@ -108,10 +107,10 @@ class DataLayerTest {
         // Добавляем несколько источников, затем очищаем всё
         viewModel.addSource(SourceType.RSS, "https://feeds.bbci.co.uk/ukrainian/rss.xml")
         viewModel.addSource(SourceType.RSS, "https://www.pravda.com.ua/rss/")
-        assertEquals(2, viewModel.getSources().size)
+        assertEquals(2 as Any?, viewModel.getSources().size as Any?)
 
         viewModel.clearAllSources()
-        assertEquals(0, viewModel.getSources().size) { "Все источники должны быть удалены" }
+        assertEquals(0 as Any?, viewModel.getSources().size as Any?) { "Все источники должны быть удалены" }
     }
 
     // ============================================================
@@ -122,7 +121,7 @@ class DataLayerTest {
     fun testImportSourcesFromOpmlDeduplication() {
         // Добавляем один источник напрямую
         viewModel.addSource(SourceType.RSS, "https://feeds.bbci.co.uk/ukrainian/rss.xml")
-        assertEquals(1, viewModel.getSources().size)
+        assertEquals(1 as Any?, viewModel.getSources().size as Any?)
 
         // Импортируем OPML с тем же URL — должен быть проигнорирован (дедупликация)
         val opmlXml = """<?xml version="1.0" encoding="UTF-8"?>
@@ -134,8 +133,8 @@ class DataLayerTest {
 </opml>"""
         val imported = viewModel.importSourcesFromOpml(opmlXml)
 
-        assertEquals(0, imported) { "Дубликат не должен импортироваться" }
-        assertEquals(1, viewModel.getSources().size) { "Количество источников не должно измениться" }
+        assertEquals(0 as Any?, imported as Any?) { "Дубликат не должен импортироваться" }
+        assertEquals(1 as Any?, viewModel.getSources().size as Any?) { "Количество источников не должно измениться" }
     }
 
     @Test
@@ -151,8 +150,8 @@ class DataLayerTest {
 </opml>"""
         val imported = viewModel.importSourcesFromOpml(opmlXml)
 
-        assertEquals(2, imported) { "Два новых источника должны быть импортированы" }
-        assertEquals(2, viewModel.getSources().size)
+        assertEquals(2 as Any?, imported as Any?) { "Два новых источника должны быть импортированы" }
+        assertEquals(2 as Any?, viewModel.getSources().size as Any?)
     }
 
     @Test
@@ -168,8 +167,8 @@ class DataLayerTest {
 </opml>"""
         val imported = viewModel.importSourcesFromOpml(opmlXml)
 
-        assertEquals(1, imported) { "Только валидный URL должен быть импортирован" }
-        assertEquals(1, viewModel.getSources().size)
+        assertEquals(1 as Any?, imported as Any?) { "Только валидный URL должен быть импортирован" }
+        assertEquals(1 as Any?, viewModel.getSources().size as Any?)
     }
 
     // ============================================================
@@ -185,7 +184,7 @@ class DataLayerTest {
         val posts = listOf(post1, post2)
         val unique = posts.distinctBy { it.id }
 
-        assertEquals(1, unique.size) { "Дубликаты по id должны удаляться" }
+        assertEquals(1 as Any?, unique.size as Any?) { "Дубликаты по id должны удаляться" }
         assertEquals("Title 1", unique[0].title) { "Должен остаться первый элемент" }
     }
 
@@ -199,7 +198,7 @@ class DataLayerTest {
         val result = viewModel.loadPostsForUrl(SourceType.RSS, "https://httpbin.org/delay/10")
         // При отмене корутины withTimeoutOrNull возвращает null,
         // который конвертируется в Error с сообщением о таймауте
-        assert(result is PostsResult.Error) { "Ожидалась ошибка, получен $result" }
+        assertTrue("Ожидалась ошибка, получен $result", result is PostsResult.Error)
     }
 
     // ============================================================
@@ -210,7 +209,7 @@ class DataLayerTest {
     fun testEmptySourcesReturnsEmptyList() {
         // Без добавленных источников список должен быть пустым
         val sources = viewModel.getSources()
-        assertTrue(sources.isEmpty()) { "Изначально источников быть не должно" }
+        assertTrue("Изначально источников быть не должно", sources.isEmpty())
     }
 
     @Test
@@ -220,18 +219,18 @@ class DataLayerTest {
         Thread.sleep(500)
 
         val result = viewModel.posts.value
-        assert(result is PostsResult.Success) { "Ожидался Success, получен $result" }
+        assertTrue("Ожидался Success, получен $result", result is PostsResult.Success)
         if (result is PostsResult.Success) {
-            assertTrue(result.posts.isEmpty()) { "При отсутствии источников список постов должен быть пустым" }
+            assertTrue("При отсутствии источников список постов должен быть пустым", result.posts.isEmpty())
         }
     }
 
     @Test
     fun testLoadPostsForUrlInvalidUrlReturnsError() {
         val result = viewModel.loadPostsForUrl(SourceType.RSS, "invalid-url")
-        assert(result is PostsResult.Error) { "Ожидалась ошибка валидации URL, получен $result" }
+        assertTrue("Ожидалась ошибка валидации URL, получен $result", result is PostsResult.Error)
         if (result is PostsResult.Error) {
-            assertTrue(result.message.contains("http")) { "Сообщение об ошибке должно содержать http" }
+            assertTrue("Сообщение об ошибке должно содержать http", result.message.contains("http"))
         }
     }
 
@@ -244,8 +243,8 @@ class DataLayerTest {
         viewModel.addSource(SourceType.RSS, "https://feeds.bbci.co.uk/ukrainian/rss.xml")
 
         val opml = viewModel.exportSourcesToOpml()
-        assertTrue(opml.contains("https://feeds.bbci.co.uk/ukrainian/rss.xml")) { "OPML должен содержать URL источника" }
-        assertTrue(opml.contains("opml")) { "OPML должен быть корректным XML" }
+        assertTrue("OPML должен содержать URL источника", opml.contains("https://feeds.bbci.co.uk/ukrainian/rss.xml"))
+        assertTrue("OPML должен быть корректным XML", opml.contains("opml"))
     }
 
     // ============================================================
@@ -258,10 +257,10 @@ class DataLayerTest {
 
         // Добавляем в избранное
         viewModel.toggleFavorite(postId)
-        assertTrue(viewModel.isFavorite(postId)) { "Пост должен быть в избранном" }
+        assertTrue("Пост должен быть в избранном", viewModel.isFavorite(postId))
 
         // Удаляем из избранного
         viewModel.toggleFavorite(postId)
-        assertFalse(viewModel.isFavorite(postId)) { "Пост не должен быть в избранном" }
+        assertFalse("Пост не должен быть в избранном", viewModel.isFavorite(postId))
     }
 }
