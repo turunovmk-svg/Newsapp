@@ -3,9 +3,11 @@ package com.mikhail.newsapp
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import kotlinx.coroutines.test.TestCoroutineDispatcher
-import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
 import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -28,7 +30,6 @@ class DataLayerTest {
     @get:Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()
 
-    private val testDispatcher = TestCoroutineDispatcher()
     private lateinit var viewModel: MainViewModel
 
     @Before
@@ -42,7 +43,6 @@ class DataLayerTest {
     @After
     fun tearDown() {
         viewModel.clearAllSources()
-        testDispatcher.cleanupTestCoroutines()
     }
 
     // ============================================================
@@ -194,7 +194,7 @@ class DataLayerTest {
     // ============================================================
 
     @Test
-    fun testLoadPostsForUrlCancellation() = runCurrent {
+    fun testLoadPostsForUrlCancellation() = runTest {
         // withTimeoutOrNull должен корректно обрабатывать отмену
         val result = viewModel.loadPostsForUrl(SourceType.RSS, "https://httpbin.org/delay/10")
         // При отмене корутины withTimeoutOrNull возвращает null,
