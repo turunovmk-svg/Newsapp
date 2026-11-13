@@ -404,10 +404,12 @@ class MainViewModel(private val appContext: Context) : ViewModel() {
     private fun saveSources(sources: List<SourceItem>) {
         try {
             val json = gson.toJson(sources)
+            Log.d("MainViewModel", "Save sources: count=${sources.size}, json=$json")
             prefs.edit().putString("sources", json).apply()
             _sources.value = sources
+            Log.d("MainViewModel", "Sources saved successfully: count=${_sources.value.size}")
         } catch (e: Exception) {
-            Log.e("MainViewModel", "Save sources error: ${e.message}")
+            Log.e("MainViewModel", "Save sources error: ${e.message}", e)
         }
     }
 
@@ -531,11 +533,21 @@ class MainViewModel(private val appContext: Context) : ViewModel() {
                     return@launch
                 }
 
+                Log.d("MainViewModel", "Add source: type=$type, url=$url")
                 showToast("Добавляем источник...")
                 val current = _sources.value
                 val finalUrl = if (type == SourceType.TELEGRAM) convertTelegramUrl(url) else url
                 val newSource = SourceItem("${type.name}_${System.currentTimeMillis()}", type, finalUrl)
                 saveSources(current + newSource)
+
+                // Проверяем, что источник реально добавился
+                if (!_sources.value.any { it.id == newSource.id }) {
+                    Log.e("MainViewModel", "Source was NOT saved: id=${newSource.id}, url=$finalUrl")
+                    showToast("Ошибка: источник не сохранён")
+                    return@launch
+                }
+
+                Log.d("MainViewModel", "Source saved successfully: id=${newSource.id}")
                 showToast("Источник добавлен! Загружаем новости...")
                 loadPosts()
             } catch (e: Exception) {

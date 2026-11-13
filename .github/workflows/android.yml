@@ -47,6 +47,9 @@ jobs:
         ./gradlew --stop 2>/dev/null || true
         rm -rf .gradle build 2>/dev/null || true
 
+    - name: Run unit tests
+      run: ./gradlew testDebugUnitTest --no-daemon --stacktrace --info
+
     - name: Build Debug APK
       run: ./gradlew :app:assembleDebug --no-daemon --stacktrace --info
 
