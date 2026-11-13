@@ -502,6 +502,9 @@ class MainViewModel(private val appContext: Context) : ViewModel() {
 
     suspend fun loadPostsForUrl(type: SourceType, url: String): PostsResult = withTimeoutOrNull(15_000L) {
         withContext(Dispatchers.IO) {
+            if (!url.startsWith("http://") && !url.startsWith("https://")) {
+                return@withTimeoutOrNull PostsResult.Error("URL должен начинаться с http:// или https://")
+            }
             when (type) {
                 SourceType.TELEGRAM -> {
                     val channel = extractTelegramChannel(url)
