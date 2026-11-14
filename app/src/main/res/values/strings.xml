@@ -5,6 +5,12 @@
     <string name="settings_title">Настройки</string>
     <string name="import_opml">Импорт OPML</string>
     <string name="export_opml">Экспорт OPML</string>
+    <string name="import_backup">Импорт резервной копии</string>
+    <string name="export_backup">Экспорт резервной копии</string>
+    <string name="backup_section_hint">Все ваши данные (источники, избранное, настройки) в одном JSON-файле. Импорт объединяет данные — ничего не удаляется.</string>
+    <string name="backup_exported">Резервная копия сохранена</string>
+    <string name="backup_imported">Резервная копия восстановлена</string>
+    <string name="backup_error">Ошибка резервной копии: %1$s</string>
     <string name="back">Назад</string>
     <string name="back_to_feed">К ленте новостей</string>
     <string name="empty_shorts">Добавьте источники</string>

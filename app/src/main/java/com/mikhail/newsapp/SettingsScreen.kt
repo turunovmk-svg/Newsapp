@@ -22,6 +22,8 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -30,6 +32,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,6 +41,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import com.mikhail.newsapp.data.SourceType
 import com.mikhail.newsapp.theme.CyberColors
 import com.mikhail.newsapp.theme.CyberTypography
@@ -101,13 +105,57 @@ fun SettingsScreen(
         }
     }
 
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .background(CyberColors.BackgroundDeep)
-            .padding(horizontal = UiSizes.ScreenPadding),
-        verticalArrangement = Arrangement.spacedBy(UiSizes.SpacerMedium)
-    ) {
+    val backupSnackbar = remember { SnackbarHostState() }
+    val backupScope = rememberCoroutineScope()
+    val backupExportLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        uri?.let { selectedUri ->
+            context.contentResolver.openOutputStream(selectedUri)?.use { outputStream ->
+                val ok = BackupManager(context).export(
+                    outputStream,
+                    snapshot = viewModel.snapshotForBackup(),
+                    exportedAt = System.currentTimeMillis()
+                )
+                backupScope.launch {
+                    backupSnackbar.showSnackbar(
+                        if (ok) context.getString(R.string.backup_exported)
+                        else context.getString(R.string.backup_error, "запись в файл не удалась")
+                    )
+                }
+            }
+        }
+    }
+    val backupImportLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri?.let { selectedUri ->
+            backupScope.launch {
+                try {
+                    val parsed = context.contentResolver.openInputStream(selectedUri)?.use { input ->
+                        if (input == null) throw BackupFormat.InvalidBackupException("не удалось открыть файл")
+                        BackupManager(context).readAndValidate(input)
+                    } ?: throw BackupFormat.InvalidBackupException("не удалось открыть файл")
+                    val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        viewModel.applyBackup(parsed)
+                    }
+                    backupSnackbar.showSnackbar(context.getString(R.string.backup_imported) + ": " + result)
+                } catch (e: BackupFormat.InvalidBackupException) {
+                    backupSnackbar.showSnackbar(context.getString(R.string.backup_error, e.message ?: ""))
+                } catch (e: Exception) {
+                    backupSnackbar.showSnackbar(context.getString(R.string.backup_error, e.message ?: "неизвестная ошибка"))
+                }
+            }
+        }
+    }
+
+    Box(modifier = modifier.fillMaxSize().background(CyberColors.BackgroundDeep)) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = UiSizes.ScreenPadding),
+            verticalArrangement = Arrangement.spacedBy(UiSizes.SpacerMedium)
+        ) {
         // ---------- Внешний вид ----------
         item {
             SectionTitle("Внешний вид")
@@ -372,6 +420,29 @@ fun SettingsScreen(
                             primaryColor = CyberColors.AccentBlueBright,
                         )
                     }
+                    Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
+                    Text(
+                        text = stringResource(id = R.string.backup_section_hint),
+                        style = CyberTypography.BodySmall,
+                        color = CyberColors.TextSecondary,
+                    )
+                    Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(UiSizes.SpacerSmall)
+                    ) {
+                        NeonButton(
+                            onClick = { backupImportLauncher.launch(arrayOf("application/json")) },
+                            modifier = Modifier.weight(1f),
+                            text = stringResource(id = R.string.import_backup),
+                        )
+                        NeonButton(
+                            onClick = { backupExportLauncher.launch("newsapp_backup.json") },
+                            modifier = Modifier.weight(1f),
+                            text = stringResource(id = R.string.export_backup),
+                            primaryColor = CyberColors.AccentBlueBright,
+                        )
+                    }
                 }
             }
         }
@@ -583,6 +654,11 @@ fun SettingsScreen(
             )
             Spacer(modifier = Modifier.height(UiSizes.SpacerLarge))
         }
+        }
+        androidx.compose.material3.SnackbarHost(
+            hostState = backupSnackbar,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
 }
 

@@ -904,6 +904,146 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _error.value = null
     }
 
+    // ---------- Резервная копия (этап 3B) ----------
+
+    /** Снимок всех пользовательских данных для экспорта в файл резервной копии. */
+    fun snapshotForBackup(): BackupFormat.Parsed {
+        val tsRaw = prefs.getString("read_ts_json", null) ?: "{}"
+        val tsObj = org.json.JSONObject(tsRaw)
+        val readTs = mutableMapOf<String, Long>()
+        tsObj.keys().forEach { k -> readTs[k] = tsObj.optLong(k, -1).takeIf { it >= 0 } ?: 0L }
+        return BackupFormat.Parsed(
+            sources = _sources.value,
+            favorites = _favorites.value,
+            readLater = _readLater.value,
+            readIds = _readIds.value,
+            readTs = readTs,
+            settings = mapOf(
+                "font_scale" to _fontScale.value,
+                "dark_theme" to _darkTheme.value,
+                "theme_mode" to _themeMode.value,
+                "view_mode" to _viewMode.value,
+                "sort_mode" to _sortMode.value,
+                "reading_font" to _readingFont.value,
+                "reading_theme" to _readingTheme.value
+            ),
+            notifications = mapOf(
+                NewsCheckWorker.KEY_ENABLED to _notifEnabled.value,
+                NewsCheckWorker.KEY_INTERVAL_HOURS to _notifIntervalHours.value,
+                "notif_disabled_sources" to _notifDisabledSources.value,
+                "quiet_start" to _quietStart.value,
+                "quiet_end" to _quietEnd.value,
+                "notif_sound" to _notifSound.value
+            )
+        )
+    }
+
+    /**
+     * Применяет валидированную резервную копию: объединение без удаления существующих данных.
+     * Все ключи пишутся ОДНИМ SharedPreferences.Editor через commit(); при неудаче —
+     * откат исходных значений и исходное состояние StateFlow (импорт не применяется частично).
+     * Возвращает текст результата для UI ("Импортировано: …") либо бросает исключение.
+     */
+    fun applyBackup(parsed: BackupFormat.Parsed): String {
+        // 1) готовим все итоговые данные в памяти (merge, без записи)
+        val newSources = BackupFormat.mergeSources(_sources.value, parsed.sources)
+        val newFavorites = BackupFormat.mergePosts(_favorites.value, parsed.favorites)
+        val newReadLater = BackupFormat.mergePosts(_readLater.value, parsed.readLater)
+        val newReadIds = _readIds.value + parsed.readIds
+        val oldTsRaw = prefs.getString("read_ts_json", null) ?: "{}"
+        val tsObj = org.json.JSONObject(oldTsRaw)
+        parsed.readTs.forEach { (k, v) -> if (!tsObj.has(k)) tsObj.put(k, v) }
+        val newReadTs = tsObj.toString()
+
+        // снимок исходных значений для отката
+        val orig = mapOf(
+            "sources_json" to prefs.getString("sources_json", null),
+            "favorites_json" to prefs.getString("favorites_json", null),
+            "readlater_json" to prefs.getString("readlater_json", null),
+            "read_ids" to prefs.getStringSet("read_ids", null),
+            "read_ts_json" to oldTsRaw
+        )
+        val origSettings = BackupFormat.SETTINGS_KEYS.associate { (k, _) -> k to readPref(k) }
+        val origNotif = BackupFormat.NOTIF_KEYS.associate { (k, _) -> k to readPref(k) }
+
+        // 2) одна транзакционная запись
+        val editor = prefs.edit()
+        editor.putString("sources_json", Source.toJsonList(newSources))
+        editor.putString("favorites_json", Post.toJsonList(newFavorites))
+        editor.putString("readlater_json", Post.toJsonList(newReadLater))
+        editor.putStringSet("read_ids", newReadIds)
+        editor.putString("read_ts_json", newReadTs)
+        parsed.settings.forEach { (k, v) -> putTyped(editor, k, v) }
+        parsed.notifications.forEach { (k, v) -> putTyped(editor, k, v) }
+        val ok = editor.commit()
+        if (!ok) {
+            // 3) откат: восстанавливаем исходные значения затронутых ключей
+            val rollback = prefs.edit()
+            orig.forEach { (k, v) -> restorePref(rollback, k, v) }
+            origSettings.forEach { (k, v) -> restorePref(rollback, k, v) }
+            origNotif.forEach { (k, v) -> restorePref(rollback, k, v) }
+            rollback.commit()
+            throw IllegalStateException("Не удалось сохранить резервную копию в хранилище")
+        }
+
+        // 4) только после успешной записи — публикуем состояние (UI обновится сразу)
+        _sources.value = newSources
+        _favorites.value = newFavorites
+        _readLater.value = newReadLater
+        _readIds.value = newReadIds
+        applySettingsToState(parsed.settings)
+        applyNotificationsToState(parsed.notifications)
+        return buildString {
+            append("Импортировано: источников +${newSources.size - _sources.value.size + parsed.sources.size.coerceAtMost(newSources.size)}, ")
+            append("избранное ${newFavorites.size}, «читать позже» ${newReadLater.size}, прочитано ${newReadIds.size}")
+        }
+    }
+
+    private fun readPref(key: String): Any? = when {
+        key == "font_scale" -> prefs.getFloat(key, 1.0f)
+        key == "dark_theme" || key == "notif_sound" || key == NewsCheckWorker.KEY_ENABLED -> prefs.getBoolean(key, false)
+        key == "quiet_start" || key == "quiet_end" || key == NewsCheckWorker.KEY_INTERVAL_HOURS -> prefs.getInt(key, -1)
+        key == "notif_disabled_sources" || key == "read_ids" -> prefs.getStringSet(key, null)
+        else -> prefs.getString(key, null)
+    }
+
+    private fun putTyped(editor: android.content.SharedPreferences.Editor, key: String, value: Any?) {
+        when (value) {
+            is Boolean -> editor.putBoolean(key, value)
+            is Int -> editor.putInt(key, value)
+            is Float -> editor.putFloat(key, value)
+            is Set<*> -> @Suppress("UNCHECKED_CAST") editor.putStringSet(key, value as Set<String>)
+            is String -> editor.putString(key, value)
+            null -> {}
+            else -> editor.putString(key, value.toString())
+        }
+    }
+
+    private fun restorePref(editor: android.content.SharedPreferences.Editor, key: String, value: Any?) {
+        if (value == null) editor.remove(key) else putTyped(editor, key, value)
+    }
+
+    private fun applySettingsToState(settings: Map<String, Any?>) {
+        (settings["font_scale"] as? Float)?.let { _fontScale.value = it }
+        (settings["dark_theme"] as? Boolean)?.let { _darkTheme.value = it }
+        (settings["theme_mode"] as? String)?.let { _themeMode.value = it }
+        (settings["view_mode"] as? String)?.let { _viewMode.value = it }
+        (settings["sort_mode"] as? String)?.let { _sortMode.value = it }
+        (settings["reading_font"] as? String)?.let { _readingFont.value = it }
+        (settings["reading_theme"] as? String)?.let { _readingTheme.value = it }
+    }
+
+    private fun applyNotificationsToState(notifications: Map<String, Any?>) {
+        (notifications[NewsCheckWorker.KEY_ENABLED] as? Boolean)?.let { _notifEnabled.value = it }
+        (notifications[NewsCheckWorker.KEY_INTERVAL_HOURS] as? Int)?.let { _notifIntervalHours.value = it }
+        (notifications["notif_disabled_sources"] as? Set<*>)?.let {
+            @Suppress("UNCHECKED_CAST") _notifDisabledSources.value = it as Set<String>
+        }
+        (notifications["quiet_start"] as? Int)?.let { _quietStart.value = it }
+        (notifications["quiet_end"] as? Int)?.let { _quietEnd.value = it }
+        (notifications["notif_sound"] as? Boolean)?.let { _notifSound.value = it }
+    }
+
     // ---------- Кэш полных текстов статей (ночной офлайн) ----------
     /** Сохраняет полный текст статьи для офлайн-чтения. */
     fun cacheFullText(postId: String, text: String) {
