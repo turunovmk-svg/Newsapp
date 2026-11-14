@@ -1931,7 +1931,7 @@ fun NewsCard(
             }
             Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
             Text(
-                text = highlightText(post.title, highlightQuery, CyberColors.Warning),
+                text = remember(post.id, highlightQuery) { highlightText(post.title, highlightQuery, CyberColors.Warning) },
                 style = CyberTypography.TitleLarge.copy(
                     fontSize = 20.sp,
                     lineHeight = 25.sp,
@@ -1947,7 +1947,7 @@ fun NewsCard(
                 if (cleanDesc?.isNotEmpty() == true) {
                     Spacer(modifier = Modifier.height(UiSizes.SpacerXSmall))
                     Text(
-                        text = highlightText(cleanDesc ?: "", highlightQuery, CyberColors.Warning),
+                        text = remember(post.id, highlightQuery, cleanDesc) { highlightText(cleanDesc ?: "", highlightQuery, CyberColors.Warning) },
                         style = CyberTypography.BodySmall,
                         color = CyberColors.TextSecondary,
                         maxLines = 2,

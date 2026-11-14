@@ -96,6 +96,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
      * поэтому возврат на папку мгновенный.
      */
     private fun applyFolderFilter() {
+        // Если первая сетевая загрузка ещё не завершилась (_postsBySource пуст),
+        // а в _posts уже лежит кэш из initPostsCache — не затираем его пустым списком.
+        if (_postsBySource.value.isEmpty() && _posts.value.isNotEmpty()) return
         val folder = _selectedFolder.value
         val folderByUrl = _sources.value.associate { it.url to it.folder }
         val filtered = FeedMerge.filterByFolder(_postsBySource.value, folder, folderByUrl)
