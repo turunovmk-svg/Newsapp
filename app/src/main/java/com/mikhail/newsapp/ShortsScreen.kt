@@ -314,7 +314,7 @@ fun ShortsFullScreenCard(
                 )
             }
             post.description?.let { desc ->
-                val cleanDesc = Post.stripHtml(desc)
+                val cleanDesc = remember(post.id) { Post.stripHtml(desc) }
                 if (!cleanDesc.isNullOrEmpty()) {
                     Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
                     Text(

@@ -1760,7 +1760,7 @@ fun FeaturedNewsCard(
                 }
             }
             post.description?.let { desc ->
-                val cleanDesc = Post.stripHtml(desc)
+                val cleanDesc = remember(post.id) { Post.stripHtml(desc) }
                 if (cleanDesc?.isNotEmpty() == true) {
                     Spacer(modifier = Modifier.height(UiSizes.SpacerSmall))
                     Text(
@@ -1943,7 +1943,7 @@ fun NewsCard(
                 modifier = Modifier.fillMaxWidth()
             )
             post.description?.let { desc ->
-                val cleanDesc = Post.stripHtml(desc)
+                val cleanDesc = remember(post.id) { Post.stripHtml(desc) }
                 if (cleanDesc?.isNotEmpty() == true) {
                     Spacer(modifier = Modifier.height(UiSizes.SpacerXSmall))
                     Text(

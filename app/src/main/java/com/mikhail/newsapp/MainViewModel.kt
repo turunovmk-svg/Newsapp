@@ -314,12 +314,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         init {
         loadSources()
-        loadFavorites()
-        loadReadLater()
         loadReadIds()
         loadSettings()
-        // Кэш постов читаем/парсим один раз на IO (этап 9B), чтобы не блокировать старт
-        viewModelScope.launch { initPostsCache() }
+        // Крупные JSON-чтения (избранное, «читать позже», кэш постов) — на IO,
+        // чтобы не блокировать холодный старт на главном потоке (этап 9B + пакет оптимизации)
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                loadFavorites()
+                loadReadLater()
+            }
+            initPostsCache()
+        }
         loadPosts()
         // Пересчёт непрочитанных
         viewModelScope.launch {
@@ -561,13 +566,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                             }
                         }
                     }
-                    // Объединяем посты всех источников (включая старые посты из ошибочных источников)
-                    _postsBySource.value = mergeLoadResults(_postsBySource.value, results)
-                    _posts.value = FeedMerge.flattenDedupSort(_postsBySource.value)
-                    _error.value = FeedMerge.decideError(anySuccess, _posts.value.size)
-                    // Кэшируем загруженное для офлайна (один раз, после всех задач — без частичного кэша)
-                    if (_posts.value.isNotEmpty()) {
-                        saveCachedPosts(_posts.value)
+                    // Слияние+дедуп+сортировка и JSON-сериализация кэша — на фоновом потоке,
+                    // не на главном (при ~200 постах это заметная работа)
+                    val merged = withContext(Dispatchers.Default) {
+                        val m = mergeLoadResults(_postsBySource.value, results)
+                        m to FeedMerge.flattenDedupSort(m)
+                    }
+                    // Перепроверяем после suspension: отменённый старый цикл не пишет поверх нового
+                    if (currentLoadJob === myJob) {
+                        _postsBySource.value = merged.first
+                        _posts.value = merged.second
+                        _error.value = FeedMerge.decideError(anySuccess, merged.second.size)
+                        // Кэшируем загруженное для офлайна (один раз, после всех задач — без частичного кэша)
+                        if (merged.second.isNotEmpty()) {
+                            val toSave = merged.second
+                            withContext(Dispatchers.Default) { saveCachedPosts(toSave) }
+                        }
                     }
                 }
             } catch (e: CancellationException) {
