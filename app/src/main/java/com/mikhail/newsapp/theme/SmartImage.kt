@@ -58,20 +58,14 @@ fun SmartNewsImage(
     val blurSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     // Декодируем не шире экрана (на Poco M5 ≈1080px) — многие RSS-источники отдают
     // полноразмерные исходники (2000px+), которые в карточке всё равно не видны.
-    // Размытый фон дополнительно ограничиваем в 4 раза: после blur(28dp) разница незаметна.
     val maxDecodePx = with(LocalDensity.current) {
         LocalConfiguration.current.screenWidthDp.dp.toPx().roundToInt()
     }.coerceAtLeast(1)
-    // Запросы стабильны и мемоизированы: при recomposition не пересоздаём ImageRequest
-    // (иначе Coil считает его новым и может перезапускать загрузку).
-    val backgroundRequest = remember(imageUrl, maxDecodePx) {
-        ImageRequest.Builder(context)
-            .data(imageUrl)
-            .size(Size(maxDecodePx / 4, maxDecodePx / 4))
-            .crossfade(120)
-            .build()
-    }
-    val contentRequest = remember(imageUrl, maxDecodePx) {
+    // ОДИН запрос на картинку: оба слоя (размытый фон + резкий объект) используют его.
+    // Раньше фон шёл с size/4 — другой cache key, Coil качал и декодировал ту же картинку
+    // дважды (лишняя сеть, лишний Bitmap в памяти, лишний декод на кадр при скролле).
+    // Запрос мемоизирован: при recomposition не пересоздаётся.
+    val imageRequest = remember(imageUrl, maxDecodePx) {
         ImageRequest.Builder(context)
             .data(imageUrl)
             .size(Size(maxDecodePx, maxDecodePx))
@@ -85,8 +79,9 @@ fun SmartNewsImage(
             .background(CyberColors.SurfaceElevated)
     ) {
         // Слой 1: размытый фон (bokeh). На API < 31 — без размытия, просто затемнённое фото.
+        // Тот же bitmap, что и у резкого слоя (один запрос → memory cache hit, без повторного декода).
         AsyncImage(
-            model = backgroundRequest,
+            model = imageRequest,
             contentDescription = null,
             contentScale = contentScale,
             modifier = Modifier
@@ -103,7 +98,7 @@ fun SmartNewsImage(
 
         // Слой 2: резкий объект (contain — без пиксельного апскейла)
         AsyncImage(
-            model = contentRequest,
+            model = imageRequest,
             contentDescription = null,
             contentScale = ContentScale.Fit,
             alignment = Alignment.Center,
