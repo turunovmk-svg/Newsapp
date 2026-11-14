@@ -2,6 +2,7 @@ package com.mikhail.newsapp
 
 import com.mikhail.newsapp.data.Post
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -236,4 +237,44 @@ class FeedFilterTest {
         assertTrue(options.any { it.id == "economy" })
         assertTrue(options.any { it.id == "games" })
     }
+
+    // ---- Этап 4: поиск (регистр, частичные совпадения, пустые поля, с фильтрами) ----
+
+    @Test
+    fun search_isCaseInsensitive() {
+        val p = post("1", "BREAKING News Today", description = "x")
+        assertTrue(FeedFilter.matchesQuery(p, "breaking"))
+        assertTrue(FeedFilter.matchesQuery(p, "NEWS"))
+        assertTrue(FeedFilter.matchesQuery(p, "Breaking"))
+    }
+
+    @Test
+    fun search_matchesPartialSubstring_inTitleAndDescription() {
+        val p = post("1", "Market rally continues", description = "Investors cheer the rally")
+        assertTrue(FeedFilter.matchesQuery(p, "rally"))
+        assertTrue(FeedFilter.matchesQuery(p, "market"))
+        assertTrue(FeedFilter.matchesQuery(p, "cheer"))
+        assertFalse(FeedFilter.matchesQuery(p, "crash"))
+    }
+
+    @Test
+    fun search_emptyQuery_matchesAll_andBlankDescriptionSafe() {
+        val p1 = post("1", "A", description = null)
+        val p2 = post("2", "B", description = "  ")
+        assertTrue(FeedFilter.matchesQuery(p1, ""))
+        assertTrue(FeedFilter.matchesQuery(p2, "   "))
+        assertFalse(FeedFilter.matchesQuery(p1, "zzz"))
+        assertFalse(FeedFilter.matchesQuery(p2, "zzz")) // пустое описание не падает
+    }
+
+    @Test
+    fun search_combinesWithSourceFilter_withoutDuplicates() {
+        val a = post("1", "Tech news", sourceUrl = "https://a.example/1")
+        val b = post("2", "Tech news", sourceUrl = "https://b.example/2")
+        val c = post("3", "Sports", sourceUrl = "https://a.example/3")
+        val all = listOf(a, b, c)
+        val res = FeedFilter.filter(all, query = "tech", type = "Все", sourceKey = FeedFilter.sourceKey(a), category = null)
+        assertEquals(listOf(a), res) // поиск + фильтр источника вместе, порядок сохранён
+    }
+
 }

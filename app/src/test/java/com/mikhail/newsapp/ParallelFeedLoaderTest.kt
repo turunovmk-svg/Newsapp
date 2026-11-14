@@ -6,6 +6,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -166,4 +167,55 @@ class ParallelFeedLoaderTest {
         val merged = mergeLoadResults(bySource, results)
         assertEquals(old, merged["https://a.example/feed"])
     }
+
+    // ---- Этап 4: массовая загрузка 20 источников ----
+
+    @Test
+    fun load20Sources_respectsConcurrencyLimit_andKeepsOrder() = runBlocking {
+        val sources = (1..20).map { Source("RSS", "https://s$it.example/feed") }
+        val maxActive = AtomicInteger(0)
+        val cur = AtomicInteger(0)
+        val loader: suspend (Source) -> List<Post> = { src ->
+            val a = cur.incrementAndGet()
+            maxActive.updateAndGet { m -> maxOf(m, a) }
+            delay(15) // имитация сети
+            cur.decrementAndGet()
+            val url = src.url
+            if (url.contains("s7") || url.contains("s13")) throw java.io.IOException("boom $url")
+            listOf(post("$url#1", url))
+        }
+        val started = System.nanoTime()
+        val results = loadSourcesParallel(sources, loader = loader)
+        val elapsedMs = (System.nanoTime() - started) / 1_000_000
+
+        assertEquals(20, results.size)
+        assertEquals(sources.map { it.url }, results.map { it.sourceUrl }) // порядок = порядку источников
+        assertEquals(18, results.count { it.error == null })
+        assertEquals(2, results.count { it.error != null })
+        assertTrue("maxActive=${maxActive.get()} > 5", maxActive.get() <= MAX_CONCURRENT_SOURCE_LOADS)
+        assertTrue("maxActive=${maxActive.get()} < 2 — не параллельно", maxActive.get() >= 2)
+        // 20 задач по 15мс при лимите 5: ~4 волны ≈ 60мс, а не 300мс последовательно
+        assertTrue("elapsed=${elapsedMs}ms — похоже на последовательную загрузку", elapsedMs < 250)
+    }
+
+    @Test
+    fun load20Sources_partialFailure_keepsSuccessfulResults() = runBlocking {
+        val sources = (1..20).map { Source("RSS", "https://s$it.example/feed") }
+        val loader: suspend (Source) -> List<Post> = { src ->
+            val url = src.url
+            val n = url.substringAfter("//s").substringBefore('.').toInt()
+            if (n % 3 == 0) throw java.io.IOException("fail $url")
+            listOf(post("$url#x", url))
+        }
+        val results = loadSourcesParallel(sources, loader = loader)
+        val ok = results.filter { it.error == null }
+        assertEquals(14, ok.size) // 6 из 20 упали (кратные 3)
+        assertTrue(ok.all { it.posts!!.size == 1 })
+    }
+
+    // ---- Этап 4: массовая загрузка 20 источников ----
+
+
+    // ---- Этап 4: массовая загрузка 20 источников ----
+
 }

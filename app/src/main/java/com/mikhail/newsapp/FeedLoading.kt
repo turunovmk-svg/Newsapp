@@ -22,7 +22,9 @@ import org.xmlpull.v1.XmlPullParserFactory
  */
 
 /** Максимум одновременно загружаемых источников (этап 10). */
-const val MAX_CONCURRENT_SOURCE_LOADS = 3
+// OkHttp connection pool по умолчанию держит 5 idle-соединений — совпадает с лимитом.
+// При 15–30 источниках лимит 3 заставлял «висящий» источник занимать слот до 3×30с.
+const val MAX_CONCURRENT_SOURCE_LOADS = 5
 
 /** Результат загрузки одного источника: либо посты, либо ошибка. */
 data class SourceLoadResult(

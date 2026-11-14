@@ -11,6 +11,11 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.mikhail.newsapp.data.Source
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -32,6 +37,29 @@ class NewsCheckWorker(
         const val PREFS_LAST_SEEN = "last_seen_links"  // url -> link новейшего материала
         const val KEY_ENABLED = "notif_enabled"
         const val KEY_INTERVAL_HOURS = "notif_interval_hours"
+
+        /** Чистая проверка тихих часов: nowMinutes — минуты суток, start/end — в минутах, -1 = выключено. */
+        internal fun isInQuietHours(nowMinutes: Int, start: Int, end: Int): Boolean {
+            if (start < 0 || end < 0) return false
+            return if (start <= end) nowMinutes in start until end
+            else nowMinutes >= start || nowMinutes < end
+        }
+
+        private val ITEM_RE = Regex("(?s)<(?:item|entry)[ >].*?</(?:item|entry)>")
+        private val TITLE_RE = Regex("(?s)<title[^>]*>(.*?)</title>")
+        private val LINK_RE = Regex("(?s)<link[^>]*>(.*?)</link>")
+        private val LINK_HREF_RE = Regex("""<link[^>]*href=["']([^"']+)["']""")
+
+        /** Возвращает (title, link) самого свежего item/entry или null. */
+        fun parseLatestMarker(xml: String, fallbackUrl: String): Pair<String, String>? {
+            val latest = ITEM_RE.find(xml) ?: return null
+            val title = TITLE_RE.find(latest.value)?.groupValues?.get(1)
+                ?.replace(Regex("<[^>]+>"), "")?.trim().orEmpty()
+            val link = LINK_RE.find(latest.value)?.groupValues?.get(1)?.trim()
+                ?: LINK_HREF_RE.find(latest.value)?.groupValues?.get(1)?.trim()
+                ?: fallbackUrl
+            return title to link
+        }
     }
 
     private val client = OkHttpClient.Builder()
@@ -60,63 +88,49 @@ class NewsCheckWorker(
             val notifSound = prefs.getBoolean("notif_sound", true)
             val now = java.util.Calendar.getInstance()
             val nowMinutes = now.get(java.util.Calendar.HOUR_OF_DAY) * 60 + now.get(java.util.Calendar.MINUTE)
-            val inQuietHours = if (quietStart >= 0 && quietEnd >= 0) {
-                if (quietStart <= quietEnd) nowMinutes in quietStart until quietEnd
-                else nowMinutes >= quietStart || nowMinutes < quietEnd
-            } else false
+            val inQuietHours = isInQuietHours(nowMinutes, quietStart, quietEnd)
 
             val lastSeen = prefs.getStringSet("last_seen_set", emptySet()) ?: emptySet()
             val isFirstRun = lastSeen.isEmpty()
-            val newTitles = mutableListOf<String>()
-            val newCount = mutableListOf<Int>()
-            val allMarkers = mutableSetOf<String>()
-
-            for (source in activeSources) {
-                try {
-                    val url = source.url
-                    val request = Request.Builder()
-                        .url(url)
-                        .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0")
-                        .build()
-                    val xml: String? = client.newCall(request).execute().use { resp ->
-                        if (!resp.isSuccessful) null
-                        else resp.body?.string()
+            // параллельная проверка, тот же лимит, что и в ленте (3)
+            val sem = Semaphore(3)
+            val results = coroutineScope {
+                activeSources.map { source ->
+                    async {
+                        sem.withPermit {
+                            try {
+                                val xml = client.newCall(
+                                    Request.Builder().url(source.url)
+                                        .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0")
+                                        .build()
+                                ).execute().use { resp -> if (resp.isSuccessful) resp.body?.string() else null }
+                                if (xml == null) null
+                                else parseLatestMarker(xml, source.url)?.let { (title, link) ->
+                                    val marker = source.url + "|" + link
+                                    val isNew = !isFirstRun && lastSeen.contains(source.url) && !lastSeen.contains(marker)
+                                    Triple(marker, title, isNew)
+                                }
+                            } catch (e: Exception) {
+                                null // один упавший источник не роняет всю проверку
+                            }
+                        }
                     }
-                    if (xml == null) continue
-                    // самый свежий материал: first <item>..</item> или <entry>..</entry>
-                    val itemRe = Regex("(?s)<(?:item|entry)[ >].*?</(?:item|entry)>")
-                    val titleRe = Regex("(?s)<title[^>]*>(.*?)</title>")
-                    val linkRe = Regex("(?s)<link[^>]*>(.*?)</link>")
-                    val linkRelRe = Regex("""<link[^>]*href=["']([^"']+)["']""")
-                    val latest = itemRe.find(xml) ?: continue
-                    val title = titleRe.find(latest.value)?.groupValues?.get(1)
-                        ?.replace(Regex("<[^>]+>"), "")?.trim().orEmpty()
-                    val link = linkRe.find(latest.value)?.groupValues?.get(1)?.trim()
-                        ?: linkRelRe.find(latest.value)?.groupValues?.get(1)?.trim()
-                        ?: url
-                    val marker = "$url|$link"
-                    allMarkers.add(marker)
-                    // Уведомляем только если источник уже проверялся раньше и материал новый
-                    if (!isFirstRun && lastSeen.contains(url) && !lastSeen.contains(marker)) {
-                        if (title.isNotEmpty()) newTitles.add(title.take(90))
-                        newCount.add(1)
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
+                }.awaitAll().filterNotNull()
             }
+            val allMarkers: MutableSet<String> = (lastSeen + results.map { it.first }).toMutableSet()
+            val newTitles = results.filter { it.third }.map { it.second.take(90) }.filter { it.isNotEmpty() }.toMutableList()
+            val totalNew = results.count { it.third }
 
             // сохраняем снимок «виденного»
             prefs.edit().putStringSet("last_seen_set", allMarkers).apply()
 
-            val totalNew = newCount.sum()
             if (totalNew > 0 && !inQuietHours) {
                 showNotification(newTitles, totalNew, notifSound)
             }
             Result.success()
         } catch (e: Exception) {
-            e.printStackTrace()
-            Result.retry()
+            // ожидаемые сетевые ошибки не должны порождать лавину retry — следующий запуск по расписанию
+            Result.success()
         }
     }
 

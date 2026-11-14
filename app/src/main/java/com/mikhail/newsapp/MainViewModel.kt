@@ -987,14 +987,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         // 4) только после успешной записи — публикуем состояние (UI обновится сразу)
+        val sourcesChanged = newSources.map { it.url }.toSet() != _sources.value.map { it.url }.toSet()
+        val addedSources = newSources.size - _sources.value.size
         _sources.value = newSources
         _favorites.value = newFavorites
         _readLater.value = newReadLater
         _readIds.value = newReadIds
         applySettingsToState(parsed.settings)
         applyNotificationsToState(parsed.notifications)
+        if (sourcesChanged) loadPosts() // новые источники — сразу тянем их ленту
         return buildString {
-            append("Импортировано: источников +${newSources.size - _sources.value.size + parsed.sources.size.coerceAtMost(newSources.size)}, ")
+            append("Импортировано: источников +$addedSources, ")
             append("избранное ${newFavorites.size}, «читать позже» ${newReadLater.size}, прочитано ${newReadIds.size}")
         }
     }
