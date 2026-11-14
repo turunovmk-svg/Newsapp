@@ -9,17 +9,22 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import coil.size.Size
+import kotlin.math.roundToInt
 
 /**
  * Адаптивная картинка новости.
@@ -51,6 +56,28 @@ fun SmartNewsImage(
 
     val context = LocalContext.current
     val blurSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    // Декодируем не шире экрана (на Poco M5 ≈1080px) — многие RSS-источники отдают
+    // полноразмерные исходники (2000px+), которые в карточке всё равно не видны.
+    // Размытый фон дополнительно ограничиваем в 4 раза: после blur(28dp) разница незаметна.
+    val maxDecodePx = with(LocalDensity.current) {
+        LocalConfiguration.current.screenWidthDp.dp.toPx().roundToInt()
+    }.coerceAtLeast(1)
+    // Запросы стабильны и мемоизированы: при recomposition не пересоздаём ImageRequest
+    // (иначе Coil считает его новым и может перезапускать загрузку).
+    val backgroundRequest = remember(imageUrl, maxDecodePx) {
+        ImageRequest.Builder(context)
+            .data(imageUrl)
+            .size(Size(maxDecodePx / 4, maxDecodePx / 4))
+            .crossfade(120)
+            .build()
+    }
+    val contentRequest = remember(imageUrl, maxDecodePx) {
+        ImageRequest.Builder(context)
+            .data(imageUrl)
+            .size(Size(maxDecodePx, maxDecodePx))
+            .crossfade(120)
+            .build()
+    }
 
     Box(
         modifier = modifier
@@ -59,10 +86,7 @@ fun SmartNewsImage(
     ) {
         // Слой 1: размытый фон (bokeh). На API < 31 — без размытия, просто затемнённое фото.
         AsyncImage(
-            model = ImageRequest.Builder(context)
-                .data(imageUrl)
-                .crossfade(120)
-                .build(),
+            model = backgroundRequest,
             contentDescription = null,
             contentScale = contentScale,
             modifier = Modifier
@@ -79,10 +103,7 @@ fun SmartNewsImage(
 
         // Слой 2: резкий объект (contain — без пиксельного апскейла)
         AsyncImage(
-            model = ImageRequest.Builder(context)
-                .data(imageUrl)
-                .crossfade(120)
-                .build(),
+            model = contentRequest,
             contentDescription = null,
             contentScale = ContentScale.Fit,
             alignment = Alignment.Center,

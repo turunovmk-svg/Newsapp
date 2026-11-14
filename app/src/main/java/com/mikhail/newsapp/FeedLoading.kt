@@ -126,6 +126,19 @@ object FeedMerge {
      */
     fun decideError(anySuccess: Boolean, totalPosts: Int): String? =
         if (!anySuccess && totalPosts == 0) "Не удалось загрузить новости ни из одного источника" else null
+
+    /**
+     * Оставляет в карте постов только источники выбранной папки (пустая/blank папка — все источники).
+     * Ключ карты — URL источника, папка берётся из sourceFolderByUrl (url → folder).
+     * Источник с неизвестным URL при выбранной папке исключается.
+     */
+    fun filterByFolder(
+        bySource: Map<String, List<Post>>,
+        folder: String,
+        sourceFolderByUrl: Map<String, String>
+    ): Map<String, List<Post>> =
+        if (folder.isBlank()) bySource
+        else bySource.filterKeys { url -> sourceFolderByUrl[url] == folder }
 }
 
 private fun upgradeImageUrl(url: String): String {

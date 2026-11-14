@@ -85,7 +85,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setSelectedFolder(folder: String) {
         _selectedFolder.value = folder
-        loadPosts()
+        // Папки фильтруем локально из уже загруженных _postsBySource —
+        // повторный сетевой запрос только из-за смены папки не нужен.
+        applyFolderFilter()
+    }
+
+    /**
+     * Пересчитывает видимую ленту (_posts) под текущую выбранную папку из _postsBySource.
+     * Без сети, без очистки кэша: источники других папок остаются в _postsBySource,
+     * поэтому возврат на папку мгновенный.
+     */
+    private fun applyFolderFilter() {
+        val folder = _selectedFolder.value
+        val folderByUrl = _sources.value.associate { it.url to it.folder }
+        val filtered = FeedMerge.filterByFolder(_postsBySource.value, folder, folderByUrl)
+        val posts = FeedMerge.flattenDedupSort(filtered)
+        _posts.value = posts
+        _error.value = FeedMerge.decideError(anySuccess = true, posts.size)
     }
 
     // ---------- Ошибки конкретных источников (url → текст) ----------
@@ -499,8 +515,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         currentLoadJob = viewModelScope.launch {
             val myJob = coroutineContext[Job]
             val allSources = _sources.value
-            val folder = _selectedFolder.value
-            val sources = if (folder.isBlank()) allSources else allSources.filter { it.folder == folder }
+            // Грузим все источники (не только текущей папки): папка — локальный фильтр
+            // через applyFolderFilter(), чтобы переключение папок не требовало сети.
+            val sources = allSources
             _error.value = null
             if (sources.isEmpty()) {
                 _posts.value = emptyList()
@@ -575,9 +592,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     // Перепроверяем после suspension: отменённый старый цикл не пишет поверх нового
                     if (currentLoadJob === myJob) {
                         _postsBySource.value = merged.first
-                        _posts.value = merged.second
-                        _error.value = FeedMerge.decideError(anySuccess, merged.second.size)
-                        // Кэшируем загруженное для офлайна (один раз, после всех задач — без частичного кэша)
+                        // Видимая лента — под текущую папку, локально (без сети)
+                        val folder = _selectedFolder.value
+                        val folderByUrl = _sources.value.associate { it.url to it.folder }
+                        _posts.value = FeedMerge.flattenDedupSort(
+                            FeedMerge.filterByFolder(merged.first, folder, folderByUrl)
+                        )
+                        _error.value = FeedMerge.decideError(anySuccess, _posts.value.size)
+                        // Кэшируем загруженное для офлайна (все источники, один раз, без частичного кэша)
                         if (merged.second.isNotEmpty()) {
                             val toSave = merged.second
                             withContext(Dispatchers.Default) { saveCachedPosts(toSave) }
