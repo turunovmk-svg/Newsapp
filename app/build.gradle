@@ -32,7 +32,11 @@ android {
             if (signingConfigs.findByName("release") != null) {
                 signingConfig signingConfigs.release
             }
-            minifyEnabled false
+            // R8 + shrink ресурсов только для release; debug не минифицируем.
+            // proguard-rules.pro подхватывается AGP по дефолтному пути,
+            // спец. keep-правила добавляем только при подтверждённой необходимости.
+            minifyEnabled true
+            shrinkResources true
         }
         debug {
             // debug тоже подписываем релизным ключом (если он есть),
